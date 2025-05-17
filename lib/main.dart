@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/home.dart';
+import 'pages/water.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,50 +14,55 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  @override
-  Widget build(BuildContext context) {
 
-    int currentPageindex = 0;
+  int currentPageindex = 1;
 
   final List<Widget> widgetOptions = [
+      MyWater(),
       MyHome(),
     ];
 
-
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        bottomNavigationBar: NavigationBar(
-          backgroundColor: Colors.white,
-          destinations: const <Widget>[
-            NavigationDestination(
-              selectedIcon: Icon(Icons.home),
-              icon: Icon(Icons.home_outlined),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Badge(
-                child: Icon(
-                  Icons.notifications_sharp,
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.only(bottom: 8, left: 10, right: 10),
+          child: ClipRRect(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(35), bottom: Radius.circular(35)),
+            child: NavigationBar(
+              selectedIndex: currentPageindex,
+              backgroundColor: Color.fromARGB(255, 250, 229, 212),
+              indicatorColor: Color.fromARGB(255, 250, 229, 212),
+              destinations: const <Widget>[
+                NavigationDestination(
+                  selectedIcon: Icon(Icons.water, color: Colors.blueAccent,),
+                  icon: Icon(Icons.water),
+                  label: 'water',
                 ),
-              ),
-              label: 'Notifications',
-            ),
-            NavigationDestination(
-              icon: Badge(
-                label: Text('2'),
-                child: Icon(
-                  Icons.messenger_sharp,
+                NavigationDestination(
+                  selectedIcon: Icon(Icons.nature, color: Colors.green,),
+                  icon: Icon(Icons.nature_outlined),
+                  label: 'Home',
                 ),
-              ),
-              label: 'Messages',
+                NavigationDestination(
+                  icon: Badge(
+                    label: Text('2'),
+                    child: Icon(
+                      Icons.messenger_sharp,
+                    ),
+                  ),
+                  label: 'Messages',
+                ),
+              ],
+              onDestinationSelected: (int index) {
+                setState(() {
+                  currentPageindex = index;
+                });
+              },
             ),
-          ],
-          onDestinationSelected: (int index) {
-            setState(() {
-              currentPageindex = index;
-            });
-          },
+          ),
         ),
         backgroundColor: Color(0xfff6f9f8),
         body:  widgetOptions[currentPageindex],
