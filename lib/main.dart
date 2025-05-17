@@ -42,8 +42,8 @@ class _MyAppState extends State<MyApp> {
                   label: 'water',
                 ),
                 NavigationDestination(
-                  selectedIcon: Icon(Icons.nature, color: Colors.green,),
-                  icon: Icon(Icons.nature_outlined),
+                  selectedIcon: Icon(Icons.eco, color: Colors.green,),
+                  icon: Icon(Icons.eco_outlined),
                   label: 'Home',
                 ),
                 NavigationDestination(
