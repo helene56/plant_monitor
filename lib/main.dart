@@ -21,21 +21,32 @@ class MyApp extends StatelessWidget {
             Center(
               child: Text(
                 "Mine planter",
-                style: TextStyle(fontSize: 30, fontFamily: 'Poppins'),
+                style: TextStyle(
+                  fontSize: 30,
+                  fontFamily: 'Poppins',
+                ),
               ),
             ),
+            // Column(
+            //   crossAxisAlignment:
+            //       CrossAxisAlignment.start,
+            //   children: [
+            //     PlantContainer(label: 'gummi'),
+            //     PlantContainer(label: 'succi'),
+            //     PlantContainer(
+            //       label:
+            //           'virkelig virkelig langt',
+            //     ),
+            //   ],
+            // ),
             Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
               children: [
-                PlantContainer(
-                  label: 'gummi',
-                ),
-                PlantContainer(
-                  label: 'succi',
-                ),
-                PlantContainer(
-                  label: 'virkelig virkelig langt',
+                Wrap(
+                  children: [
+                    MyPlantContainer(label: 'gummi'),
+                    MyPlantContainer(label: 'banan'),
+                    MyPlantContainer(label: 'test',)
+                  ],
                 ),
               ],
             ),
@@ -46,48 +57,44 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class PlantContainer extends StatelessWidget {
+class MyPlantContainer extends StatelessWidget {
   final String label;
-
-  const PlantContainer({
-    super.key,
-    required this.label,
-  });
+  const MyPlantContainer({super.key, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    // get text width
-    TextPainter painter = TextPainter(
-      text: TextSpan(
-        text: label,
-        style: TextStyle(fontSize: 20),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    double textWidth = painter.width;
-
     return Container(
       margin: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
         color: Color.fromARGB(255, 250, 229, 212),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white, width: 3)
+        border: Border.all(
+          color: Colors.white,
+          width: 3,
+        ),
       ),
-      width: textWidth + 100,
-      height: 70.0,
-      child: Row(
+      width: 150,
+      height: 200,
+      child: Column(
         children: [
-          Image.asset('./images/plant_test.png'),
+          SizedBox(
+            width: 100,
+            height: 100,
+            child: Image.asset(
+              './images/plant_test.png',
+            ),
+          ),
           Expanded(
             flex: 1,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(5, 8, 8, 8),
-                child: Text(
-                  label,
-                  style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+            child: Center(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontFamily: 'Poppins',
                 ),
               ),
+            ),
           ),
         ],
       ),
