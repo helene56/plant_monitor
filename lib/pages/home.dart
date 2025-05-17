@@ -8,41 +8,34 @@ class MyHome extends StatefulWidget {
 }
 
 class _MyHomeState extends State<MyHome> {
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xfff6f9f8),
-      body: Column(
-        mainAxisAlignment:
-            MainAxisAlignment.start,
-        children: [
-          SizedBox(height: 40),
-          Center(
-            child: Text(
-              "Mine planter",
-              style: TextStyle(
-                fontSize: 30,
-                fontFamily: 'Poppins',
-              ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        SizedBox(height: 40),
+        Center(
+          child: Text(
+            "Mine planter",
+            style: TextStyle(
+              fontSize: 30,
+              fontFamily: 'Poppins',
             ),
           ),
-          Column(
-            children: [
-              Wrap(
-                children: [
-                  MyPlantContainer(
-                    label: 'gummi',
-                  ),
-                  MyPlantContainer(
-                    label: 'banan',
-                  ),
-                  MyPlantContainer(label: 'test'),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+        Column(
+          children: [
+            Wrap(
+              children: [
+                MyPlantContainer(label: 'gummi'),
+                MyPlantContainer(label: 'banan'),
+                MyPlantContainer(label: 'test'),
+              ],
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
