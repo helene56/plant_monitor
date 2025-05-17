@@ -27,18 +27,6 @@ class MyApp extends StatelessWidget {
                 ),
               ),
             ),
-            // Column(
-            //   crossAxisAlignment:
-            //       CrossAxisAlignment.start,
-            //   children: [
-            //     PlantContainer(label: 'gummi'),
-            //     PlantContainer(label: 'succi'),
-            //     PlantContainer(
-            //       label:
-            //           'virkelig virkelig langt',
-            //     ),
-            //   ],
-            // ),
             Column(
               children: [
                 Wrap(
