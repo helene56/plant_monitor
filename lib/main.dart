@@ -41,21 +41,17 @@ class _MyAppState extends State<MyApp> {
                 NavigationDestination(
                   selectedIcon: Icon(Icons.water, color: Colors.blueAccent,),
                   icon: Icon(Icons.water),
-                  label: 'water',
+                  label: 'Vand beholder',
                 ),
                 NavigationDestination(
                   selectedIcon: Icon(Icons.eco, color: Colors.green,),
                   icon: Icon(Icons.eco_outlined),
-                  label: 'Home',
+                  label: 'Planter',
                 ),
                 NavigationDestination(
-                  icon: Badge(
-                    label: Text('2'),
-                    child: Icon(
-                      Icons.messenger_sharp,
-                    ),
-                  ),
-                  label: 'Messages',
+                  selectedIcon: Icon(Icons.straighten, color: Colors.redAccent,),
+                  icon: Icon(Icons.straighten),
+                  label: 'Statistik',
                 ),
               ],
               onDestinationSelected: (int index) {
