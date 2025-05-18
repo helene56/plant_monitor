@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 class MyPlantStat extends StatelessWidget {
-  const MyPlantStat({super.key});
+  final int plantId;
+  const MyPlantStat({super.key, required this.plantId});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Text('plant stats!!!')),
+      appBar: AppBar(),
+      body: Center(child: Text('plant stats!!! id: $plantId')),
     );
   }
 }

@@ -28,9 +28,9 @@ class _MyHomeState extends State<MyHome> {
           children: [
             Wrap(
               children: [
-                MyPlantContainer(label: 'gummi'),
-                MyPlantContainer(label: 'banan'),
-                MyPlantContainer(label: 'test'),
+                MyPlantContainer(label: 'gummi', plantId: 0,),
+                MyPlantContainer(label: 'banan', plantId: 1,),
+                MyPlantContainer(label: 'test', plantId: 2,),
               ],
             ),
           ],
@@ -42,21 +42,31 @@ class _MyHomeState extends State<MyHome> {
 
 class MyPlantContainer extends StatefulWidget {
   final String label;
+  final int plantId;
   const MyPlantContainer({
     super.key,
     required this.label,
+    required this.plantId,
   });
 
   @override
-  State<MyPlantContainer> createState() => _MyPlantContainerState();
+  State<MyPlantContainer> createState() =>
+      _MyPlantContainerState();
 }
 
-class _MyPlantContainerState extends State<MyPlantContainer> {
+class _MyPlantContainerState
+    extends State<MyPlantContainer> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPlantStat()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => MyPlantStat(plantId: widget.plantId),
+          ),
+        );
       },
       child: Container(
         margin: const EdgeInsets.fromLTRB(
