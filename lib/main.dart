@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plant_monitor/pages/statistics.dart';
 import 'pages/home.dart';
 import 'pages/water.dart';
 
@@ -20,6 +21,7 @@ class _MyAppState extends State<MyApp> {
   final List<Widget> widgetOptions = [
       MyWater(),
       MyHome(),
+      MyStats()
     ];
 
   @override

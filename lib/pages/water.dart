@@ -10,6 +10,6 @@ class MyWater extends StatefulWidget {
 class _MyWaterState extends State<MyWater> {
   @override
   Widget build(BuildContext context) {
-    return Text('my text');
+    return Center(child: Text('my text for water container'));
   }
 }
