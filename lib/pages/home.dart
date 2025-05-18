@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plant_monitor/pages/plant_stats.dart';
 
 class MyHome extends StatefulWidget {
   const MyHome({super.key});
@@ -8,7 +9,6 @@ class MyHome extends StatefulWidget {
 }
 
 class _MyHomeState extends State<MyHome> {
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -40,7 +40,7 @@ class _MyHomeState extends State<MyHome> {
   }
 }
 
-class MyPlantContainer extends StatelessWidget {
+class MyPlantContainer extends StatefulWidget {
   final String label;
   const MyPlantContainer({
     super.key,
@@ -48,41 +48,61 @@ class MyPlantContainer extends StatelessWidget {
   });
 
   @override
+  State<MyPlantContainer> createState() => _MyPlantContainerState();
+}
+
+class _MyPlantContainerState extends State<MyPlantContainer> {
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(15, 10, 10, 10),
-      decoration: BoxDecoration(
-        color: Color.fromARGB(255, 250, 229, 212),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.white,
-          width: 3,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPlantStat()));
+      },
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(
+          15,
+          10,
+          10,
+          10,
         ),
-      ),
-      width: 150,
-      height: 200,
-      child: Column(
-        children: [
-          SizedBox(
-            width: 100,
-            height: 100,
-            child: Image.asset(
-              './images/plant_test.png',
-            ),
+        decoration: BoxDecoration(
+          color: Color.fromARGB(
+            255,
+            250,
+            229,
+            212,
           ),
-          Expanded(
-            flex: 1,
-            child: Center(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontFamily: 'Poppins',
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.white,
+            width: 3,
+          ),
+        ),
+        width: 150,
+        height: 200,
+        child: Column(
+          children: [
+            SizedBox(
+              width: 100,
+              height: 100,
+              child: Image.asset(
+                './images/plant_test.png',
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Center(
+                child: Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Poppins',
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
