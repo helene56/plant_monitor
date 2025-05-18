@@ -39,8 +39,8 @@ class _MyAppState extends State<MyApp> {
               indicatorColor: Color.fromARGB(255, 250, 229, 212),
               destinations: const <Widget>[
                 NavigationDestination(
-                  selectedIcon: Icon(Icons.water, color: Colors.blueAccent,),
-                  icon: Icon(Icons.water),
+                  selectedIcon: Icon(Icons.local_drink, color: Colors.blueAccent,),
+                  icon: Icon(Icons.local_drink_outlined),
                   label: 'Vand beholder',
                 ),
                 NavigationDestination(
