@@ -50,7 +50,7 @@ class MyPlantContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(10.0),
+      margin: const EdgeInsets.fromLTRB(15, 10, 10, 10),
       decoration: BoxDecoration(
         color: Color.fromARGB(255, 250, 229, 212),
         borderRadius: BorderRadius.circular(8),
