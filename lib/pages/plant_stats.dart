@@ -51,7 +51,12 @@ class MyPlantStat extends StatelessWidget {
               mainAxisAlignment:
                   MainAxisAlignment.spaceEvenly,
               children: [
-                Text('Vand'),
+                // Text('Vand'),
+                Align(
+                  alignment:
+                      Alignment.centerRight,
+                  child: Text('50/100'),
+                ),
                 Row(
                   mainAxisAlignment:
                       MainAxisAlignment.center,
@@ -92,7 +97,12 @@ class MyPlantStat extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text('Sollys'),
+                // Text('Sollys'),
+                Align(
+                  alignment:
+                      Alignment.centerRight,
+                  child: Text('50/100'),
+                ),
                 Row(
                   mainAxisAlignment:
                       MainAxisAlignment.center,
@@ -133,7 +143,12 @@ class MyPlantStat extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text('Fugt'),
+                // Text('Fugt'),
+                Align(
+                  alignment:
+                      Alignment.centerRight,
+                  child: Text('50/100'),
+                ),
                 Row(
                   mainAxisAlignment:
                       MainAxisAlignment.center,
@@ -174,7 +189,12 @@ class MyPlantStat extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text('Luft temperatur'),
+                // Text('Luft temperatur'),
+                Align(
+                  alignment:
+                      Alignment.centerRight,
+                  child: Text('50/100'),
+                ),
                 Row(
                   mainAxisAlignment:
                       MainAxisAlignment.center,
@@ -215,7 +235,12 @@ class MyPlantStat extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text('Jord temperatur'),
+                // Text('Jord temperatur'),
+                Align(
+                  alignment:
+                      Alignment.centerRight,
+                  child: Text('50/100'),
+                ),
                 Row(
                   mainAxisAlignment:
                       MainAxisAlignment.center,
