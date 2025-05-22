@@ -31,7 +31,12 @@ class MyPlantStat extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Color(0xFFE3EEEC),
+              color: Color.fromARGB(
+                255,
+                255,
+                245,
+                235,
+              ),
               borderRadius: BorderRadius.circular(
                 8,
               ),
@@ -53,35 +58,34 @@ class MyPlantStat extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.water_drop,
-                      color: const Color.fromARGB(
+                      color: Color.fromARGB(
                         255,
-                        105,
-                        190,
-                        240,
-                      ),
+                        120,
+                        180,
+                        220,
+                      ), // Match Water bar
                     ),
                     SizedBox(width: 10),
                     SizedBox(
                       width: 260,
                       child: LinearProgressIndicator(
                         backgroundColor:
-                            const Color.fromARGB(
-                              109,
-                              105,
-                              190,
-                              240,
-                            ),
+                            Color.fromARGB(
+                              85,
+                              120,
+                              180,
+                              220,
+                            ), // Water bg
                         borderRadius:
                             BorderRadius.circular(
                               25,
                             ),
-                        color:
-                            const Color.fromARGB(
-                              255,
-                              105,
-                              190,
-                              240,
-                            ),
+                        color: Color.fromARGB(
+                          255,
+                          120,
+                          180,
+                          220,
+                        ), // Water bar
                         minHeight: 20,
                         value: 0.5,
                       ),
@@ -95,30 +99,34 @@ class MyPlantStat extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.wb_sunny,
-                      color: Colors.amber,
+                      color: Color.fromARGB(
+                        255,
+                        255,
+                        213,
+                        79,
+                      ), // Match Sunlight bar
                     ),
                     SizedBox(width: 10),
                     SizedBox(
                       width: 260,
                       child: LinearProgressIndicator(
                         backgroundColor:
-                            const Color.fromARGB(
-                              109,
-                              240,
-                              229,
-                              105,
-                            ),
+                            Color.fromARGB(
+                              85,
+                              255,
+                              213,
+                              79,
+                            ), // Sunlight bg
                         borderRadius:
                             BorderRadius.circular(
                               25,
                             ),
-                        color:
-                            const Color.fromARGB(
-                              255,
-                              240,
-                              229,
-                              105,
-                            ),
+                        color: Color.fromARGB(
+                          255,
+                          255,
+                          213,
+                          79,
+                        ), // Sunlight bar
                         minHeight: 20,
                         value: 0.5,
                       ),
@@ -132,35 +140,34 @@ class MyPlantStat extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.foggy,
-                      color: const Color.fromARGB(
+                      color: Color.fromARGB(
                         255,
-                        33,
-                        150,
-                        243,
-                      ),
+                        139,
+                        193,
+                        183,
+                      ), // Match Moisture bar
                     ),
                     SizedBox(width: 10),
                     SizedBox(
                       width: 260,
                       child: LinearProgressIndicator(
                         backgroundColor:
-                            const Color.fromARGB(
-                              109,
-                              33,
-                              150,
-                              243,
-                            ),
+                            Color.fromARGB(
+                              85,
+                              139,
+                              193,
+                              183,
+                            ), // Moisture bg
                         borderRadius:
                             BorderRadius.circular(
                               25,
                             ),
-                        color:
-                            const Color.fromARGB(
-                              255,
-                              33,
-                              150,
-                              243,
-                            ),
+                        color: Color.fromARGB(
+                          255,
+                          139,
+                          193,
+                          183,
+                        ), // Moisture bar
                         minHeight: 20,
                         value: 0.5,
                       ),
@@ -174,35 +181,34 @@ class MyPlantStat extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.thermostat,
-                      color: const Color.fromARGB(
+                      color: Color.fromARGB(
                         255,
                         255,
-                        112,
-                        67,
-                      ),
+                        183,
+                        77,
+                      ), // Match Air temp bar
                     ),
                     SizedBox(width: 10),
                     SizedBox(
                       width: 260,
                       child: LinearProgressIndicator(
                         backgroundColor:
-                            const Color.fromARGB(
-                              109,
+                            Color.fromARGB(
+                              85,
                               255,
-                              112,
-                              67,
-                            ),
+                              183,
+                              77,
+                            ), // Air temp bg
                         borderRadius:
                             BorderRadius.circular(
                               25,
                             ),
-                        color:
-                            const Color.fromARGB(
-                              255,
-                              255,
-                              112,
-                              67,
-                            ),
+                        color: Color.fromARGB(
+                          255,
+                          255,
+                          183,
+                          77,
+                        ), // Air temp bar
                         minHeight: 20,
                         value: 0.5,
                       ),
@@ -216,35 +222,34 @@ class MyPlantStat extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.thermostat,
-                      color: const Color.fromARGB(
+                      color: Color.fromARGB(
                         255,
-                        141,
-                        110,
-                        99,
-                      ),
+                        188,
+                        170,
+                        164,
+                      ), // Match Earth temp bar
                     ),
                     SizedBox(width: 10),
                     SizedBox(
                       width: 260,
                       child: LinearProgressIndicator(
                         backgroundColor:
-                            const Color.fromARGB(
-                              109,
-                              141,
-                              110,
-                              99,
-                            ),
+                            Color.fromARGB(
+                              85,
+                              188,
+                              170,
+                              164,
+                            ), // Earth temp bg
                         borderRadius:
                             BorderRadius.circular(
                               25,
                             ),
-                        color:
-                            const Color.fromARGB(
-                              255,
-                              141,
-                              110,
-                              99,
-                            ),
+                        color: Color.fromARGB(
+                          255,
+                          188,
+                          170,
+                          164,
+                        ), // Earth temp bar
                         minHeight: 20,
                         value: 0.5,
                       ),
