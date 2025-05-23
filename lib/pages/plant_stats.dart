@@ -21,23 +21,23 @@ class _MyPlantStatState extends State<MyPlantStat> {
 
     List tooltips = [waterKey, sunKey, moistureKey, airTempKey, earthTempKey];
 
-    return Scaffold(
-      appBar: AppBar(),
-      body: GestureDetector(
-        onTap: () async {
-          if (showingToolTips) return;
-          showingToolTips = true;
+    return GestureDetector(
+      onTap: () async {
+        if (showingToolTips) return;
+        showingToolTips = true;
 
-          for (var tool in tooltips) {
-            tool.currentState?.ensureTooltipVisible();
-            await Future.delayed(Duration(milliseconds: 200), () {
-              Tooltip.dismissAllToolTips();
-            });
-          }
+        for (var tool in tooltips) {
+          tool.currentState?.ensureTooltipVisible();
+          await Future.delayed(Duration(milliseconds: 200), () {
+            Tooltip.dismissAllToolTips();
+          });
+        }
 
-          showingToolTips = false;
-        },
-        child: Column(
+        showingToolTips = false;
+      },
+      child: Scaffold(
+        appBar: AppBar(),
+        body: Column(
           // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Row(
@@ -273,12 +273,19 @@ class TooltipIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       key: tooltipkey,
-      triggerMode: TooltipTriggerMode.manual,
       message: iconName,
       preferBelow: false,
-      child: Icon(
-        iconSymbol,
-        color: color, // Match Water bar
+      child: GestureDetector(
+        onTap: () {
+          tooltipkey.currentState?.ensureTooltipVisible();
+          Future.delayed(Duration(milliseconds: 400), () {
+            Tooltip.dismissAllToolTips();
+          });
+        }, // Absorbs tap, does nothing
+        child: Icon(
+          iconSymbol,
+          color: color, // Match Water bar
+        ),
       ),
     );
   }
