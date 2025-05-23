@@ -30,7 +30,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
 
           for (var tool in tooltips) {
             tool.currentState?.ensureTooltipVisible();
-            await Future.delayed(Duration(seconds: 2), () {
+            await Future.delayed(Duration(milliseconds: 200), () {
               Tooltip.dismissAllToolTips();
             });
           }
