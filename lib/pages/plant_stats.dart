@@ -1,22 +1,41 @@
 import 'package:flutter/material.dart';
 
-class MyPlantStat extends StatelessWidget {
+class MyPlantStat extends StatefulWidget {
   final int plantId;
   const MyPlantStat({super.key, required this.plantId});
 
   @override
+  State<MyPlantStat> createState() => _MyPlantStatState();
+}
+
+class _MyPlantStatState extends State<MyPlantStat> {
+  bool showingToolTips = false;
+
+  @override
   Widget build(BuildContext context) {
-    final GlobalKey<TooltipState> tooltipkey = GlobalKey<TooltipState>();
+    final GlobalKey<TooltipState> waterKey = GlobalKey<TooltipState>();
+    final GlobalKey<TooltipState> sunKey = GlobalKey<TooltipState>();
+    final GlobalKey<TooltipState> moistureKey = GlobalKey<TooltipState>();
+    final GlobalKey<TooltipState> airTempKey = GlobalKey<TooltipState>();
+    final GlobalKey<TooltipState> earthTempKey = GlobalKey<TooltipState>();
+
+    List tooltips = [waterKey, sunKey, moistureKey, airTempKey, earthTempKey];
 
     return Scaffold(
       appBar: AppBar(),
       body: GestureDetector(
-        onTap: () {
-          print('Screen tapped');
-          tooltipkey.currentState?.ensureTooltipVisible();
-          Future.delayed(Duration(seconds: 10), () {
-            Tooltip.dismissAllToolTips();
-          });
+        onTap: () async {
+          if (showingToolTips) return;
+          showingToolTips = true;
+
+          for (var tool in tooltips) {
+            tool.currentState?.ensureTooltipVisible();
+            await Future.delayed(Duration(seconds: 2), () {
+              Tooltip.dismissAllToolTips();
+            });
+          }
+
+          showingToolTips = false;
         },
         child: Column(
           // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -27,7 +46,7 @@ class MyPlantStat extends StatelessWidget {
                   width: 300,
                   child: Image.asset('./images/plant_test.png'),
                 ),
-                Text('id: $plantId', style: TextStyle(fontSize: 24)),
+                Text('id: ${widget.plantId}', style: TextStyle(fontSize: 24)),
               ],
             ),
             Container(
@@ -51,10 +70,10 @@ class MyPlantStat extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       TooltipIcon(
-                        color: Color.fromARGB(255, 120, 180, 220),
-                        tooltipkey: tooltipkey,
+                        tooltipkey: waterKey,
                         iconName: 'Vand',
                         iconSymbol: Icons.water_drop,
+                        color: Color.fromARGB(255, 120, 180, 220),
                       ),
                       SizedBox(width: 10),
                       SizedBox(
@@ -87,14 +106,11 @@ class MyPlantStat extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.wb_sunny,
-                        color: Color.fromARGB(
-                          255,
-                          255,
-                          213,
-                          79,
-                        ), // Match Sunlight bar
+                      TooltipIcon(
+                        tooltipkey: sunKey,
+                        iconName: 'Sollys',
+                        iconSymbol: Icons.wb_sunny,
+                        color: Color.fromARGB(255, 255, 213, 79),
                       ),
                       SizedBox(width: 10),
                       SizedBox(
@@ -127,14 +143,11 @@ class MyPlantStat extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.foggy,
-                        color: Color.fromARGB(
-                          255,
-                          139,
-                          193,
-                          183,
-                        ), // Match Moisture bar
+                      TooltipIcon(
+                        tooltipkey: moistureKey,
+                        iconName: 'Fugt',
+                        iconSymbol: Icons.foggy,
+                        color: Color.fromARGB(255, 139, 193, 183),
                       ),
                       SizedBox(width: 10),
                       SizedBox(
@@ -167,14 +180,11 @@ class MyPlantStat extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.thermostat,
-                        color: Color.fromARGB(
-                          255,
-                          255,
-                          183,
-                          77,
-                        ), // Match Air temp bar
+                      TooltipIcon(
+                        tooltipkey: airTempKey,
+                        iconName: 'Luft temperatur',
+                        iconSymbol: Icons.thermostat,
+                        color: Color.fromARGB(255, 255, 183, 77),
                       ),
                       SizedBox(width: 10),
                       SizedBox(
@@ -207,14 +217,11 @@ class MyPlantStat extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.thermostat,
-                        color: Color.fromARGB(
-                          255,
-                          188,
-                          170,
-                          164,
-                        ), // Match Earth temp bar
+                      TooltipIcon(
+                        tooltipkey: earthTempKey,
+                        iconName: 'Jord temperatur',
+                        iconSymbol: Icons.thermostat,
+                        color: Color.fromARGB(255, 188, 170, 164),
                       ),
                       SizedBox(width: 10),
                       SizedBox(
