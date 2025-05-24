@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:plant_monitor/plant_data.dart';
 
 class AddPlant extends StatefulWidget {
-  AddPlant({super.key});
-  
+  final void Function(Map<String, dynamic>) onAddPlant;
+  AddPlant({super.key, required this.onAddPlant});
 
-  final List<String> plantNames = [
-    for (int i = 0; i < 9; i++) 'item$i',
-  ];
+
+  // plant data names
+  final List<String> plantNames = [for (var plant in plants) plant.name];
 
   @override
   State<AddPlant> createState() => _AddPlantState();
@@ -18,7 +19,7 @@ class _AddPlantState extends State<AddPlant> {
           .map((name) => DropdownMenuEntry(value: name, label: name))
           .toList();
 
-  int? _value = 1;
+  int? _value = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +57,16 @@ class _AddPlantState extends State<AddPlant> {
         ],
       ),
       actions: [
+        TextButton(
+          onPressed: () {
+            widget.onAddPlant({
+              'label': 'ny plante',
+              'plantId': DateTime.now().millisecondsSinceEpoch,
+            });
+            Navigator.of(context).pop();
+          },
+          child: Text('Tilføj'),
+        ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text('Luk'),

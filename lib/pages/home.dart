@@ -2,13 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:plant_monitor/pages/plant_stats.dart';
 
 class MyHome extends StatefulWidget {
-  const MyHome({super.key});
+  final List<Map<String, dynamic>> plantsCards;
+  const MyHome({super.key, required this.plantsCards});
 
   @override
   State<MyHome> createState() => _MyHomeState();
 }
 
 class _MyHomeState extends State<MyHome> {
+  // List<Map<String, dynamic>> plantsCards = [
+  //   {'label': 'gummi', 'plantId': 0},
+  //   {'label': 'banan', 'plantId': 1},
+  //   {'label': 'test', 'plantId': 2},
+  // ];
+
+  
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -18,20 +27,21 @@ class _MyHomeState extends State<MyHome> {
         Center(
           child: Text(
             "Mine planter",
-            style: TextStyle(
-              fontSize: 30,
-              fontFamily: 'Poppins',
-            ),
+            style: TextStyle(fontSize: 30, fontFamily: 'Poppins'),
           ),
         ),
         Column(
           children: [
             Wrap(
-              children: [
-                MyPlantContainer(label: 'gummi', plantId: 0,),
-                MyPlantContainer(label: 'banan', plantId: 1,),
-                MyPlantContainer(label: 'test', plantId: 2,),
-              ],
+              children:
+                  widget.plantsCards
+                      .map(
+                        (plant) => MyPlantContainer(
+                          label: plant['label'],
+                          plantId: plant['plantId'],
+                        ),
+                      )
+                      .toList(),
             ),
           ],
         ),
@@ -50,12 +60,10 @@ class MyPlantContainer extends StatefulWidget {
   });
 
   @override
-  State<MyPlantContainer> createState() =>
-      _MyPlantContainerState();
+  State<MyPlantContainer> createState() => _MyPlantContainerState();
 }
 
-class _MyPlantContainerState
-    extends State<MyPlantContainer> {
+class _MyPlantContainerState extends State<MyPlantContainer> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -63,30 +71,16 @@ class _MyPlantContainerState
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => MyPlantStat(plantId: widget.plantId),
+            builder: (context) => MyPlantStat(plantId: widget.plantId),
           ),
         );
       },
       child: Container(
-        margin: const EdgeInsets.fromLTRB(
-          15,
-          10,
-          10,
-          10,
-        ),
+        margin: const EdgeInsets.fromLTRB(15, 10, 10, 10),
         decoration: BoxDecoration(
-          color: Color.fromARGB(
-            255,
-            250,
-            229,
-            212,
-          ),
+          color: Color.fromARGB(255, 250, 229, 212),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Colors.white,
-            width: 3,
-          ),
+          border: Border.all(color: Colors.white, width: 3),
         ),
         width: 150,
         height: 200,
@@ -95,19 +89,14 @@ class _MyPlantContainerState
             SizedBox(
               width: 100,
               height: 100,
-              child: Image.asset(
-                './images/plant_test.png',
-              ),
+              child: Image.asset('./images/plant_test.png'),
             ),
             Expanded(
               flex: 1,
               child: Center(
                 child: Text(
                   widget.label,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: 'Poppins',
-                  ),
+                  style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
                 ),
               ),
             ),

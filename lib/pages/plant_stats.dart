@@ -212,7 +212,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                   // Text('Jord temperatur'),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: Text('50/100'),
+                    child: Text('50℃'),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
