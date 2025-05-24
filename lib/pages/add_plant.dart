@@ -5,7 +5,7 @@ class AddPlant extends StatefulWidget {
   
 
   final List<String> plantNames = [
-    for (int i = 0; i < 11; i++) 'item$i',
+    for (int i = 0; i < 9; i++) 'item$i',
   ];
 
   @override
