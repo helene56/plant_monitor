@@ -14,6 +14,14 @@ class AddPlant extends StatefulWidget {
 }
 
 class _AddPlantState extends State<AddPlant> {
+  // controller for text input
+  final TextEditingController _controller = TextEditingController();
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is disposed.
+    _controller.dispose();
+    super.dispose();
+  }
   List<DropdownMenuEntry<String>> get menuItems =>
       widget.plantNames
           .map((name) => DropdownMenuEntry(value: name, label: name))
@@ -31,6 +39,7 @@ class _AddPlantState extends State<AddPlant> {
           Text('Her kan du tilføje en plante.'),
           SizedBox(
             child: TextField(
+              controller: _controller,
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
                 labelText: 'plante navn',
@@ -60,7 +69,7 @@ class _AddPlantState extends State<AddPlant> {
         TextButton(
           onPressed: () {
             widget.onAddPlant({
-              'label': 'ny plante',
+              'label': _controller.text,
               'plantId': DateTime.now().millisecondsSinceEpoch,
             });
             Navigator.of(context).pop();
