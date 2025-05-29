@@ -5,7 +5,6 @@ class AddPlant extends StatefulWidget {
   final void Function(Map<String, dynamic>) onAddPlant;
   AddPlant({super.key, required this.onAddPlant});
 
-
   // plant data names
   final List<String> plantNames = [for (var plant in plants) plant.name];
 
@@ -22,12 +21,14 @@ class _AddPlantState extends State<AddPlant> {
     _controller.dispose();
     super.dispose();
   }
+
   List<DropdownMenuEntry<String>> get menuItems =>
       widget.plantNames
           .map((name) => DropdownMenuEntry(value: name, label: name))
           .toList();
 
   int? _value = 0;
+  String? _errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +38,11 @@ class _AddPlantState extends State<AddPlant> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text('Her kan du tilføje en plante.'),
+          if (_errorText != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(_errorText!, style: TextStyle(color: Colors.red)),
+            ),
           SizedBox(
             child: TextField(
               controller: _controller,
@@ -68,11 +74,17 @@ class _AddPlantState extends State<AddPlant> {
       actions: [
         TextButton(
           onPressed: () {
-            widget.onAddPlant({
-              'label': _controller.text,
-              'plantId': DateTime.now().millisecondsSinceEpoch,
-            });
-            Navigator.of(context).pop();
+            if (_controller.text.isNotEmpty) {
+              widget.onAddPlant({
+                'label': _controller.text,
+                'plantId': DateTime.now().millisecondsSinceEpoch,
+              });
+              Navigator.of(context).pop();
+            } else {
+              setState(() {
+                _errorText = 'Feltet må ikke være tomt!';
+              });
+            }
           },
           child: Text('Tilføj'),
         ),
