@@ -4,48 +4,45 @@ import 'package:plant_monitor/pages/plant_stats.dart';
 class MyHome extends StatefulWidget {
   final List<Map<String, dynamic>> plantsCards;
   const MyHome({super.key, required this.plantsCards});
+  
 
   @override
   State<MyHome> createState() => _MyHomeState();
 }
 
 class _MyHomeState extends State<MyHome> {
-  // List<Map<String, dynamic>> plantsCards = [
-  //   {'label': 'gummi', 'plantId': 0},
-  //   {'label': 'banan', 'plantId': 1},
-  //   {'label': 'test', 'plantId': 2},
-  // ];
-
-  
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        SizedBox(height: 40),
-        Center(
-          child: Text(
-            "Mine planter",
-            style: TextStyle(fontSize: 30, fontFamily: 'Poppins'),
-          ),
-        ),
-        Column(
-          children: [
-            Wrap(
-              children:
-                  widget.plantsCards
-                      .map(
-                        (plant) => MyPlantContainer(
-                          label: plant['label'],
-                          plantId: plant['plantId'],
-                        ),
-                      )
-                      .toList(),
+
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          SizedBox(height: 40),
+          Center(
+            child: Text(
+              "Mine planter",
+              style: TextStyle(fontSize: 30, fontFamily: 'Poppins'),
             ),
-          ],
-        ),
-      ],
+          ),
+          Column(
+            children: [
+              Wrap(
+                children:
+                    widget.plantsCards
+                        .map(
+                          (plant) => MyPlantContainer(
+                            label: plant['label'],
+                            plantId: plant['plantId'],
+                          ),
+                        )
+                        .toList(),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
