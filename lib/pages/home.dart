@@ -91,9 +91,12 @@ class _MyPlantContainerState extends State<MyPlantContainer> {
             Expanded(
               flex: 1,
               child: Center(
-                child: Text(
-                  widget.label,
-                  style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    widget.label,
+                    style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+                  ),
                 ),
               ),
             ),
