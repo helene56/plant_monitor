@@ -7,13 +7,13 @@ import 'package:sqflite/sqflite.dart';
 // functions
 
 // Define a function that inserts dogs into the database
-Future<void> insertRecord(Database database, String table, Map<String, Object> record) async {
+Future<void> insertRecord(
+  Database database,
+  String table,
+  Map<String, Object> record,
+) async {
   final db = database;
-  await db.insert(
-    table,
-    record,
-    conflictAlgorithm: ConflictAlgorithm.replace,
-  );
+  await db.insert(table, record, conflictAlgorithm: ConflictAlgorithm.replace);
 }
 
 // not sure yet I will need this..
@@ -32,7 +32,11 @@ Future<void> insertRecord(Database database, String table, Map<String, Object> r
 //   ];
 // }
 
-Future<void> updateRecord(Database database, String table, Map<String, Object> record) async {
+Future<void> updateRecord(
+  Database database,
+  String table,
+  Map<String, Object> record,
+) async {
   // Get a reference to the database.
   final db = database;
   // Update the given Dog.
@@ -53,7 +57,7 @@ Future<void> deleteRecord(Database database, String table, int id) async {
   );
 }
 
-void main() async {
+void initializeDatabase() async {
   // Avoid errors caused by flutter upgrade.
   // Importing 'package:flutter/widgets.dart' is required.
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,5 +86,4 @@ void main() async {
     },
     version: 1,
   );
-
 }
