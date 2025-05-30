@@ -9,5 +9,5 @@
 9. dont add plant card if another with same name exists - give warning at add
 10. organize code for main, add_plant. The different functions are not so organized.
 11. add table in DB for:
-    1. plant data (static), right now a test data is stored in plant_data, should be removed
+    1. type and its specific data, whenever a new plant is made, everything except name and id in Plant should be filled out from the specific type
     2. sensor class data, real time data from plant sensor values
