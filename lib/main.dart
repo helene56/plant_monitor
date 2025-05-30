@@ -24,15 +24,8 @@ class _MyAppState extends State<MyApp> {
   // call database initializing
   late Future<Database> databasePlantKeeper;
   List<Plant> plantsCards = [];
-  // update plantsCards to add existing cards in the db OR
-  // use the database directly to show cards?
-  // test cards
-  // List<Plant> plantsCards = [
-  //   // {'name': 'gummi', 'id': 0},
-  //   // {'name': 'banan', 'id': 1},
-  //   // {'name': 'test', 'id': 2},
-  // ];
-   @override
+
+  @override
   void initState() {
     super.initState();
     databasePlantKeeper = initializeDatabase();
@@ -45,7 +38,7 @@ class _MyAppState extends State<MyApp> {
       });
     });
   }
-  
+
   // add a new plant card
   void _addPlant(
     Map<String, Object?> newPlant,
@@ -68,7 +61,7 @@ class _MyAppState extends State<MyApp> {
     );
     // call the database
     insertRecord(database, table, testPlant.toMap());
-    
+
     print(await allPlants(database));
 
     setState(() {
