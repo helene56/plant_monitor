@@ -18,6 +18,45 @@ Future<void> insertRecord(
   await db.insert(table, record, conflictAlgorithm: ConflictAlgorithm.replace);
 }
 
+
+Future<List<PlantType>> plantTypes(Database database) async {
+  // Get a reference to the database.
+  final db = database;
+  // Query the table for all the plants.
+  final List<Map<String, Object?>> plantTypeMap = await db.query('plant_types');
+
+  // Convert the list of each plant's fields into a list of `Plant` objects.
+  return [
+    for (final {
+          'id': id as int,
+          'label': label as String,
+          'type': type as String,
+          'waterNeedsMin': waterNeedsMin as int,
+          'waterNeedsMax': waterNeedsMax as int,
+          'sunLuxMin': sunLuxMin as int,
+          'sunLuxMax': sunLuxMax as int,
+          'airTempMin': airTempMin as int,
+          'airTempMax': airTempMax as int,
+          'humidityMin': humidityMin as int,
+          'humidityMax': humidityMax as int,
+        }
+        in plantTypeMap)
+      PlantType(
+        id: id,
+        label: label,
+        type: type,
+        waterNeedsMax: waterNeedsMax,
+        waterNeedsMin: waterNeedsMin,
+        sunLuxMax: sunLuxMax,
+        sunLuxMin: sunLuxMin,
+        airTempMax: airTempMax,
+        airTempMin: airTempMin,
+        humidityMax: humidityMax,
+        humidityMin: humidityMin,
+      ),
+  ];
+}
+
 // not sure yet I will need this..
 // A method that retrieves all the plants from the plants table.
 Future<List<Plant>> allPlants(Database database) async {
@@ -149,7 +188,7 @@ Future<Database> initializeDatabase() async {
 
   // insert type, types, more to come?
   insertRecord(database, 'plant_types', ficus.toMap());
-  
+
 
   return database;
 }

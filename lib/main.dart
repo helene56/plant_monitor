@@ -43,21 +43,8 @@ class _MyAppState extends State<MyApp> {
   void _addPlant(
     Database database,
     String table,
-    Map<String, Object> record,
+    Plant newPlant,
   ) async {
-    var newPlant = Plant(
-      id: record["id"] as int,
-      name: record["name"] as String,
-      type: 'no type',
-      waterNeedsMax: 0,
-      waterNeedsMin: 0,
-      sunLuxMax: 0,
-      sunLuxMin: 0,
-      humidityMax: 0,
-      humidityMin: 0,
-      airTempMax: 0,
-      airTempMin: 0,
-    );
     // call the database
     insertRecord(database, table, newPlant.toMap());
 
