@@ -36,6 +36,7 @@ class _MyHomeState extends State<MyHome> {
                           (plant) => MyPlantContainer(
                             label: plant.name,
                             plantId: plant.id,
+                            plantCard: plant,
                           ),
                         )
                         .toList(),
@@ -51,10 +52,12 @@ class _MyHomeState extends State<MyHome> {
 class MyPlantContainer extends StatefulWidget {
   final String label;
   final int plantId;
+  final Plant plantCard;
   const MyPlantContainer({
     super.key,
     required this.label,
     required this.plantId,
+    required this.plantCard
   });
 
   @override
@@ -69,7 +72,7 @@ class _MyPlantContainerState extends State<MyPlantContainer> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MyPlantStat(plantId: widget.plantId),
+            builder: (context) => MyPlantStat(plantId: widget.plantId, plantCard: widget.plantCard,),
           ),
         );
       },

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:plant_monitor/data/plant.dart';
 
 class MyPlantStat extends StatefulWidget {
   final int plantId;
-  const MyPlantStat({super.key, required this.plantId});
+  final Plant plantCard;
+  const MyPlantStat({super.key, required this.plantId, required this.plantCard});
 
   @override
   State<MyPlantStat> createState() => _MyPlantStatState();
@@ -10,7 +12,7 @@ class MyPlantStat extends StatefulWidget {
 
 class _MyPlantStatState extends State<MyPlantStat> {
   bool showingToolTips = false;
-
+  
   @override
   Widget build(BuildContext context) {
     final GlobalKey<TooltipState> waterKey = GlobalKey<TooltipState>();
@@ -20,6 +22,8 @@ class _MyPlantStatState extends State<MyPlantStat> {
     final GlobalKey<TooltipState> earthTempKey = GlobalKey<TooltipState>();
 
     List tooltips = [waterKey, sunKey, moistureKey, airTempKey, earthTempKey];
+
+    int waterMax = widget.plantCard.waterNeedsMax;
 
     return GestureDetector(
       onTap: () async {
@@ -64,7 +68,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                   // Text('Vand'),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: Text('50/100'),
+                    child: Text('50/$waterMax'),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
