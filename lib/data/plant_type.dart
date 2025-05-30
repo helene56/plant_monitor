@@ -3,6 +3,7 @@
 
 class PlantType {
   final int id;
+  final String label;
   final String type;
   final int waterNeedsMin;
   final int waterNeedsMax;
@@ -15,6 +16,7 @@ class PlantType {
 
   const PlantType({
     required this.id,
+    required this.label,
     required this.type,
     required this.waterNeedsMin,
     required this.waterNeedsMax,
@@ -30,6 +32,7 @@ class PlantType {
   Map<String, Object?> toMap() {
     return {
       'id': id,
+      'label': label,
       'type': type,
       'waterNeedsMin': waterNeedsMin,
       'waterNeedsMax': waterNeedsMax,
