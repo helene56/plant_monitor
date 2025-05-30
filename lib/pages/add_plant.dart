@@ -3,13 +3,18 @@ import 'package:plant_monitor/plant_data.dart';
 import 'package:sqflite/sqflite.dart';
 
 class AddPlant extends StatefulWidget {
-  final void Function(Map<String, Object?> newPlant, Database database, String table, Map<String, Object> record) onAddPlant;
+  // TODO: figure out if there is a way not to define this function again..
+  final void Function(
+    Database database,
+    String table,
+    Map<String, Object> record,
+  )
+  onAddPlant;
   final Database database;
   AddPlant({super.key, required this.onAddPlant, required this.database});
 
   // plant data names
   final List<String> plantNames = [for (var plant in plants) plant.name];
-
 
   @override
   State<AddPlant> createState() => _AddPlantState();
@@ -78,10 +83,7 @@ class _AddPlantState extends State<AddPlant> {
         TextButton(
           onPressed: () {
             if (_controller.text.isNotEmpty) {
-              widget.onAddPlant({
-                'name': _controller.text,
-                'id': DateTime.now().millisecondsSinceEpoch,
-              }, widget.database, 'plants', {
+              widget.onAddPlant(widget.database, 'plants', {
                 'name': _controller.text,
                 'id': DateTime.now().millisecondsSinceEpoch,
               });

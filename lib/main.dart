@@ -41,12 +41,11 @@ class _MyAppState extends State<MyApp> {
 
   // add a new plant card
   void _addPlant(
-    Map<String, Object?> newPlant,
     Database database,
     String table,
     Map<String, Object> record,
   ) async {
-    var testPlant = Plant(
+    var newPlant = Plant(
       id: record["id"] as int,
       name: record["name"] as String,
       type: 'no type',
@@ -60,12 +59,12 @@ class _MyAppState extends State<MyApp> {
       airTempMin: 0,
     );
     // call the database
-    insertRecord(database, table, testPlant.toMap());
+    insertRecord(database, table, newPlant.toMap());
 
     print(await allPlants(database));
 
     setState(() {
-      plantsCards.add(testPlant);
+      plantsCards.add(newPlant);
     });
   }
 
