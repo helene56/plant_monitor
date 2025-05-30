@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'plant.dart';
+import 'plant_type.dart';
 
 // functions
 
@@ -93,7 +94,7 @@ Future<Database> initializeDatabase() async {
     // When the database is first created, create a table to store plants.
     onCreate: (db, version) {
       // Run the CREATE TABLE statement on the database.
-      return db.execute(
+      db.execute(
         'CREATE TABLE plants('
         'id INTEGER PRIMARY KEY, '
         'name TEXT, '
@@ -108,9 +109,47 @@ Future<Database> initializeDatabase() async {
         'humidityMax INTEGER'
         ')',
       );
+
+      db.execute(
+        'CREATE TABLE plant_types('
+        'id INTEGER PRIMARY KEY,'
+        'label TEXT,'
+        'type TEXT, '
+        'waterNeedsMin INTEGER, '
+        'waterNeedsMax INTEGER, '
+        'sunLuxMin INTEGER, '
+        'sunLuxMax INTEGER, '
+        'airTempMin INTEGER, '
+        'airTempMax INTEGER, '
+        'humidityMin INTEGER, '
+        'humidityMax INTEGER'
+        ')',
+      );
     },
     version: 1,
   );
+
+  // create standard plant type options
+  // TODO: in readme describe scala used
+  // using 1-10 to define needs ranges for water.
+  // ficus elastica has medium need for water..
+  var ficus = PlantType(
+    id: 0,
+    label: 'Gummi træ',
+    type: 'ficus elastica',
+    waterNeedsMin: 4,
+    waterNeedsMax: 6,
+    sunLuxMin: 250,
+    sunLuxMax: 1000,
+    airTempMin: 18,
+    airTempMax: 27,
+    humidityMin: 50,
+    humidityMax: 80,
+  );
+
+  // insert type, types, more to come?
+  insertRecord(database, 'plant_types', ficus.toMap());
+  
 
   return database;
 }
