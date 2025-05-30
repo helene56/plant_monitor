@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:plant_monitor/plant_data.dart';
 
 class AddPlant extends StatefulWidget {
-  final void Function(Map<String, dynamic>) onAddPlant;
+  final void Function(Map<String, Object?>) onAddPlant;
   AddPlant({super.key, required this.onAddPlant});
 
   // plant data names

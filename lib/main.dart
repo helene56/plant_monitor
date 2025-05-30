@@ -19,13 +19,13 @@ class _MyAppState extends State<MyApp> {
   int currentPageindex = 1;
 
   // test cards
-  List<Map<String, dynamic>> plantsCards = [
+  List<Map<String, Object?>> plantsCards = [
     {'label': 'gummi', 'plantId': 0},
     {'label': 'banan', 'plantId': 1},
     {'label': 'test', 'plantId': 2},
   ];
   // add a new plant card
-  void _addPlant(Map<String, dynamic> newPlant) {
+  void _addPlant(Map<String, Object?> newPlant) {
     setState(() {
       plantsCards.add(newPlant);
     });
