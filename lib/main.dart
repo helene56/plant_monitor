@@ -3,6 +3,9 @@ import 'package:plant_monitor/pages/statistics.dart';
 import 'pages/home.dart';
 import 'pages/water.dart';
 import 'pages/add_plant.dart';
+import 'data/database_helper.dart';
+import 'package:sqflite/sqflite.dart';
+import 'data/plant.dart';
 
 void main() {
   runApp(MaterialApp(home: MyApp(), debugShowCheckedModeBanner: false));
@@ -18,16 +21,58 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   int currentPageindex = 1;
 
+  // call database initializing
+  late Future<Database> databasePlantKeeper;
+  List<Plant> plantsCards = [];
+  // update plantsCards to add existing cards in the db OR
+  // use the database directly to show cards?
   // test cards
-  List<Map<String, Object?>> plantsCards = [
-    {'label': 'gummi', 'plantId': 0},
-    {'label': 'banan', 'plantId': 1},
-    {'label': 'test', 'plantId': 2},
-  ];
+  // List<Plant> plantsCards = [
+  //   // {'name': 'gummi', 'id': 0},
+  //   // {'name': 'banan', 'id': 1},
+  //   // {'name': 'test', 'id': 2},
+  // ];
+   @override
+  void initState() {
+    super.initState();
+    databasePlantKeeper = initializeDatabase();
+
+    // Load data from DB once ready
+    databasePlantKeeper.then((db) async {
+      List<Plant> loadedPlants = await allPlants(db);
+      setState(() {
+        plantsCards = loadedPlants;
+      });
+    });
+  }
+  
   // add a new plant card
-  void _addPlant(Map<String, Object?> newPlant) {
+  void _addPlant(
+    Map<String, Object?> newPlant,
+    Database database,
+    String table,
+    Map<String, Object> record,
+  ) async {
+    var testPlant = Plant(
+      id: record["id"] as int,
+      name: record["name"] as String,
+      type: 'no type',
+      waterNeedsMax: 0,
+      waterNeedsMin: 0,
+      sunLuxMax: 0,
+      sunLuxMin: 0,
+      humidityMax: 0,
+      humidityMin: 0,
+      airTempMax: 0,
+      airTempMin: 0,
+    );
+    // call the database
+    insertRecord(database, table, testPlant.toMap());
+    
+    print(await allPlants(database));
+
     setState(() {
-      plantsCards.add(newPlant);
+      plantsCards.add(testPlant);
     });
   }
 
@@ -44,7 +89,21 @@ class _MyAppState extends State<MyApp> {
           // Add your onPressed code here!
           showDialog(
             context: context,
-            builder: (context) => AddPlant(onAddPlant: _addPlant),
+            builder:
+                (context) => FutureBuilder<Database>(
+                  future: databasePlantKeeper,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done &&
+                        snapshot.hasData) {
+                      return AddPlant(
+                        onAddPlant: _addPlant,
+                        database: snapshot.data!, // pass the actual database
+                      );
+                    } else {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                  },
+                ),
           );
         },
         backgroundColor: Colors.lightGreen,
