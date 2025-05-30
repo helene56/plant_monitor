@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:plant_monitor/pages/plant_stats.dart';
+import 'package:plant_monitor/data/plant.dart';
 
 class MyHome extends StatefulWidget {
-  final List<Map<String, dynamic>> plantsCards;
+  final List<Plant> plantsCards;
   const MyHome({super.key, required this.plantsCards});
   
 
@@ -33,8 +34,8 @@ class _MyHomeState extends State<MyHome> {
                     widget.plantsCards
                         .map(
                           (plant) => MyPlantContainer(
-                            label: plant['label'],
-                            plantId: plant['plantId'],
+                            label: plant.name,
+                            plantId: plant.id,
                           ),
                         )
                         .toList(),
