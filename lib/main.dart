@@ -40,17 +40,11 @@ class _MyAppState extends State<MyApp> {
         plantsCards = loadedPlants;
         plantingTypes = loadedPlantingTypes;
       });
-      
     });
   }
 
-
   // add a new plant card
-  void _addPlant(
-    Database database,
-    String table,
-    Plant newPlant,
-  ) async {
+  void _addPlant(Database database, String table, Plant newPlant) async {
     // call the database
     insertRecord(database, table, newPlant.toMap());
 

@@ -5,46 +5,107 @@ import 'package:plant_monitor/data/plant.dart';
 class MyHome extends StatefulWidget {
   final List<Plant> plantsCards;
   const MyHome({super.key, required this.plantsCards});
-  
 
   @override
   State<MyHome> createState() => _MyHomeState();
 }
 
 class _MyHomeState extends State<MyHome> {
+  OverlayEntry? overlayEntry;
+  bool overlayCreated = false;
+
+  void _showOverlay(BuildContext context, GlobalKey containerKey) {
+    final overlay = Overlay.of(context);
+    final renderBox =
+        containerKey.currentContext!.findRenderObject() as RenderBox;
+    final position = renderBox.localToGlobal(Offset.zero);
+    if (overlayCreated) {
+      return;
+    }
+    overlayEntry = OverlayEntry(
+      builder:
+          (context) => Positioned(
+            top: position.dy + 10,
+            left: position.dx + 10,
+            child: Material(
+              color: Colors.transparent,
+              child: Ink(
+                decoration: const ShapeDecoration(
+                  color: Colors.lightBlue,
+                  shape: CircleBorder(),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.delete),
+                  color: Colors.white,
+                  onPressed: () {
+                    // show pop up ask if sure to delete
+                  },
+                ),
+              ),
+            ),
+          ),
+    );
+    setState(() {
+      overlayCreated = true;
+    });
+    overlay.insert(overlayEntry!);
+    // somehow remove if single tap
+
+    // overlayEntry.remove();
+  }
+
+  void _removeOverlay() {
+    overlayEntry?.remove();
+    overlayEntry = null;
+  }
 
   @override
   Widget build(BuildContext context) {
-
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          SizedBox(height: 40),
-          Center(
-            child: Text(
-              "Mine planter",
-              style: TextStyle(fontSize: 30, fontFamily: 'Poppins'),
-            ),
-          ),
-          Column(
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: () {
+            print("tapped!!");
+            _removeOverlay();
+            setState(() {
+              overlayCreated = false;
+            });
+          },
+        ),
+        SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Wrap(
-                children:
-                    widget.plantsCards
-                        .map(
-                          (plant) => MyPlantContainer(
+              SizedBox(height: 40),
+              Center(
+                child: Text(
+                  "Mine planter",
+                  style: TextStyle(fontSize: 30, fontFamily: 'Poppins'),
+                ),
+              ),
+              Column(
+                children: [
+                  Wrap(
+                    children:
+                        widget.plantsCards.map((plant) {
+                          final key =
+                              GlobalKey(); // unique key for each container
+                          return MyPlantContainer(
                             label: plant.name,
                             plantId: plant.id,
                             plantCard: plant,
-                          ),
-                        )
-                        .toList(),
+                            containerKey: key,
+                            onLongPressOverlay:
+                                () => _showOverlay(context, key),
+                          );
+                        }).toList(),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -53,11 +114,15 @@ class MyPlantContainer extends StatefulWidget {
   final String label;
   final int plantId;
   final Plant plantCard;
+  final VoidCallback onLongPressOverlay;
+  final GlobalKey containerKey;
   const MyPlantContainer({
     super.key,
     required this.label,
     required this.plantId,
-    required this.plantCard
+    required this.plantCard,
+    required this.onLongPressOverlay,
+    required this.containerKey,
   });
 
   @override
@@ -65,33 +130,6 @@ class MyPlantContainer extends StatefulWidget {
 }
 
 class _MyPlantContainerState extends State<MyPlantContainer> {
-  final GlobalKey containerKey = GlobalKey();
-
-
-  void _showOverlay(BuildContext context) {
-    final overlay = Overlay.of(context);
-    final renderBox = containerKey.currentContext!.findRenderObject() as RenderBox;
-    final position = renderBox.localToGlobal(Offset.zero);
-
-    OverlayEntry overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        top: position.dy + 10,
-        left: position.dx + 10,
-        child: Material(
-          color: Colors.transparent,
-          child: IconButton(
-            icon: Icon(Icons.star, color: Colors.amber),
-            onPressed: () {
-              print('Overlay button pressed');
-            },
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(overlayEntry);
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -99,7 +137,11 @@ class _MyPlantContainerState extends State<MyPlantContainer> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MyPlantStat(plantId: widget.plantId, plantCard: widget.plantCard,),
+            builder:
+                (context) => MyPlantStat(
+                  plantId: widget.plantId,
+                  plantCard: widget.plantCard,
+                ),
           ),
         );
       },
@@ -107,11 +149,11 @@ class _MyPlantContainerState extends State<MyPlantContainer> {
         print("long press");
         // pop up saying delete
         // if pop up clicked ask are you sure, add a show dialog button with delete
-        _showOverlay(context);
+        widget.onLongPressOverlay();
         // IconButton(icon: const Icon(Icons.android), color: Colors.white, onPressed: () {});
       },
       child: Container(
-        key: containerKey,
+        key: widget.containerKey,
         margin: const EdgeInsets.fromLTRB(15, 10, 10, 10),
         decoration: BoxDecoration(
           color: Color.fromARGB(255, 250, 229, 212),
