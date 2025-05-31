@@ -14,6 +14,13 @@ class _MyHomeState extends State<MyHome> {
   OverlayEntry? overlayEntry;
   bool overlayCreated = false;
 
+  void _handleContainerPressed() {
+    setState(() {
+      _removeOverlay();
+      overlayCreated = !overlayCreated; // toggle boolean
+    });
+  }
+
   void _showOverlay(BuildContext context, GlobalKey containerKey) {
     final overlay = Overlay.of(context);
     final renderBox =
@@ -97,6 +104,7 @@ class _MyHomeState extends State<MyHome> {
                             containerKey: key,
                             onLongPressOverlay:
                                 () => _showOverlay(context, key),
+                            onContainerPressed: _handleContainerPressed,
                           );
                         }).toList(),
                   ),
@@ -116,6 +124,7 @@ class MyPlantContainer extends StatefulWidget {
   final Plant plantCard;
   final VoidCallback onLongPressOverlay;
   final GlobalKey containerKey;
+  final VoidCallback onContainerPressed;
   const MyPlantContainer({
     super.key,
     required this.label,
@@ -123,6 +132,7 @@ class MyPlantContainer extends StatefulWidget {
     required this.plantCard,
     required this.onLongPressOverlay,
     required this.containerKey,
+    required this.onContainerPressed
   });
 
   @override
@@ -134,6 +144,7 @@ class _MyPlantContainerState extends State<MyPlantContainer> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        widget.onContainerPressed();
         Navigator.push(
           context,
           MaterialPageRoute(
