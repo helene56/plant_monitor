@@ -6,6 +6,7 @@ import 'pages/add_plant.dart';
 import 'data/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 import 'data/plant.dart';
+import 'package:plant_monitor/data/plant_type.dart';
 
 void main() {
   runApp(MaterialApp(home: MyApp(), debugShowCheckedModeBanner: false));
@@ -24,6 +25,7 @@ class _MyAppState extends State<MyApp> {
   // call database initializing
   late Future<Database> databasePlantKeeper;
   List<Plant> plantsCards = [];
+  List<PlantType> plantingTypes = [];
 
   @override
   void initState() {
@@ -33,11 +35,15 @@ class _MyAppState extends State<MyApp> {
     // Load data from DB once ready
     databasePlantKeeper.then((db) async {
       List<Plant> loadedPlants = await allPlants(db);
+      List<PlantType> loadedPlantingTypes = await plantTypes(db);
       setState(() {
         plantsCards = loadedPlants;
+        plantingTypes = loadedPlantingTypes;
       });
+      
     });
   }
+
 
   // add a new plant card
   void _addPlant(
@@ -77,6 +83,7 @@ class _MyAppState extends State<MyApp> {
                       return AddPlant(
                         onAddPlant: _addPlant,
                         database: snapshot.data!, // pass the actual database
+                        plantingTypes: plantingTypes,
                       );
                     } else {
                       return const Center(child: CircularProgressIndicator());
