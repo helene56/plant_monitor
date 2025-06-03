@@ -128,7 +128,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                               220,
                             ), // Water bar
                             minHeight: 20,
-                            value: 0.5,
+                            value: getProgressBarPercentage(waterSensor, waterMax),
                           ),
                         ),
                       ],
@@ -165,7 +165,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                               79,
                             ), // Sunlight bar
                             minHeight: 20,
-                            value: 0.5,
+                            value: getProgressBarPercentage(sunSensor, sunMax),
                           ),
                         ),
                       ],
@@ -202,7 +202,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                               183,
                             ), // Moisture bar
                             minHeight: 20,
-                            value: 0.5,
+                            value: getProgressBarPercentage(humiditySensor, humidityMax),
                           ),
                         ),
                       ],
@@ -239,7 +239,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                               77,
                             ), // Air temp bar
                             minHeight: 20,
-                            value: 0.5,
+                            value: getProgressBarPercentage(airTempSensor, airTempMax),
                           ),
                         ),
                       ],
@@ -273,7 +273,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                               164,
                             ), // Earth temp bar
                             minHeight: 20,
-                            value: 0.5,
+                            value: getProgressBarPercentage(earthTempSensor, 30),
                           ),
                         ),
                       ],
@@ -322,4 +322,9 @@ class TooltipIcon extends StatelessWidget {
       ),
     );
   }
+}
+
+
+double getProgressBarPercentage(int sensorValue, int maxValue){
+  return (sensorValue / maxValue) * 100;
 }
