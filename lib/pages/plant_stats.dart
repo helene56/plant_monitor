@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:plant_monitor/data/database_helper.dart';
 import 'package:plant_monitor/data/plant.dart';
+import 'package:plant_monitor/data/plant_sensor_data.dart';
+import 'package:sqflite/sqflite.dart';
 
 class MyPlantStat extends StatefulWidget {
   final int plantId;
   final Plant plantCard;
+  final Database database;
   const MyPlantStat({
     super.key,
     required this.plantId,
     required this.plantCard,
+    required this.database,
   });
 
   @override
@@ -16,6 +21,21 @@ class MyPlantStat extends StatefulWidget {
 
 class _MyPlantStatState extends State<MyPlantStat> {
   bool showingToolTips = false;
+  PlantSensorData? plantSensor;
+  
+  @override
+  void initState() {
+    super.initState();
+    initializeSensor();
+  }
+
+
+  void initializeSensor() async {
+    PlantSensorData data = await getSensor(widget.database, widget.plantCard.id);
+    setState(() {
+      plantSensor = data;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +52,16 @@ class _MyPlantStatState extends State<MyPlantStat> {
     int sunMax = widget.plantCard.sunLuxMax;
     int humidityMax = widget.plantCard.humidityMax;
     int airTempMax = widget.plantCard.airTempMax;
+
+    if (plantSensor == null) {
+      return const CircularProgressIndicator(); // Or some loading widget
+    }
+
+    int waterSensor = plantSensor!.water;
+    int sunSensor = plantSensor!.sunLux;
+    int airTempSensor = plantSensor!.airTemp;
+    int earthTempSensor = plantSensor!.airTemp;
+    int humiditySensor = plantSensor!.humidity;
 
     return GestureDetector(
       onTap: () async {
@@ -69,7 +99,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                     // Text('Vand'),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Text('null/$waterMax ($waterPercentage%)'),
+                      child: Text('$waterSensor/$waterMax ($waterPercentage%)'),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -106,7 +136,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                     // Text('Sollys'),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Text('null/$sunMax (Lux)'),
+                      child: Text('$sunSensor/$sunMax (Lux)'),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -143,7 +173,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                     // Text('Fugt'),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Text('null/$humidityMax (%)'),
+                      child: Text('$humiditySensor/$humidityMax (%)'),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -180,7 +210,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                     // Text('Luft temperatur'),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Text('null/$airTempMax (℃)'),
+                      child: Text('$airTempSensor/$airTempMax (℃)'),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -215,7 +245,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                       ],
                     ),
                     // Text('Jord temperatur'),
-                    Align(alignment: Alignment.centerRight, child: Text('null℃')),
+                    Align(alignment: Alignment.centerRight, child: Text('$earthTempSensor℃')),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

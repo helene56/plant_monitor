@@ -153,6 +153,7 @@ class _MyHomeState extends State<MyHome> {
                             plantId: plant.id,
                             plantCard: plant,
                             containerKey: key,
+                            db: widget.database,
                             onLongPressOverlay:
                                 () => _showOverlay(
                                   context,
@@ -178,6 +179,7 @@ class MyPlantContainer extends StatefulWidget {
   final String label;
   final int plantId;
   final Plant plantCard;
+  final Database db;
   final VoidCallback onLongPressOverlay;
   final GlobalKey containerKey;
   final VoidCallback onContainerPressed;
@@ -186,6 +188,7 @@ class MyPlantContainer extends StatefulWidget {
     required this.label,
     required this.plantId,
     required this.plantCard,
+    required this.db,
     required this.onLongPressOverlay,
     required this.containerKey,
     required this.onContainerPressed,
@@ -208,6 +211,7 @@ class _MyPlantContainerState extends State<MyPlantContainer> {
                 (context) => MyPlantStat(
                   plantId: widget.plantId,
                   plantCard: widget.plantCard,
+                  database: widget.db,
                 ),
           ),
         );

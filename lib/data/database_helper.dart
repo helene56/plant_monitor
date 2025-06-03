@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:path/path.dart';
+import 'package:plant_monitor/data/plant_sensor_data.dart';
 import 'package:sqflite/sqflite.dart';
 import 'plant.dart';
 import 'plant_type.dart';
@@ -57,6 +58,39 @@ Future<List<PlantType>> plantTypes(Database database) async {
   ];
 }
 
+Future<PlantSensorData> getSensor(Database database, int id) async {
+  // Get a reference to the database.
+  final db = database;
+
+  // Query plant sensor from the database.
+  final List<Map<String, Object?>> plantSensorMap = await db.query(
+    'plant_sensor',
+    // Use a `where` clause to get a specific dog.
+    where: 'id = ?',
+    // Pass the plant sensor's id as a whereArg to prevent SQL injection.
+    whereArgs: [id],
+  );
+
+  return [
+    for (final {
+          'id': id as int,
+          'water': water as int,
+          'sunLux': sunLux as int,
+          'airTemp': airTemp as int,
+          'earthTemp': earthTemp as int,
+          'humidity': humidity as int,
+        }
+        in plantSensorMap)
+      PlantSensorData(
+        id: id,
+        water: water,
+        sunLux: sunLux,
+        airTemp: airTemp,
+        earthTemp: earthTemp,
+        humidity: humidity,
+      ),
+  ].first;
+}
 // not sure yet I will need this..
 // A method that retrieves all the plants from the plants table.
 Future<List<Plant>> allPlants(Database database) async {
@@ -162,6 +196,17 @@ Future<Database> initializeDatabase() async {
         'airTempMax INTEGER, '
         'humidityMin INTEGER, '
         'humidityMax INTEGER'
+        ')',
+      );
+
+      db.execute(
+        'CREATE TABLE plant_sensor('
+        'id INTEGER PRIMARY KEY,'
+        'water INTEGER, '
+        'sunLux INTEGER, '
+        'airTemp INTEGER, '
+        'earthTemp INTEGER, '
+        'humidity INTEGER '
         ')',
       );
     },
