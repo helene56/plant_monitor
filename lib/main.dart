@@ -59,7 +59,18 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     final List<Widget> widgetOptions = [
       MyWater(),
-      MyHome(plantsCards: plantsCards),
+      // pass database to myhome, so availible for delete calls as well
+      FutureBuilder(
+        future: databasePlantKeeper,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done &&
+              snapshot.hasData) {
+            return MyHome(plantsCards: plantsCards, database: snapshot.data!);
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
       MyStats(),
     ];
     return Scaffold(

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:plant_monitor/pages/plant_stats.dart';
 import 'package:plant_monitor/data/plant.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:plant_monitor/data/database_helper.dart';
 
 class MyHome extends StatefulWidget {
   final List<Plant> plantsCards;
-  const MyHome({super.key, required this.plantsCards});
+  final Database database;
+  const MyHome({super.key, required this.plantsCards, required this.database});
 
   @override
   State<MyHome> createState() => _MyHomeState();
@@ -21,11 +24,13 @@ class _MyHomeState extends State<MyHome> {
     });
   }
 
-  void onDeletePlant(String plantId) {
+  void onDeletePlant(int plantId) {
     _handleContainerPressed();
     setState(() {
-      widget.plantsCards.removeWhere((plant) => plant.name == plantId);
+      widget.plantsCards.removeWhere((plant) => plant.id == plantId);
     });
+    // remove plant from database
+    deleteRecord(widget.database, 'plants', plantId);
     
   }
 
@@ -152,7 +157,7 @@ class _MyHomeState extends State<MyHome> {
                                   context,
                                   key,
                                   plant.name,
-                                  () => onDeletePlant(plant.name),
+                                  () => onDeletePlant(plant.id),
                                 ),
                             onContainerPressed: _handleContainerPressed,
                           );
