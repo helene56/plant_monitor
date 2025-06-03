@@ -21,7 +21,20 @@ class _MyHomeState extends State<MyHome> {
     });
   }
 
-  void _showOverlay(BuildContext context, GlobalKey containerKey) {
+  void onDeletePlant(String plantId) {
+    _handleContainerPressed();
+    setState(() {
+      widget.plantsCards.removeWhere((plant) => plant.name == plantId);
+    });
+    
+  }
+
+  void _showOverlay(
+    BuildContext context,
+    GlobalKey containerKey,
+    String plantId,
+    VoidCallback onDeletePlant,
+  ) {
     final overlay = Overlay.of(context);
     final renderBox =
         containerKey.currentContext!.findRenderObject() as RenderBox;
@@ -53,19 +66,28 @@ class _MyHomeState extends State<MyHome> {
                         return AlertDialog(
                           content: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('Vil du gerne slette?'),
-                            ],
+                            children: [Text('Vil du gerne slette?')],
                           ),
                           actions: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                TextButton(onPressed: () {}, child: Text('slet')),
-                                TextButton(onPressed: () {}, child: Text('fortryd')),
+                                TextButton(
+                                  onPressed: () {
+                                    // delete card from database and list
+                                    onDeletePlant();
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text('slet'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text('fortryd'),
+                                ),
                               ],
                             ),
-                            
                           ],
                         );
                       },
@@ -126,7 +148,12 @@ class _MyHomeState extends State<MyHome> {
                             plantCard: plant,
                             containerKey: key,
                             onLongPressOverlay:
-                                () => _showOverlay(context, key),
+                                () => _showOverlay(
+                                  context,
+                                  key,
+                                  plant.name,
+                                  () => onDeletePlant(plant.name),
+                                ),
                             onContainerPressed: _handleContainerPressed,
                           );
                         }).toList(),
