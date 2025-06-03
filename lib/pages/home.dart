@@ -147,6 +147,7 @@ class _MyHomeState extends State<MyHome> {
                         widget.plantsCards.map((plant) {
                           final key =
                               GlobalKey(); // unique key for each container
+                          // TODO: maybe passing plant alone is enough in MyPlantContainer?
                           return MyPlantContainer(
                             label: plant.name,
                             plantId: plant.id,
