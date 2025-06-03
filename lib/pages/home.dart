@@ -46,6 +46,30 @@ class _MyHomeState extends State<MyHome> {
                   color: Colors.white,
                   onPressed: () {
                     // show pop up ask if sure to delete
+                    // use show dialog
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          content: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('Vil du gerne slette?'),
+                            ],
+                          ),
+                          actions: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                TextButton(onPressed: () {}, child: Text('slet')),
+                                TextButton(onPressed: () {}, child: Text('fortryd')),
+                              ],
+                            ),
+                            
+                          ],
+                        );
+                      },
+                    );
                   },
                 ),
               ),
@@ -72,7 +96,6 @@ class _MyHomeState extends State<MyHome> {
       children: [
         GestureDetector(
           onTap: () {
-            print("tapped!!");
             _removeOverlay();
             setState(() {
               overlayCreated = false;
@@ -132,7 +155,7 @@ class MyPlantContainer extends StatefulWidget {
     required this.plantCard,
     required this.onLongPressOverlay,
     required this.containerKey,
-    required this.onContainerPressed
+    required this.onContainerPressed,
   });
 
   @override
