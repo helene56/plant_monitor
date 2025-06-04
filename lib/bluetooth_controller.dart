@@ -18,6 +18,11 @@ class MyBluetooth extends StatefulWidget {
 
 class _MyBluetoothState extends State<MyBluetooth> {
   // TODO: database should save devices to be used here i think..
+  @override
+  void initState() {
+    super.initState();
+    scanResults(); // Automatically starts scanning when MyBluetooth is started for the first time
+  }
 
   Future<void> initializeBluetooth() async {
     // set log level
@@ -79,8 +84,8 @@ class _MyBluetoothState extends State<MyBluetooth> {
     // Optional: use `stopScan()` as an alternative to timeout
     // TODO: specify my own identifiers
     await FlutterBluePlus.startScan(
-      withServices: [Guid("180D")], // match any of the specified services
-      withNames: ["Bluno"], // *or* any of the specified names
+      // withServices: [Guid("180D")], // match any of the specified services
+      withNames: ["MY_PWS1"], // *or* any of the specified names
       timeout: Duration(seconds: 15),
     );
 
