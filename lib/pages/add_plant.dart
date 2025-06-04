@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:plant_monitor/data/plant.dart';
 import 'package:plant_monitor/data/plant_type.dart';
+import 'package:plant_monitor/bluetooth_controller.dart';
 
 
 class AddPlant extends StatefulWidget {
@@ -55,7 +56,7 @@ class _AddPlantState extends State<AddPlant> {
             ),
           ),
           SizedBox(height: 20),
-          Text('plante type'),
+          Text('Plante type'),
           Wrap(
             spacing: 5.0,
             children:
@@ -71,6 +72,8 @@ class _AddPlantState extends State<AddPlant> {
                   );
                 }).toList(),
           ),
+          Text('Sensor enheder'),
+          MyBluetooth()
         ],
       ),
       actions: [
