@@ -3,16 +3,22 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
+import 'data/plant_sensor_data.dart';
+import 'data/database_helper.dart';
 
 class MyBluetooth extends StatefulWidget {
   final Database database;
   final bool onAddDevice;
   final bool exitAddPlant;
+  final int currentPlantId;
+  // final Function(DeviceIdentifier) onDataSubmit;
   const MyBluetooth({
     super.key,
     required this.database,
     required this.onAddDevice,
     required this.exitAddPlant,
+    required this.currentPlantId
+    // required this.onDataSubmit
   });
 
   @override
@@ -24,7 +30,7 @@ class _MyBluetoothState extends State<MyBluetooth> {
   @override
   void initState() {
     super.initState();
-    initializeBluetooth();
+    initializeBluetooth(); // TODO: should really only happen once, dont call more than once
     // move this function to initializeBluetooth?
     scanResults(); // Automatically starts scanning when MyBluetooth is started
   }
@@ -32,7 +38,18 @@ class _MyBluetoothState extends State<MyBluetooth> {
   Future<void> addDevice() async {
     if (_value != null) {
       var selectedDevice = devices[_value!];
-      // TODO: save to database
+      // save sensor in database
+      var sensor = PlantSensorData(
+        id: widget.currentPlantId,
+        sensorId: selectedDevice.device.remoteId.toString(),
+        water: 0,
+        sunLux: 0,
+        airTemp: 0,
+        earthTemp: 0,
+        humidity: 0,
+      );
+
+      insertRecord(widget.database, 'plant_sensor', sensor.toMap());
       // connect to device
       connectToDevice(selectedDevice.device);
       print("connected to $selectedDevice.advertisementData.advName");

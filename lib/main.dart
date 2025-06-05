@@ -6,7 +6,6 @@ import 'pages/add_plant.dart';
 import 'data/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 import 'data/plant.dart';
-import 'data/plant_sensor_data.dart';
 import 'package:plant_monitor/data/plant_type.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
@@ -77,15 +76,17 @@ class _MyAppState extends State<MyApp> {
     insertRecord(database, table, newPlant.toMap());
     // insert sensor values
     // initialize values as 0 -> maybe later i can add values from sensor if connected
-    var sensor = PlantSensorData(
-      id: newPlant.id,
-      water: 0,
-      sunLux: 0,
-      airTemp: 0,
-      earthTemp: 0,
-      humidity: 0,
-    );
-    insertRecord(database, 'plant_sensor', sensor.toMap());
+    // need to pass the remoteId from sensor, used to reconnect it later automatically
+    // var sensor = PlantSensorData(
+    //   id: newPlant.id,
+    //   sensorId: deviceId,
+    //   water: 0,
+    //   sunLux: 0,
+    //   airTemp: 0,
+    //   earthTemp: 0,
+    //   humidity: 0,
+    // );
+    // insertRecord(database, 'plant_sensor', sensor.toMap());
 
     print(await allPlants(database));
 

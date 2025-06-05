@@ -74,6 +74,7 @@ Future<PlantSensorData> getSensor(Database database, int id) async {
   return [
     for (final {
           'id': id as int,
+          'sensorId': sensorId as String,
           'water': water as int,
           'sunLux': sunLux as int,
           'airTemp': airTemp as int,
@@ -83,6 +84,7 @@ Future<PlantSensorData> getSensor(Database database, int id) async {
         in plantSensorMap)
       PlantSensorData(
         id: id,
+        sensorId: sensorId,
         water: water,
         sunLux: sunLux,
         airTemp: airTemp,
@@ -202,6 +204,7 @@ Future<Database> initializeDatabase() async {
       db.execute(
         'CREATE TABLE plant_sensor('
         'id INTEGER PRIMARY KEY,'
+        'sensorId TEXT, '
         'water INTEGER, '
         'sunLux INTEGER, '
         'airTemp INTEGER, '

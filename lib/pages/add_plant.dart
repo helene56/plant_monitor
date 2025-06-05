@@ -36,6 +36,7 @@ class _AddPlantState extends State<AddPlant> {
   String? _errorText;
   bool addedPlant = false;
   bool exitAddPlant = false;
+  int? selectedPlantId = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +82,7 @@ class _AddPlantState extends State<AddPlant> {
             database: widget.database,
             onAddDevice: addedPlant,
             exitAddPlant: exitAddPlant,
+            currentPlantId: selectedPlantId!,
           ),
         ],
       ),
@@ -108,6 +110,7 @@ class _AddPlantState extends State<AddPlant> {
               widget.onAddPlant(widget.database, 'plants', newPlant);
               // should add sensor device to database and also add autoconnect
               setState(() {
+                selectedPlantId = newPlant.id;
                 addedPlant = true;
                 exitAddPlant = true;
               });
