@@ -17,7 +17,7 @@ class MyBluetooth extends StatefulWidget {
     required this.database,
     required this.onAddDevice,
     required this.exitAddPlant,
-    required this.currentPlantId
+    required this.currentPlantId,
     // required this.onDataSubmit
   });
 
@@ -27,33 +27,53 @@ class MyBluetooth extends StatefulWidget {
 
 class _MyBluetoothState extends State<MyBluetooth> {
   // TODO: database should save devices to be used here i think..
+  static List<BluetoothDevice> devices = [];
   @override
   void initState() {
     super.initState();
     initializeBluetooth(); // TODO: should really only happen once, dont call more than once
     // move this function to initializeBluetooth?
     scanResults(); // Automatically starts scanning when MyBluetooth is started
+    
+
   }
 
   Future<void> addDevice() async {
     if (_value != null) {
       var selectedDevice = devices[_value!];
-      // save sensor in database
-      var sensor = PlantSensorData(
-        id: widget.currentPlantId,
-        sensorId: selectedDevice.device.remoteId.toString(),
-        water: 0,
-        sunLux: 0,
-        airTemp: 0,
-        earthTemp: 0,
-        humidity: 0,
-      );
 
-      insertRecord(widget.database, 'plant_sensor', sensor.toMap());
-      // connect to device
-      connectToDevice(selectedDevice.device);
+      if (selectedDevice.isConnected) {
+        getServices(selectedDevice);
+      } else {
+        // connect to device
+        connectToDevice(selectedDevice).then((_) {
+          // get services and insert selected device in database
+          getServices(selectedDevice);
+        });
+
+      }
+
       print("connected to $selectedDevice.advertisementData.advName");
     }
+  }
+
+  Future<void> addSensor(
+    BluetoothDevice selectedDevice,
+    int airTemperature,
+  ) async {
+    var sensor = PlantSensorData(
+      id: widget.currentPlantId,
+      sensorId: selectedDevice.remoteId.toString(),
+      water: 0,
+      sunLux: 0,
+      airTemp: airTemperature,
+      earthTemp: 0,
+      humidity: 0,
+    );
+
+    await insertRecord(widget.database, 'plant_sensor', sensor.toMap());
+    // var sensors = await getSensors(widget.database);
+    print("hey");
   }
 
   // TODO: should not connect again after once connected, only if disconnect
@@ -133,7 +153,7 @@ class _MyBluetoothState extends State<MyBluetooth> {
         ScanResult r = results.last; // the most recently found device
         // add results found
         setState(() {
-          devices.add(r);
+          devices.add(r.device);
         });
         print('${r.device.remoteId}: "${r.advertisementData.advName}" found!');
       }
@@ -167,18 +187,43 @@ class _MyBluetoothState extends State<MyBluetooth> {
   Future<void> getServices(BluetoothDevice device) async {
     // Note: You must call discoverServices after every re-connection!
     List<BluetoothService> services = await device.discoverServices();
+    int airTemperature = 0;
+
     for (var service in services) {
-      // do something with service
-      // Reads all characteristics
-      var characteristics = service.characteristics;
-      for (BluetoothCharacteristic c in characteristics) {
-        if (c.properties.read) {
-          List<int> value = await c.read();
-          print("printing value..");
-          print(value);
+      if (service.serviceUuid.toString() ==
+          "0f956141-6b9c-4a41-a6df-977ac4b99d78") {
+        for (var c in service.characteristics) {
+          if (c.uuid.toString() == "0f956142-6b9c-4a41-a6df-977ac4b99d78") {
+            if (c.properties.read) {
+              List<int> temperatureValue = await c.read();
+              airTemperature = temperatureValue[0];
+              print("Temperature: $temperatureValue");
+            }
+          }
+          if (c.uuid.toString() == "0f956143-6b9c-4a41-a6df-977ac4b99d78") {
+            if (c.properties.read) {
+              List<int> pumpValue = await c.read();
+              print("Pump: $pumpValue");
+            }
+          }
         }
       }
     }
+
+    addSensor(device, airTemperature);
+
+    // for (var service in services) {
+    //   // do something with service
+    //   // Reads all characteristics
+    //   var characteristics = service.characteristics;
+    //   for (BluetoothCharacteristic c in characteristics) {
+    //     if (c.properties.read) {
+    //       List<int> value = await c.read();
+    //       print("printing value..");
+    //       print(value);
+    //     }
+    //   }
+    // }
   }
 
   //TODO: write a specific function for this app
@@ -206,17 +251,29 @@ class _MyBluetoothState extends State<MyBluetooth> {
 
   // example: TODO: rewrite with intention of loading devices from database
   Future<void> saveDevice() async {
+    // List<PlantSensorData> sensors = await getSensors(widget.database);
+
+    // setState(() {
+    //   // String currentSensorId = '';
+    //   for (var sensor in sensors) {
+    //       devices.add(BluetoothDevice.fromId(sensor.sensorId));
+
+    //   }
+    // });
     // final String remoteId = await File('/remoteId.txt').readAsString();
     // var device = BluetoothDevice.fromId(remoteId);
     // // AutoConnect is convenient because it does not "time out"
     // // even if the device is not available / turned off.
     // await device.connect(autoConnect: true);
   }
+
   int? _value = 0;
-  List<ScanResult> devices = [];
+  // List<BluetoothDevice> devices = [];
+  // bool connected = false;
 
   @override
   Widget build(BuildContext context) {
+    
     if (widget.onAddDevice) {
       addDevice();
     }
@@ -229,7 +286,7 @@ class _MyBluetoothState extends State<MyBluetooth> {
         children:
             List<Widget>.generate(devices.length, (int index) {
               return ChoiceChip(
-                label: Text(devices[index].advertisementData.advName),
+                label: Text(devices[index].advName),
                 selected: _value == index,
                 onSelected: (bool selected) {
                   setState(() {
