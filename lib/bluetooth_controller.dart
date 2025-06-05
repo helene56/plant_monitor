@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:sqflite/sqflite.dart';
 
 // TODO:
-// 1. start scanning for devices when add floating button is clicked
-// 2. all devices with certain id (to be determined later) should be showed in the list availible
-//    to choose in choice chip select
 // 3. connect to device that has been selected
 
 class MyBluetooth extends StatefulWidget {
-  const MyBluetooth({super.key});
+  final Database database;
+  final bool onAddDevice;
+  const MyBluetooth({super.key, required this.database, required this.onAddDevice});
 
   @override
   State<MyBluetooth> createState() => _MyBluetoothState();
@@ -21,7 +21,54 @@ class _MyBluetoothState extends State<MyBluetooth> {
   @override
   void initState() {
     super.initState();
-    scanResults(); // Automatically starts scanning when MyBluetooth is started for the first time
+    initializeBluetooth();
+    // move this function to initializeBluetooth?
+    scanResults(); // Automatically starts scanning when MyBluetooth is started
+  }
+
+
+  // TODO: create callback function to:
+  // 1. save device selected to database
+  // 2. connect to said device
+
+  Future<void> addDevice() async {
+    if (_value != null) {
+      var selectedDevice = devices[_value!];
+      // save to database
+      // connect to device
+      connectToDevice(selectedDevice.device);
+      print("connected to $selectedDevice.advertisementData.advName");
+
+    }
+    
+  }
+
+  // TODO: should not connect again after once connected, only if disconnect
+  Future<void> connectToDevice(BluetoothDevice device) async {
+    // listen for disconnection
+    var subscription = device.connectionState.listen((BluetoothConnectionState state) async {
+        if (state == BluetoothConnectionState.disconnected) {
+            // 1. typically, start a periodic timer that tries to 
+            //    reconnect, or just call connect() again right now
+            // 2. you must always re-discover services after disconnection!
+            print("${device.disconnectReason?.code} ${device.disconnectReason?.description}");
+        }
+    });
+
+    // cleanup: cancel subscription when disconnected
+    //   - [delayed] This option is only meant for `connectionState` subscriptions.  
+    //     When `true`, we cancel after a small delay. This ensures the `connectionState` 
+    //     listener receives the `disconnected` event.
+    //   - [next] if true, the the stream will be canceled only on the *next* disconnection,
+    //     not the current disconnection. This is useful if you setup your subscriptions
+    //     before you connect.
+    device.cancelWhenDisconnected(subscription, delayed:true, next:true);
+
+    // Connect to the device
+    await device.connect();
+
+    // cancel to prevent duplicate listeners
+    subscription.cancel();
   }
 
   Future<void> initializeBluetooth() async {
@@ -148,9 +195,14 @@ class _MyBluetoothState extends State<MyBluetooth> {
   }
   int? _value = 0;
   List<ScanResult> devices = [];
-
+  // TODO: consider if for some reason a device turns off, 
+  // if it should not be displayed on the list of devices anymore..
   @override
   Widget build(BuildContext context) {
+    if (widget.onAddDevice)
+    {
+      addDevice();
+    }
     if (devices.isNotEmpty) {
       return Wrap(
         spacing: 5.0,

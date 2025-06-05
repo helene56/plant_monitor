@@ -44,6 +44,12 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+
+//   void onAddDevice() {
+//   print("Device added callback triggered!");
+//   // You can update state or reload something here later
+// }
+
   // add a new plant card
   void _addPlant(Database database, String table, Plant newPlant) async {
     // call the database

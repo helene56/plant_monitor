@@ -31,6 +31,7 @@ class _AddPlantState extends State<AddPlant> {
 
   int? _value = 0;
   String? _errorText;
+  bool addedPlant = false;
 
 
   @override
@@ -73,7 +74,7 @@ class _AddPlantState extends State<AddPlant> {
                 }).toList(),
           ),
           Text('Sensor enheder'),
-          MyBluetooth()
+          MyBluetooth(database: widget.database, onAddDevice: addedPlant)
         ],
       ),
       actions: [
@@ -97,6 +98,10 @@ class _AddPlantState extends State<AddPlant> {
               );
               // add plant!!!
               widget.onAddPlant(widget.database, 'plants', newPlant);
+              // should add sensor device to database and also add autoconnect
+              setState(() {
+                addedPlant = true;
+              });
               Navigator.of(context).pop();
             } else if (_value == null) {
               setState(() {

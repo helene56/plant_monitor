@@ -9,3 +9,5 @@
         1. in create a plant dialog -> show availible sensors to pair
     2. sensor send data on initial pairing -> when created
     3. when update button clicked and still in range of bluetooth -> send updated data if update is there
+    4. might make 3. unnesecary: autoconnect to already once established connections (saved in db)
+    5. when first time adding a device connect once (so not autoconnect)
