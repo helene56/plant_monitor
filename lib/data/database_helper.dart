@@ -93,6 +93,37 @@ Future<PlantSensorData> getSensor(Database database, int id) async {
       ),
   ].first;
 }
+
+Future<List<PlantSensorData>> getSensors(Database database,) async {
+  // Get a reference to the database.
+  final db = database;
+
+  // Query plant sensor from the database.
+  final List<Map<String, Object?>> plantSensorMap = await db.query('plant_sensor');
+
+  return [
+    for (final {
+          'id': id as int,
+          'sensorId': sensorId as String,
+          'water': water as int,
+          'sunLux': sunLux as int,
+          'airTemp': airTemp as int,
+          'earthTemp': earthTemp as int,
+          'humidity': humidity as int,
+        }
+        in plantSensorMap)
+      PlantSensorData(
+        id: id,
+        sensorId: sensorId,
+        water: water,
+        sunLux: sunLux,
+        airTemp: airTemp,
+        earthTemp: earthTemp,
+        humidity: humidity,
+      ),
+  ];
+}
+
 // not sure yet I will need this..
 // A method that retrieves all the plants from the plants table.
 Future<List<Plant>> allPlants(Database database) async {
