@@ -60,7 +60,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
     int waterSensor = plantSensor!.water;
     int sunSensor = plantSensor!.sunLux;
     int airTempSensor = plantSensor!.airTemp;
-    int earthTempSensor = plantSensor!.airTemp;
+    int earthTempSensor = plantSensor!.earthTemp;
     int humiditySensor = plantSensor!.humidity;
 
     return GestureDetector(
@@ -326,5 +326,5 @@ class TooltipIcon extends StatelessWidget {
 
 
 double getProgressBarPercentage(int sensorValue, int maxValue){
-  return (sensorValue / maxValue) * 100;
+  return (sensorValue / maxValue);
 }
