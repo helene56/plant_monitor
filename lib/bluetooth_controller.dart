@@ -67,6 +67,10 @@ class _MyBluetoothState extends State<MyBluetooth> {
     var subscription = FlutterBluePlus.onScanResults.listen((results) {
       if (results.isNotEmpty) {
         ScanResult r = results.last; // the most recently found device
+        // add results found
+        setState(() {
+          devices.add(r);
+        });
         print('${r.device.remoteId}: "${r.advertisementData.advName}" found!');
       }
     }, onError: (e) => print(e));
@@ -82,7 +86,7 @@ class _MyBluetoothState extends State<MyBluetooth> {
 
     // Start scanning w/ timeout
     // Optional: use `stopScan()` as an alternative to timeout
-    // TODO: specify my own identifiers
+    // TODO: specify my own identifiers, easier to look for identifier instead of names
     await FlutterBluePlus.startScan(
       // withServices: [Guid("180D")], // match any of the specified services
       withNames: ["MY_PWS1"], // *or* any of the specified names
@@ -143,24 +147,28 @@ class _MyBluetoothState extends State<MyBluetooth> {
     // await device.connect(autoConnect: true);
   }
   int? _value = 0;
-  List labels = ["my text"];
+  List<ScanResult> devices = [];
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 5.0,
-      children:
-          List<Widget>.generate(labels.length, (int index) {
-            return ChoiceChip(
-              label: Text(labels[index]),
-              selected: _value == index,
-              onSelected: (bool selected) {
-                setState(() {
-                  _value = selected ? index : null;
-                });
-              },
-            );
-          }).toList(),
-    );
+    if (devices.isNotEmpty) {
+      return Wrap(
+        spacing: 5.0,
+        children:
+            List<Widget>.generate(devices.length, (int index) {
+              return ChoiceChip(
+                label: Text(devices[index].advertisementData.advName),
+                selected: _value == index,
+                onSelected: (bool selected) {
+                  setState(() {
+                    _value = selected ? index : null;
+                  });
+                },
+              );
+            }).toList(),
+      );
+    } else {
+      return Container(); // should not show anything in case no devices are found
+    }
   }
 }
