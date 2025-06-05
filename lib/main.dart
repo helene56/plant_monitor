@@ -74,21 +74,8 @@ class _MyAppState extends State<MyApp> {
   void _addPlant(Database database, String table, Plant newPlant) async {
     // call the database
     insertRecord(database, table, newPlant.toMap());
-    // insert sensor values
-    // initialize values as 0 -> maybe later i can add values from sensor if connected
-    // need to pass the remoteId from sensor, used to reconnect it later automatically
-    // var sensor = PlantSensorData(
-    //   id: newPlant.id,
-    //   sensorId: deviceId,
-    //   water: 0,
-    //   sunLux: 0,
-    //   airTemp: 0,
-    //   earthTemp: 0,
-    //   humidity: 0,
-    // );
-    // insertRecord(database, 'plant_sensor', sensor.toMap());
 
-    print(await allPlants(database));
+    // print(await allPlants(database));
 
     setState(() {
       plantsCards.add(newPlant);
