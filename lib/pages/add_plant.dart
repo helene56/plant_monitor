@@ -5,15 +5,18 @@ import 'package:plant_monitor/data/plant.dart';
 import 'package:plant_monitor/data/plant_type.dart';
 import 'package:plant_monitor/bluetooth_controller.dart';
 
-
 class AddPlant extends StatefulWidget {
   // TODO: figure out if there is a way not to define this function again..
   final void Function(Database database, String table, Plant newPlant)
   onAddPlant;
   final Database database;
   final List<PlantType> plantingTypes;
-  const AddPlant({super.key, required this.onAddPlant, required this.database, required this.plantingTypes});
-
+  const AddPlant({
+    super.key,
+    required this.onAddPlant,
+    required this.database,
+    required this.plantingTypes,
+  });
 
   @override
   State<AddPlant> createState() => _AddPlantState();
@@ -32,7 +35,7 @@ class _AddPlantState extends State<AddPlant> {
   int? _value = 0;
   String? _errorText;
   bool addedPlant = false;
-
+  bool exitAddPlant = false;
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +77,11 @@ class _AddPlantState extends State<AddPlant> {
                 }).toList(),
           ),
           Text('Sensor enheder'),
-          MyBluetooth(database: widget.database, onAddDevice: addedPlant)
+          MyBluetooth(
+            database: widget.database,
+            onAddDevice: addedPlant,
+            exitAddPlant: exitAddPlant,
+          ),
         ],
       ),
       actions: [
@@ -85,7 +92,8 @@ class _AddPlantState extends State<AddPlant> {
                 id: DateTime.now().millisecondsSinceEpoch,
                 name: _controller.text,
                 type:
-                    widget.plantingTypes[_value!]
+                    widget
+                        .plantingTypes[_value!]
                         .type, // this needs to be selected by the chip select
                 waterNeedsMax: widget.plantingTypes[_value!].waterNeedsMax,
                 waterNeedsMin: widget.plantingTypes[_value!].waterNeedsMin,
@@ -101,6 +109,7 @@ class _AddPlantState extends State<AddPlant> {
               // should add sensor device to database and also add autoconnect
               setState(() {
                 addedPlant = true;
+                exitAddPlant = true;
               });
               Navigator.of(context).pop();
             } else if (_value == null) {
@@ -116,7 +125,12 @@ class _AddPlantState extends State<AddPlant> {
           child: Text('Tilføj'),
         ),
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            setState(() {
+              exitAddPlant = true;
+            });
+            Navigator.of(context).pop();
+          },
           child: Text('Luk'),
         ),
       ],

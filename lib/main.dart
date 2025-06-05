@@ -8,6 +8,7 @@ import 'package:sqflite/sqflite.dart';
 import 'data/plant.dart';
 import 'data/plant_sensor_data.dart';
 import 'package:plant_monitor/data/plant_type.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 void main() {
   runApp(MaterialApp(home: MyApp(), debugShowCheckedModeBanner: false));
@@ -44,11 +45,31 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-
-//   void onAddDevice() {
-//   print("Device added callback triggered!");
-//   // You can update state or reload something here later
-// }
+  Future<void> _openDialog() async {
+    final result = await showDialog(
+      context: context,
+      builder:
+          (context) => FutureBuilder<Database>(
+            future: databasePlantKeeper,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done &&
+                  snapshot.hasData) {
+                return AddPlant(
+                  onAddPlant: _addPlant,
+                  database: snapshot.data!, // pass the actual database
+                  plantingTypes: plantingTypes,
+                );
+              } else {
+                return const Center(child: CircularProgressIndicator());
+              }
+            },
+          ),
+    );
+    // if dialog was dismissed by tapping outside
+    if (result == null) {
+      FlutterBluePlus.stopScan();
+    }
+  }
 
   // add a new plant card
   void _addPlant(Database database, String table, Plant newPlant) async {
@@ -95,25 +116,7 @@ class _MyAppState extends State<MyApp> {
       floatingActionButton: FloatingActionButton.small(
         onPressed: () {
           // Add your onPressed code here!
-          showDialog(
-            context: context,
-            builder:
-                (context) => FutureBuilder<Database>(
-                  future: databasePlantKeeper,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done &&
-                        snapshot.hasData) {
-                      return AddPlant(
-                        onAddPlant: _addPlant,
-                        database: snapshot.data!, // pass the actual database
-                        plantingTypes: plantingTypes,
-                      );
-                    } else {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                  },
-                ),
-          );
+          _openDialog();
         },
         backgroundColor: Colors.lightGreen,
         shape: CircleBorder(),
