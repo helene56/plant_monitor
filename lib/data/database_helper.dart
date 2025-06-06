@@ -75,6 +75,7 @@ Future<PlantSensorData> getSensor(Database database, int id) async {
     for (final {
           'id': id as int,
           'sensorId': sensorId as String,
+          'sensorName': sensorName as String,
           'water': water as int,
           'sunLux': sunLux as int,
           'airTemp': airTemp as int,
@@ -85,6 +86,7 @@ Future<PlantSensorData> getSensor(Database database, int id) async {
       PlantSensorData(
         id: id,
         sensorId: sensorId,
+        sensorName: sensorName,
         water: water,
         sunLux: sunLux,
         airTemp: airTemp,
@@ -105,6 +107,7 @@ Future<List<PlantSensorData>> getSensors(Database database,) async {
     for (final {
           'id': id as int,
           'sensorId': sensorId as String,
+          'sensorName': sensorName as String,
           'water': water as int,
           'sunLux': sunLux as int,
           'airTemp': airTemp as int,
@@ -115,6 +118,7 @@ Future<List<PlantSensorData>> getSensors(Database database,) async {
       PlantSensorData(
         id: id,
         sensorId: sensorId,
+        sensorName: sensorName,
         water: water,
         sunLux: sunLux,
         airTemp: airTemp,
@@ -236,6 +240,7 @@ Future<Database> initializeDatabase() async {
         'CREATE TABLE plant_sensor('
         'id INTEGER PRIMARY KEY,'
         'sensorId TEXT, '
+        'sensorName TEXT, '
         'water INTEGER, '
         'sunLux INTEGER, '
         'airTemp INTEGER, '

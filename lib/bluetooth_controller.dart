@@ -26,21 +26,22 @@ class MyBluetooth extends StatefulWidget {
 }
 
 class _MyBluetoothState extends State<MyBluetooth> {
-  // TODO: database should save devices to be used here i think..
-  static List<BluetoothDevice> devices = [];
   @override
   void initState() {
     super.initState();
     initializeBluetooth(); // TODO: should really only happen once, dont call more than once
     // move this function to initializeBluetooth?
+    autoConnectDevice();
     scanResults(); // Automatically starts scanning when MyBluetooth is started
-    
+  }
 
+  bool isInList(BluetoothDevice device) {
+    return devices.any((entry) => entry['device'].remoteId == device.remoteId);
   }
 
   Future<void> addDevice() async {
     if (_value != null) {
-      var selectedDevice = devices[_value!];
+      var selectedDevice = devices[_value!]['device'];
 
       if (selectedDevice.isConnected) {
         getServices(selectedDevice);
@@ -50,7 +51,6 @@ class _MyBluetoothState extends State<MyBluetooth> {
           // get services and insert selected device in database
           getServices(selectedDevice);
         });
-
       }
 
       print("connected to $selectedDevice.advertisementData.advName");
@@ -64,6 +64,7 @@ class _MyBluetoothState extends State<MyBluetooth> {
     var sensor = PlantSensorData(
       id: widget.currentPlantId,
       sensorId: selectedDevice.remoteId.toString(),
+      sensorName: selectedDevice.advName,
       water: 0,
       sunLux: 0,
       airTemp: airTemperature,
@@ -73,10 +74,8 @@ class _MyBluetoothState extends State<MyBluetooth> {
 
     await insertRecord(widget.database, 'plant_sensor', sensor.toMap());
     // var sensors = await getSensors(widget.database);
-    print("hey");
   }
 
-  // TODO: should not connect again after once connected, only if disconnect
   Future<void> connectToDevice(BluetoothDevice device) async {
     // listen for disconnection
     var subscription = device.connectionState.listen((
@@ -152,9 +151,15 @@ class _MyBluetoothState extends State<MyBluetooth> {
       if (results.isNotEmpty) {
         ScanResult r = results.last; // the most recently found device
         // add results found
-        setState(() {
-          devices.add(r.device);
-        });
+        if (!isInList(r.device)) {
+          setState(() {
+            devices.add({
+              'device': r.device,
+              'deviceName': r.advertisementData.advName,
+            });
+          });
+        }
+
         print('${r.device.remoteId}: "${r.advertisementData.advName}" found!');
       }
     }, onError: (e) => print(e));
@@ -226,54 +231,32 @@ class _MyBluetoothState extends State<MyBluetooth> {
     // }
   }
 
-  //TODO: write a specific function for this app
-  Future<void> writeToLed(BluetoothDevice device) async {
-    // Note: You must call discoverServices after every re-connection!
-    List<BluetoothService> services = await device.discoverServices();
-    for (var service in services) {
-      // do something with service
-      if (service.serviceUuid.toString() ==
-          "00001523-1212-efde-1523-785feabcd123") {
-        // Iterate through characteristics
-        for (var characteristic in service.characteristics) {
-          if (characteristic.characteristicUuid.toString() ==
-              "00001525-1212-efde-1523-785feabcd123") {
-            //   // Write to the characteristic
-            //   await characteristic.write([ledState]); // Example value to turn on the LED
-            //   // toggle led on/off
-            //   ledState ^= 1;
-            //   print("Value written to characteristic");
-          }
-        }
+  Future<void> autoConnectDevice() async {
+    // if getSensor is not empty
+    // autoconnect device and add to devices
+
+    List<PlantSensorData> sensors = await getSensors(widget.database);
+    for (var sensor in sensors) {
+      var device = BluetoothDevice.fromId(sensor.sensorId);
+      await device.connect(autoConnect: true, mtu: null).then((_) {});
+
+      final connectionState = await device.connectionState.firstWhere(
+        (state) => state == BluetoothConnectionState.connected,
+      );
+
+      if (!isInList(device)) {
+        setState(() {
+          devices.add({'device': device, 'deviceName': sensor.sensorName});
+        });
       }
     }
   }
 
-  // example: TODO: rewrite with intention of loading devices from database
-  Future<void> saveDevice() async {
-    // List<PlantSensorData> sensors = await getSensors(widget.database);
-
-    // setState(() {
-    //   // String currentSensorId = '';
-    //   for (var sensor in sensors) {
-    //       devices.add(BluetoothDevice.fromId(sensor.sensorId));
-
-    //   }
-    // });
-    // final String remoteId = await File('/remoteId.txt').readAsString();
-    // var device = BluetoothDevice.fromId(remoteId);
-    // // AutoConnect is convenient because it does not "time out"
-    // // even if the device is not available / turned off.
-    // await device.connect(autoConnect: true);
-  }
-
   int? _value = 0;
-  // List<BluetoothDevice> devices = [];
-  // bool connected = false;
+  List<Map<String, dynamic>> devices = [];
 
   @override
   Widget build(BuildContext context) {
-    
     if (widget.onAddDevice) {
       addDevice();
     }
@@ -286,7 +269,7 @@ class _MyBluetoothState extends State<MyBluetooth> {
         children:
             List<Widget>.generate(devices.length, (int index) {
               return ChoiceChip(
-                label: Text(devices[index].advName),
+                label: Text(devices[index]['deviceName']),
                 selected: _value == index,
                 onSelected: (bool selected) {
                   setState(() {

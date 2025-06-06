@@ -5,6 +5,7 @@
 class PlantSensorData {
   final int id; // should be initialized with id from Plant
   final String sensorId;
+  final String sensorName;
   final int water;
   final int sunLux;
   final int airTemp;
@@ -14,6 +15,7 @@ class PlantSensorData {
   const PlantSensorData({
     required this.id,
     required this.sensorId,
+    required this.sensorName,
     required this.water,
     required this.sunLux,
     required this.airTemp,
@@ -25,6 +27,7 @@ class PlantSensorData {
     return {
       'id': id,
       "sensorId": sensorId,
+      'sensorName': sensorName,
       'water': water,
       'sunLux': sunLux,
       'airTemp': airTemp,
