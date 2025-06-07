@@ -19,7 +19,6 @@ Future<void> insertRecord(
   await db.insert(table, record, conflictAlgorithm: ConflictAlgorithm.replace);
 }
 
-
 Future<List<PlantType>> plantTypes(Database database) async {
   // Get a reference to the database.
   final db = database;
@@ -72,7 +71,7 @@ Future<PlantSensorData> getSensor(Database database, int id) async {
   );
 
   return [
-    for (final {
+    for (var {
           'id': id as int,
           'sensorId': sensorId as String,
           'sensorName': sensorName as String,
@@ -96,15 +95,17 @@ Future<PlantSensorData> getSensor(Database database, int id) async {
   ].first;
 }
 
-Future<List<PlantSensorData>> getSensors(Database database,) async {
+Future<List<PlantSensorData>> getSensors(Database database) async {
   // Get a reference to the database.
   final db = database;
 
   // Query plant sensor from the database.
-  final List<Map<String, Object?>> plantSensorMap = await db.query('plant_sensor');
+  final List<Map<String, Object?>> plantSensorMap = await db.query(
+    'plant_sensor',
+  );
 
   return [
-    for (final {
+    for (var {
           'id': id as int,
           'sensorId': sensorId as String,
           'sensorName': sensorName as String,
@@ -171,7 +172,7 @@ Future<List<Plant>> allPlants(Database database) async {
 Future<void> updateRecord(
   Database database,
   String table,
-  Map<String, Object> record,
+  Map<String, Object?> record,
 ) async {
   // Get a reference to the database.
   final db = database;
@@ -272,7 +273,6 @@ Future<Database> initializeDatabase() async {
 
   // insert type, types, more to come?
   insertRecord(database, 'plant_types', ficus.toMap());
-
 
   return database;
 }
