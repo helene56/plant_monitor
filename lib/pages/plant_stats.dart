@@ -3,6 +3,7 @@ import 'package:plant_monitor/data/database_helper.dart';
 import 'package:plant_monitor/data/plant.dart';
 import 'package:plant_monitor/data/plant_sensor_data.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class MyPlantStat extends StatefulWidget {
   final int plantId;
@@ -22,19 +23,68 @@ class MyPlantStat extends StatefulWidget {
 class _MyPlantStatState extends State<MyPlantStat> {
   bool showingToolTips = false;
   PlantSensorData? plantSensor;
-  
+
   @override
   void initState() {
     super.initState();
     initializeSensor();
+    // if (plantSensor != null)
+    // {
+    //   subscibeToDevice(BluetoothDevice.fromId(plantSensor!.sensorId));
+    // }
   }
 
-
   void initializeSensor() async {
-    PlantSensorData data = await getSensor(widget.database, widget.plantCard.id);
+    PlantSensorData data = await getSensor(
+      widget.database,
+      widget.plantCard.id,
+    );
     setState(() {
       plantSensor = data;
     });
+    subscibeToDevice(BluetoothDevice.fromId(plantSensor!.sensorId));
+  }
+
+  Future<void> subscibeToDevice(BluetoothDevice device) async {
+    if (device.isDisconnected) {
+      // Connect to the device
+      await device.connect();
+    }
+
+    List<BluetoothService> services = await device.discoverServices();
+    for (var service in services) {
+      if (service.serviceUuid.toString() ==
+          "0f956141-6b9c-4a41-a6df-977ac4b99d78") {
+        for (var c in service.characteristics) {
+          if (c.uuid.toString() == "0f956142-6b9c-4a41-a6df-977ac4b99d78") {
+            // Enable notifications
+            await c.setNotifyValue(true);
+            // Listen for value changes
+            final subscription = c.onValueReceived.listen((value) async {
+              if (plantSensor == null) {
+                // Still not ready, so skip this update
+                return;
+              }
+              // update plantsensor -- should update database
+              setState(() {
+                plantSensor = plantSensor!.copyWith(airTemp: value[0]);
+              });
+
+              // Update the database (async, outside of setState)
+              await updateRecord(
+                widget.database,
+                'plant_sensor',
+                plantSensor!.toMap(),
+              );
+
+              print('Sensor data: $value');
+            });
+            // Automatically cancel subscription when device disconnects
+            device.cancelWhenDisconnected(subscription);
+          }
+        }
+      }
+    }
   }
 
   @override
@@ -128,7 +178,10 @@ class _MyPlantStatState extends State<MyPlantStat> {
                               220,
                             ), // Water bar
                             minHeight: 20,
-                            value: getProgressBarPercentage(waterSensor, waterMax),
+                            value: getProgressBarPercentage(
+                              waterSensor,
+                              waterMax,
+                            ),
                           ),
                         ),
                       ],
@@ -202,7 +255,10 @@ class _MyPlantStatState extends State<MyPlantStat> {
                               183,
                             ), // Moisture bar
                             minHeight: 20,
-                            value: getProgressBarPercentage(humiditySensor, humidityMax),
+                            value: getProgressBarPercentage(
+                              humiditySensor,
+                              humidityMax,
+                            ),
                           ),
                         ),
                       ],
@@ -239,13 +295,19 @@ class _MyPlantStatState extends State<MyPlantStat> {
                               77,
                             ), // Air temp bar
                             minHeight: 20,
-                            value: getProgressBarPercentage(airTempSensor, airTempMax),
+                            value: getProgressBarPercentage(
+                              airTempSensor,
+                              airTempMax,
+                            ),
                           ),
                         ),
                       ],
                     ),
                     // Text('Jord temperatur'),
-                    Align(alignment: Alignment.centerRight, child: Text('$earthTempSensor℃')),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text('$earthTempSensor℃'),
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -273,7 +335,10 @@ class _MyPlantStatState extends State<MyPlantStat> {
                               164,
                             ), // Earth temp bar
                             minHeight: 20,
-                            value: getProgressBarPercentage(earthTempSensor, 30),
+                            value: getProgressBarPercentage(
+                              earthTempSensor,
+                              30,
+                            ),
                           ),
                         ),
                       ],
@@ -324,7 +389,6 @@ class TooltipIcon extends StatelessWidget {
   }
 }
 
-
-double getProgressBarPercentage(int sensorValue, int maxValue){
+double getProgressBarPercentage(int sensorValue, int maxValue) {
   return (sensorValue / maxValue);
 }
