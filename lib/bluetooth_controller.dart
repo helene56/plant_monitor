@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:io';
@@ -32,6 +34,7 @@ class _MyBluetoothState extends State<MyBluetooth> {
     initializeBluetooth(); // TODO: should really only happen once, dont call more than once
     // move this function to initializeBluetooth?
     autoConnectDevice();
+    
     scanResults(); // Automatically starts scanning when MyBluetooth is started
   }
 
@@ -234,13 +237,15 @@ class _MyBluetoothState extends State<MyBluetooth> {
   Future<void> autoConnectDevice() async {
     // if getSensor is not empty
     // autoconnect device and add to devices
-
+    if (!kIsWeb && Platform.isAndroid) {
+      await FlutterBluePlus.turnOn();
+    }
     List<PlantSensorData> sensors = await getSensors(widget.database);
     for (var sensor in sensors) {
       var device = BluetoothDevice.fromId(sensor.sensorId);
       await device.connect(autoConnect: true, mtu: null).then((_) {});
 
-      final connectionState = await device.connectionState.firstWhere(
+      await device.connectionState.firstWhere(
         (state) => state == BluetoothConnectionState.connected,
       );
 
@@ -248,6 +253,27 @@ class _MyBluetoothState extends State<MyBluetooth> {
         setState(() {
           devices.add({'device': device, 'deviceName': sensor.sensorName});
         });
+      }
+    }
+  }
+
+  Future<void> subscibeToDevice(BluetoothDevice device) async {
+    List<BluetoothService> services = await device.discoverServices();
+    for (var service in services) {
+      if (service.serviceUuid.toString() ==
+          "0f956141-6b9c-4a41-a6df-977ac4b99d78") {
+        for (var c in service.characteristics) {
+          if (c.uuid.toString() == "0f956142-6b9c-4a41-a6df-977ac4b99d78") {
+            // Enable notifications
+            await c.setNotifyValue(true);
+            // Listen for value changes
+            final subscription = c.onValueReceived.listen((value) {
+              print('Sensor data: $value');
+            });
+            // Automatically cancel subscription when device disconnects
+            device.cancelWhenDisconnected(subscription);
+          }
+        }
       }
     }
   }
