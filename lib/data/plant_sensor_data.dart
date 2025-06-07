@@ -1,18 +1,17 @@
 // plant sensor class
 // holds info about the actual sensor values
 
-
 class PlantSensorData {
   final int id; // should be initialized with id from Plant
   final String sensorId;
   final String sensorName;
-  final int water;
-  final int sunLux;
-  final int airTemp;
-  final int earthTemp;
-  final int humidity;
+  int water;
+  int sunLux;
+  int airTemp;
+  int earthTemp;
+  int humidity;
 
-  const PlantSensorData({
+  PlantSensorData({
     required this.id,
     required this.sensorId,
     required this.sensorName,
@@ -20,7 +19,7 @@ class PlantSensorData {
     required this.sunLux,
     required this.airTemp,
     required this.earthTemp,
-    required this.humidity
+    required this.humidity,
   });
 
   Map<String, Object?> toMap() {
@@ -34,5 +33,27 @@ class PlantSensorData {
       'earthTemp': earthTemp,
       'humidity': humidity,
     };
+  }
+
+  PlantSensorData copyWith({
+    int? airTemp,
+    int? water,
+    int? sunLux,
+    int? earthTemp,
+    int? humidity,
+    String? sensorId,
+    String? sensorName,
+    int? id,
+  }) {
+    return PlantSensorData(
+      id: this.id,
+      airTemp: airTemp ?? this.airTemp,
+      water: water ?? this.water,
+      sunLux: sunLux ?? this.sunLux,
+      earthTemp: earthTemp ?? this.earthTemp,
+      humidity: humidity ?? this.humidity,
+      sensorId: sensorId ?? this.sensorId,
+      sensorName: sensorName ?? this.sensorName,
+    );
   }
 }
