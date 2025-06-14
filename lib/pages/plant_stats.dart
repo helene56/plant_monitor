@@ -392,3 +392,73 @@ class TooltipIcon extends StatelessWidget {
 double getProgressBarPercentage(int sensorValue, int maxValue) {
   return (sensorValue / maxValue);
 }
+
+class SensorProgress extends StatelessWidget {
+  final String label;
+  final int sensorValue;
+  final int maxValue;
+  final GlobalKey<TooltipState> tooltipKey;
+  final IconData icon;
+  final String iconName;
+  final List colorCode;
+
+  const SensorProgress({
+    super.key,
+    required this.label,
+    required this.sensorValue,
+    required this.maxValue,
+    required this.tooltipKey,
+    required this.icon,
+    required this.iconName,
+    required this.colorCode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text('$sensorValue/$maxValue ($label)'),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TooltipIcon(
+              tooltipkey: tooltipKey,
+              iconName: iconName,
+              iconSymbol: icon,
+              color: Color.fromARGB(
+                colorCode[0],
+                colorCode[1],
+                colorCode[2],
+                colorCode[3],
+              ),
+            ),
+            SizedBox(width: 10),
+            SizedBox(
+              width: 260,
+              child: LinearProgressIndicator(
+                backgroundColor: Color.fromARGB(
+                  85,
+                  colorCode[1],
+                  colorCode[2],
+                  colorCode[3],
+                ), // Sunlight bg
+                borderRadius: BorderRadius.circular(25),
+                color: Color.fromARGB(
+                  colorCode[0],
+                  colorCode[1],
+                  colorCode[2],
+                  colorCode[3],
+                ), // Sunlight bar
+                minHeight: 20,
+                value: getProgressBarPercentage(sensorValue, maxValue),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
