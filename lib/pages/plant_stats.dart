@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:plant_monitor/data/database_helper.dart';
 import 'package:plant_monitor/data/plant.dart';
@@ -23,7 +25,7 @@ class MyPlantStat extends StatefulWidget {
 class _MyPlantStatState extends State<MyPlantStat> {
   bool showingToolTips = false;
   PlantSensorData? plantSensor;
-
+  StreamSubscription? _bluetoothSubscription;
   @override
   void initState() {
     super.initState();
@@ -49,7 +51,6 @@ class _MyPlantStatState extends State<MyPlantStat> {
     if (device.isDisconnected) {
       // Connect to the device
       return;
-      await device.connect();
     }
 
     List<BluetoothService> services = await device.discoverServices();
@@ -61,15 +62,20 @@ class _MyPlantStatState extends State<MyPlantStat> {
             // Enable notifications
             await c.setNotifyValue(true);
             // Listen for value changes
-            final subscription = c.onValueReceived.listen((value) async {
+            final _bluetoothSubscription = c.onValueReceived.listen((
+              value,
+            ) async {
+              if (!mounted) return; // Check if the widget is still mounted
               if (plantSensor == null) {
                 // Still not ready, so skip this update
                 return;
               }
               // update plantsensor -- should update database
-              setState(() {
-                plantSensor = plantSensor!.copyWith(airTemp: value[0]);
-              });
+              if (mounted) {
+                setState(() {
+                  plantSensor = plantSensor!.copyWith(airTemp: value[0]);
+                });
+              }
 
               // Update the database (async, outside of setState)
               await updateRecord(
@@ -81,11 +87,18 @@ class _MyPlantStatState extends State<MyPlantStat> {
               print('Sensor data: $value');
             });
             // Automatically cancel subscription when device disconnects
-            device.cancelWhenDisconnected(subscription);
+            device.cancelWhenDisconnected(_bluetoothSubscription);
           }
         }
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _bluetoothSubscription?.cancel(); // Cancel the subscription
+    // Optionally disconnect the device if needed
+    super.dispose();
   }
 
   @override
@@ -147,11 +160,51 @@ class _MyPlantStatState extends State<MyPlantStat> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    ...buildSensorProgress('Vand', '$waterPercentage%', Icons.water_drop, waterKey, waterSensor, waterMax, [255, 120, 180, 220]),
-                    ...buildSensorProgress('Sollys', 'Lux', Icons.wb_sunny, sunKey, sunSensor, sunMax, [255, 255, 213, 79]),
-                    ...buildSensorProgress('Fugt', '%', Icons.foggy, humidityKey, humiditySensor, humidityMax, [255, 139, 193, 183]),
-                    ...buildSensorProgress('Luft temperatur', '℃', Icons.thermostat, airTempKey, airTempSensor, airTempMax, [255, 255, 183, 77]),
-                    ...buildSensorProgress('Jord temperatur', '℃', Icons.thermostat, earthTempKey, earthTempSensor, 30, [255, 188, 170, 164]),
+                    ...buildSensorProgress(
+                      'Vand',
+                      '$waterPercentage%',
+                      Icons.water_drop,
+                      waterKey,
+                      waterSensor,
+                      waterMax,
+                      [255, 120, 180, 220],
+                    ),
+                    ...buildSensorProgress(
+                      'Sollys',
+                      'Lux',
+                      Icons.wb_sunny,
+                      sunKey,
+                      sunSensor,
+                      sunMax,
+                      [255, 255, 213, 79],
+                    ),
+                    ...buildSensorProgress(
+                      'Fugt',
+                      '%',
+                      Icons.foggy,
+                      humidityKey,
+                      humiditySensor,
+                      humidityMax,
+                      [255, 139, 193, 183],
+                    ),
+                    ...buildSensorProgress(
+                      'Luft temperatur',
+                      '℃',
+                      Icons.thermostat,
+                      airTempKey,
+                      airTempSensor,
+                      airTempMax,
+                      [255, 255, 183, 77],
+                    ),
+                    ...buildSensorProgress(
+                      'Jord temperatur',
+                      '℃',
+                      Icons.thermostat,
+                      earthTempKey,
+                      earthTempSensor,
+                      30,
+                      [255, 188, 170, 164],
+                    ),
                   ],
                 ),
               ),
