@@ -48,6 +48,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
   Future<void> subscibeToDevice(BluetoothDevice device) async {
     if (device.isDisconnected) {
       // Connect to the device
+      return;
       await device.connect();
     }
 
@@ -91,11 +92,11 @@ class _MyPlantStatState extends State<MyPlantStat> {
   Widget build(BuildContext context) {
     final GlobalKey<TooltipState> waterKey = GlobalKey<TooltipState>();
     final GlobalKey<TooltipState> sunKey = GlobalKey<TooltipState>();
-    final GlobalKey<TooltipState> moistureKey = GlobalKey<TooltipState>();
+    final GlobalKey<TooltipState> humidityKey = GlobalKey<TooltipState>();
     final GlobalKey<TooltipState> airTempKey = GlobalKey<TooltipState>();
     final GlobalKey<TooltipState> earthTempKey = GlobalKey<TooltipState>();
 
-    List tooltips = [waterKey, sunKey, moistureKey, airTempKey, earthTempKey];
+    List tooltips = [waterKey, sunKey, humidityKey, airTempKey, earthTempKey];
 
     int waterMax = widget.plantCard.waterNeedsMax;
     int waterPercentage = ((0 / waterMax) * 100).round();
@@ -146,203 +147,11 @@ class _MyPlantStatState extends State<MyPlantStat> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // Text('Vand'),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text('$waterSensor/$waterMax ($waterPercentage%)'),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TooltipIcon(
-                          tooltipkey: waterKey,
-                          iconName: 'Vand',
-                          iconSymbol: Icons.water_drop,
-                          color: Color.fromARGB(255, 120, 180, 220),
-                        ),
-                        SizedBox(width: 10),
-                        SizedBox(
-                          width: 260,
-                          child: LinearProgressIndicator(
-                            backgroundColor: Color.fromARGB(
-                              85,
-                              120,
-                              180,
-                              220,
-                            ), // Water bg
-                            borderRadius: BorderRadius.circular(25),
-                            color: Color.fromARGB(
-                              255,
-                              120,
-                              180,
-                              220,
-                            ), // Water bar
-                            minHeight: 20,
-                            value: getProgressBarPercentage(
-                              waterSensor,
-                              waterMax,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Text('Sollys'),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text('$sunSensor/$sunMax (Lux)'),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TooltipIcon(
-                          tooltipkey: sunKey,
-                          iconName: 'Sollys',
-                          iconSymbol: Icons.wb_sunny,
-                          color: Color.fromARGB(255, 255, 213, 79),
-                        ),
-                        SizedBox(width: 10),
-                        SizedBox(
-                          width: 260,
-                          child: LinearProgressIndicator(
-                            backgroundColor: Color.fromARGB(
-                              85,
-                              255,
-                              213,
-                              79,
-                            ), // Sunlight bg
-                            borderRadius: BorderRadius.circular(25),
-                            color: Color.fromARGB(
-                              255,
-                              255,
-                              213,
-                              79,
-                            ), // Sunlight bar
-                            minHeight: 20,
-                            value: getProgressBarPercentage(sunSensor, sunMax),
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Text('Fugt'),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text('$humiditySensor/$humidityMax (%)'),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TooltipIcon(
-                          tooltipkey: moistureKey,
-                          iconName: 'Fugt',
-                          iconSymbol: Icons.foggy,
-                          color: Color.fromARGB(255, 139, 193, 183),
-                        ),
-                        SizedBox(width: 10),
-                        SizedBox(
-                          width: 260,
-                          child: LinearProgressIndicator(
-                            backgroundColor: Color.fromARGB(
-                              85,
-                              139,
-                              193,
-                              183,
-                            ), // Moisture bg
-                            borderRadius: BorderRadius.circular(25),
-                            color: Color.fromARGB(
-                              255,
-                              139,
-                              193,
-                              183,
-                            ), // Moisture bar
-                            minHeight: 20,
-                            value: getProgressBarPercentage(
-                              humiditySensor,
-                              humidityMax,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Text('Luft temperatur'),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text('$airTempSensor/$airTempMax (℃)'),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TooltipIcon(
-                          tooltipkey: airTempKey,
-                          iconName: 'Luft temperatur',
-                          iconSymbol: Icons.thermostat,
-                          color: Color.fromARGB(255, 255, 183, 77),
-                        ),
-                        SizedBox(width: 10),
-                        SizedBox(
-                          width: 260,
-                          child: LinearProgressIndicator(
-                            backgroundColor: Color.fromARGB(
-                              85,
-                              255,
-                              183,
-                              77,
-                            ), // Air temp bg
-                            borderRadius: BorderRadius.circular(25),
-                            color: Color.fromARGB(
-                              255,
-                              255,
-                              183,
-                              77,
-                            ), // Air temp bar
-                            minHeight: 20,
-                            value: getProgressBarPercentage(
-                              airTempSensor,
-                              airTempMax,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Text('Jord temperatur'),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text('$earthTempSensor℃'),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TooltipIcon(
-                          tooltipkey: earthTempKey,
-                          iconName: 'Jord temperatur',
-                          iconSymbol: Icons.thermostat,
-                          color: Color.fromARGB(255, 188, 170, 164),
-                        ),
-                        SizedBox(width: 10),
-                        SizedBox(
-                          width: 260,
-                          child: LinearProgressIndicator(
-                            backgroundColor: Color.fromARGB(
-                              85,
-                              188,
-                              170,
-                              164,
-                            ), // Earth temp bg
-                            borderRadius: BorderRadius.circular(25),
-                            color: Color.fromARGB(
-                              255,
-                              188,
-                              170,
-                              164,
-                            ), // Earth temp bar
-                            minHeight: 20,
-                            value: getProgressBarPercentage(
-                              earthTempSensor,
-                              30,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    ...buildSensorProgress('Vand', '$waterPercentage%', Icons.water_drop, waterKey, waterSensor, waterMax, [255, 120, 180, 220]),
+                    ...buildSensorProgress('Sollys', 'Lux', Icons.wb_sunny, sunKey, sunSensor, sunMax, [255, 255, 213, 79]),
+                    ...buildSensorProgress('Fugt', '%', Icons.foggy, humidityKey, humiditySensor, humidityMax, [255, 139, 193, 183]),
+                    ...buildSensorProgress('Luft temperatur', '℃', Icons.thermostat, airTempKey, airTempSensor, airTempMax, [255, 255, 183, 77]),
+                    ...buildSensorProgress('Jord temperatur', '℃', Icons.thermostat, earthTempKey, earthTempSensor, 30, [255, 188, 170, 164]),
                   ],
                 ),
               ),
@@ -393,72 +202,56 @@ double getProgressBarPercentage(int sensorValue, int maxValue) {
   return (sensorValue / maxValue);
 }
 
-class SensorProgress extends StatelessWidget {
-  final String label;
-  final int sensorValue;
-  final int maxValue;
-  final GlobalKey<TooltipState> tooltipKey;
-  final IconData icon;
-  final String iconName;
-  final List colorCode;
-
-  const SensorProgress({
-    super.key,
-    required this.label,
-    required this.sensorValue,
-    required this.maxValue,
-    required this.tooltipKey,
-    required this.icon,
-    required this.iconName,
-    required this.colorCode,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
+List<Widget> buildSensorProgress(
+  String label,
+  String unitName,
+  IconData icon,
+  GlobalKey<TooltipState> tooltipKey,
+  int sensorValue,
+  int maxValue,
+  List<int> colorCode,
+) {
+  return [
+    Align(
+      alignment: Alignment.centerRight,
+      child: Text('$sensorValue/$maxValue ($unitName)'),
+    ),
+    Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: Text('$sensorValue/$maxValue ($label)'),
+        TooltipIcon(
+          tooltipkey: tooltipKey,
+          iconName: label,
+          iconSymbol: icon,
+          color: Color.fromARGB(
+            colorCode[0],
+            colorCode[1],
+            colorCode[2],
+            colorCode[3],
+          ),
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TooltipIcon(
-              tooltipkey: tooltipKey,
-              iconName: iconName,
-              iconSymbol: icon,
-              color: Color.fromARGB(
-                colorCode[0],
-                colorCode[1],
-                colorCode[2],
-                colorCode[3],
-              ),
-            ),
-            SizedBox(width: 10),
-            SizedBox(
-              width: 260,
-              child: LinearProgressIndicator(
-                backgroundColor: Color.fromARGB(
-                  85,
-                  colorCode[1],
-                  colorCode[2],
-                  colorCode[3],
-                ), // Sunlight bg
-                borderRadius: BorderRadius.circular(25),
-                color: Color.fromARGB(
-                  colorCode[0],
-                  colorCode[1],
-                  colorCode[2],
-                  colorCode[3],
-                ), // Sunlight bar
-                minHeight: 20,
-                value: getProgressBarPercentage(sensorValue, maxValue),
-              ),
-            ),
-          ],
+        SizedBox(width: 10),
+        SizedBox(
+          width: 260,
+          child: LinearProgressIndicator(
+            backgroundColor: Color.fromARGB(
+              85,
+              colorCode[1],
+              colorCode[2],
+              colorCode[3],
+            ), // Sunlight bg
+            borderRadius: BorderRadius.circular(25),
+            color: Color.fromARGB(
+              colorCode[0],
+              colorCode[1],
+              colorCode[2],
+              colorCode[3],
+            ), // Sunlight bar
+            minHeight: 20,
+            value: getProgressBarPercentage(sensorValue, maxValue),
+          ),
         ),
       ],
-    );
-  }
+    ),
+  ];
 }
