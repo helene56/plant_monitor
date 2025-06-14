@@ -1,5 +1,6 @@
 import 'dart:async';
-
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:plant_monitor/data/database_helper.dart';
 import 'package:plant_monitor/data/plant.dart';
@@ -47,51 +48,75 @@ class _MyPlantStatState extends State<MyPlantStat> {
     subscibeToDevice(BluetoothDevice.fromId(plantSensor!.sensorId));
   }
 
+  Future<void> autoConnectDevice() async {
+    // if getSensor is not empty
+    // autoconnect device and add to devices
+    if (!kIsWeb && Platform.isAndroid) {
+      await FlutterBluePlus.turnOn();
+    }
+    List<PlantSensorData> sensors = await getSensors(widget.database);
+    for (var sensor in sensors) {
+      var device = BluetoothDevice.fromId(sensor.sensorId);
+      await device.connect(autoConnect: true, mtu: null).then((_) {});
+
+      await device.connectionState.firstWhere(
+        (state) => state == BluetoothConnectionState.connected,
+      );
+    }
+  }
+
   Future<void> subscibeToDevice(BluetoothDevice device) async {
     if (device.isDisconnected) {
       // Connect to the device
-      return;
+      await autoConnectDevice();
     }
 
-    List<BluetoothService> services = await device.discoverServices();
-    for (var service in services) {
-      if (service.serviceUuid.toString() ==
-          "0f956141-6b9c-4a41-a6df-977ac4b99d78") {
-        for (var c in service.characteristics) {
-          if (c.uuid.toString() == "0f956142-6b9c-4a41-a6df-977ac4b99d78") {
-            // Enable notifications
-            await c.setNotifyValue(true);
-            // Listen for value changes
-            final _bluetoothSubscription = c.onValueReceived.listen((
-              value,
-            ) async {
-              if (!mounted) return; // Check if the widget is still mounted
-              if (plantSensor == null) {
-                // Still not ready, so skip this update
-                return;
-              }
-              // update plantsensor -- should update database
-              if (mounted) {
-                setState(() {
-                  plantSensor = plantSensor!.copyWith(airTemp: value[0]);
+    device.connectionState.listen((state) async {
+      if (state == BluetoothConnectionState.connected) {
+        print('Device is connected');
+        List<BluetoothService> services = await device.discoverServices();
+        for (var service in services) {
+          if (service.serviceUuid.toString() ==
+              "0f956141-6b9c-4a41-a6df-977ac4b99d78") {
+            for (var c in service.characteristics) {
+              if (c.uuid.toString() == "0f956142-6b9c-4a41-a6df-977ac4b99d78") {
+                // Enable notifications
+                await c.setNotifyValue(true);
+                // Listen for value changes
+                final _bluetoothSubscription = c.onValueReceived.listen((
+                  value,
+                ) async {
+                  if (!mounted) return; // Check if the widget is still mounted
+                  if (plantSensor == null) {
+                    // Still not ready, so skip this update
+                    return;
+                  }
+                  // update plantsensor -- should update database
+                  if (mounted) {
+                    setState(() {
+                      plantSensor = plantSensor!.copyWith(airTemp: value[0]);
+                    });
+                  }
+
+                  // Update the database (async, outside of setState)
+                  await updateRecord(
+                    widget.database,
+                    'plant_sensor',
+                    plantSensor!.toMap(),
+                  );
+
+                  print('Sensor data: $value');
                 });
+                // Automatically cancel subscription when device disconnects
+                device.cancelWhenDisconnected(_bluetoothSubscription);
               }
-
-              // Update the database (async, outside of setState)
-              await updateRecord(
-                widget.database,
-                'plant_sensor',
-                plantSensor!.toMap(),
-              );
-
-              print('Sensor data: $value');
-            });
-            // Automatically cancel subscription when device disconnects
-            device.cancelWhenDisconnected(_bluetoothSubscription);
+            }
           }
         }
+      } else if (state == BluetoothConnectionState.disconnected) {
+        print('Device is disconnected');
       }
-    }
+    });
   }
 
   @override
