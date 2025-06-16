@@ -31,10 +31,6 @@ class _MyPlantStatState extends State<MyPlantStat> {
   void initState() {
     super.initState();
     initializeSensor();
-    // if (plantSensor != null)
-    // {
-    //   subscibeToDevice(BluetoothDevice.fromId(plantSensor!.sensorId));
-    // }
   }
 
   void initializeSensor() async {
@@ -83,7 +79,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
                 // Enable notifications
                 await c.setNotifyValue(true);
                 // Listen for value changes
-                final _bluetoothSubscription = c.onValueReceived.listen((
+                final bluetoothSubscription = c.onValueReceived.listen((
                   value,
                 ) async {
                   if (!mounted) return; // Check if the widget is still mounted
@@ -108,7 +104,13 @@ class _MyPlantStatState extends State<MyPlantStat> {
                   print('Sensor data: $value');
                 });
                 // Automatically cancel subscription when device disconnects
-                device.cancelWhenDisconnected(_bluetoothSubscription);
+                device.cancelWhenDisconnected(bluetoothSubscription);
+              } else if (c.uuid.toString() ==
+                  "0f956143-6b9c-4a41-a6df-977ac4b99d78") {
+                if (c.properties.read) {
+                  List<int> value = await c.read();
+                  print('pump status: $value');
+                }
               }
             }
           }

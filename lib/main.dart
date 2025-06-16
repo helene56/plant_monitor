@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plant_monitor/pages/statistics.dart';
 import 'pages/home.dart';
 import 'pages/water.dart';
@@ -9,38 +10,52 @@ import 'data/plant.dart';
 import 'package:plant_monitor/data/plant_type.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
-void main() {
-  runApp(MaterialApp(home: MyApp(), debugShowCheckedModeBanner: false));
+// Then define your appDatabase provider elsewhere like this:
+final appDatabase = Provider<Database>((ref) {
+  throw UnimplementedError('Database provider was not initialized');
+});
+
+void main() async {
+  // this is important to make sure flutter binding is initialized before runApp
+  WidgetsFlutterBinding.ensureInitialized();
+  // initialize database
+  final db = await initializeDatabase();
+ 
+  runApp(
+    ProviderScope(
+      overrides: [
+      appDatabase.overrideWithValue(db),
+    ],
+      child: MaterialApp(home: MyApp(), debugShowCheckedModeBanner: false),
+    ),
+  );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends ConsumerState<MyApp> {
   int currentPageindex = 1;
-
-  // call database initializing
-  late Future<Database> databasePlantKeeper;
   List<Plant> plantsCards = [];
   List<PlantType> plantingTypes = [];
 
   @override
   void initState() {
     super.initState();
-    databasePlantKeeper = initializeDatabase();
+    _initializeData(ref.read(appDatabase));
+  }
 
-    // Load data from DB once ready
-    databasePlantKeeper.then((db) async {
-      List<Plant> loadedPlants = await allPlants(db);
-      List<PlantType> loadedPlantingTypes = await plantTypes(db);
-      setState(() {
-        plantsCards = loadedPlants;
-        plantingTypes = loadedPlantingTypes;
-      });
+  void _initializeData(Database db) async {
+    final loadedPlants = await allPlants(db);
+    final loadedPlantingTypes = await plantTypes(db);
+
+    setState(() {
+      plantsCards = loadedPlants;
+      plantingTypes = loadedPlantingTypes;
     });
   }
 
@@ -48,20 +63,10 @@ class _MyAppState extends State<MyApp> {
     final result = await showDialog(
       context: context,
       builder:
-          (context) => FutureBuilder<Database>(
-            future: databasePlantKeeper,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done &&
-                  snapshot.hasData) {
-                return AddPlant(
-                  onAddPlant: _addPlant,
-                  database: snapshot.data!, // pass the actual database
-                  plantingTypes: plantingTypes,
-                );
-              } else {
-                return const Center(child: CircularProgressIndicator());
-              }
-            },
+          (context) => AddPlant(
+            onAddPlant: _addPlant,
+            database: ref.read(appDatabase),
+            plantingTypes: plantingTypes,
           ),
     );
     // if dialog was dismissed by tapping outside
@@ -75,8 +80,6 @@ class _MyAppState extends State<MyApp> {
     // call the database
     insertRecord(database, table, newPlant.toMap());
 
-    // print(await allPlants(database));
-
     setState(() {
       plantsCards.add(newPlant);
     });
@@ -84,20 +87,10 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+
     final List<Widget> widgetOptions = [
       MyWater(),
-      // pass database to myhome, so availible for delete calls as well
-      FutureBuilder(
-        future: databasePlantKeeper,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.hasData) {
-            return MyHome(plantsCards: plantsCards, database: snapshot.data!);
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
-        },
-      ),
+      MyHome(plantsCards: plantsCards, database: ref.read(appDatabase)),
       MyStats(),
     ];
     return Scaffold(
