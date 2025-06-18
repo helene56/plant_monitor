@@ -4,19 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:plant_monitor/main.dart';
 import 'data/plant_sensor_data.dart';
 import 'data/database_helper.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MyBluetooth extends StatefulWidget {
-  final Database database;
+class MyBluetooth extends ConsumerStatefulWidget {
   final bool onAddDevice;
   final bool exitAddPlant;
   final int currentPlantId;
   // final Function(DeviceIdentifier) onDataSubmit;
   const MyBluetooth({
     super.key,
-    required this.database,
     required this.onAddDevice,
     required this.exitAddPlant,
     required this.currentPlantId,
@@ -24,20 +24,22 @@ class MyBluetooth extends StatefulWidget {
   });
 
   @override
-  State<MyBluetooth> createState() => _MyBluetoothState();
+  ConsumerState<MyBluetooth> createState() => _MyBluetoothState();
 }
 
-class _MyBluetoothState extends State<MyBluetooth> {
+class _MyBluetoothState extends ConsumerState<MyBluetooth> {
+  late final Database db;
   @override
   void initState() {
     super.initState();
     initializeBluetooth(); // TODO: should really only happen once, dont call more than once
     // move this function to initializeBluetooth?
+    db = ref.read(appDatabase);
     autoConnectDevice();
     
     scanResults(); // Automatically starts scanning when MyBluetooth is started
   }
-
+  
   bool isInList(BluetoothDevice device) {
     return devices.any((entry) => entry['device'].remoteId == device.remoteId);
   }
@@ -75,7 +77,7 @@ class _MyBluetoothState extends State<MyBluetooth> {
       humidity: 0,
     );
 
-    await insertRecord(widget.database, 'plant_sensor', sensor.toMap());
+    await insertRecord(db, 'plant_sensor', sensor.toMap());
     // var sensors = await getSensors(widget.database);
   }
 
@@ -220,18 +222,6 @@ class _MyBluetoothState extends State<MyBluetooth> {
 
     addSensor(device, airTemperature);
 
-    // for (var service in services) {
-    //   // do something with service
-    //   // Reads all characteristics
-    //   var characteristics = service.characteristics;
-    //   for (BluetoothCharacteristic c in characteristics) {
-    //     if (c.properties.read) {
-    //       List<int> value = await c.read();
-    //       print("printing value..");
-    //       print(value);
-    //     }
-    //   }
-    // }
   }
 
   Future<void> autoConnectDevice() async {
@@ -240,7 +230,8 @@ class _MyBluetoothState extends State<MyBluetooth> {
     if (!kIsWeb && Platform.isAndroid) {
       await FlutterBluePlus.turnOn();
     }
-    List<PlantSensorData> sensors = await getSensors(widget.database);
+    
+    List<PlantSensorData> sensors = await getSensors(db);
     for (var sensor in sensors) {
       var device = BluetoothDevice.fromId(sensor.sensorId);
       await device.connect(autoConnect: true, mtu: null).then((_) {});
@@ -283,6 +274,7 @@ class _MyBluetoothState extends State<MyBluetooth> {
 
   @override
   Widget build(BuildContext context) {
+    
     if (widget.onAddDevice) {
       addDevice();
     }

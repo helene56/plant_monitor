@@ -5,25 +5,25 @@ import 'package:flutter/material.dart';
 import 'package:plant_monitor/data/database_helper.dart';
 import 'package:plant_monitor/data/plant.dart';
 import 'package:plant_monitor/data/plant_sensor_data.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:plant_monitor/main.dart';
+// import 'package:sqflite/sqflite.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MyPlantStat extends StatefulWidget {
+class MyPlantStat extends ConsumerStatefulWidget {
   final int plantId;
   final Plant plantCard;
-  final Database database;
   const MyPlantStat({
     super.key,
     required this.plantId,
     required this.plantCard,
-    required this.database,
   });
 
   @override
-  State<MyPlantStat> createState() => _MyPlantStatState();
+  ConsumerState<MyPlantStat> createState() => _MyPlantStatState();
 }
 
-class _MyPlantStatState extends State<MyPlantStat> {
+class _MyPlantStatState extends ConsumerState<MyPlantStat> {
   bool showingToolTips = false;
   PlantSensorData? plantSensor;
   StreamSubscription? _bluetoothSubscription;
@@ -35,7 +35,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
 
   void initializeSensor() async {
     PlantSensorData data = await getSensor(
-      widget.database,
+      ref.read(appDatabase),
       widget.plantCard.id,
     );
     setState(() {
@@ -50,7 +50,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
     if (!kIsWeb && Platform.isAndroid) {
       await FlutterBluePlus.turnOn();
     }
-    List<PlantSensorData> sensors = await getSensors(widget.database);
+    List<PlantSensorData> sensors = await getSensors(ref.read(appDatabase));
     for (var sensor in sensors) {
       var device = BluetoothDevice.fromId(sensor.sensorId);
       await device.connect(autoConnect: true, mtu: null).then((_) {});
@@ -96,7 +96,7 @@ class _MyPlantStatState extends State<MyPlantStat> {
 
                   // Update the database (async, outside of setState)
                   await updateRecord(
-                    widget.database,
+                    ref.read(appDatabase),
                     'plant_sensor',
                     plantSensor!.toMap(),
                   );

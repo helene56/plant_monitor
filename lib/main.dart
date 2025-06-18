@@ -10,7 +10,7 @@ import 'data/plant.dart';
 import 'package:plant_monitor/data/plant_type.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
-// Then define your appDatabase provider elsewhere like this:
+
 final appDatabase = Provider<Database>((ref) {
   throw UnimplementedError('Database provider was not initialized');
 });
@@ -65,7 +65,6 @@ class _MyAppState extends ConsumerState<MyApp> {
       builder:
           (context) => AddPlant(
             onAddPlant: _addPlant,
-            database: ref.read(appDatabase),
             plantingTypes: plantingTypes,
           ),
     );
@@ -90,7 +89,7 @@ class _MyAppState extends ConsumerState<MyApp> {
 
     final List<Widget> widgetOptions = [
       MyWater(),
-      MyHome(plantsCards: plantsCards, database: ref.read(appDatabase)),
+      MyHome(plantsCards: plantsCards),
       MyStats(),
     ];
     return Scaffold(

@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:plant_monitor/main.dart';
 import 'package:plant_monitor/pages/plant_stats.dart';
 import 'package:plant_monitor/data/plant.dart';
-import 'package:sqflite/sqflite.dart';
+// import 'package:sqflite/sqflite.dart';
 import 'package:plant_monitor/data/database_helper.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MyHome extends StatefulWidget {
+class MyHome extends ConsumerStatefulWidget {
   final List<Plant> plantsCards;
-  final Database database;
-  const MyHome({super.key, required this.plantsCards, required this.database});
+  const MyHome({super.key, required this.plantsCards});
 
   @override
-  State<MyHome> createState() => _MyHomeState();
+  ConsumerState<MyHome> createState() => _MyHomeState();
 }
 
-class _MyHomeState extends State<MyHome> {
+class _MyHomeState extends ConsumerState<MyHome> {
   OverlayEntry? overlayEntry;
   bool overlayCreated = false;
 
@@ -30,7 +31,7 @@ class _MyHomeState extends State<MyHome> {
       widget.plantsCards.removeWhere((plant) => plant.id == plantId);
     });
     // remove plant from database
-    deleteRecord(widget.database, 'plants', plantId);
+    deleteRecord(ref.read(appDatabase), 'plants', plantId);
     
   }
 
@@ -153,7 +154,6 @@ class _MyHomeState extends State<MyHome> {
                             plantId: plant.id,
                             plantCard: plant,
                             containerKey: key,
-                            db: widget.database,
                             onLongPressOverlay:
                                 () => _showOverlay(
                                   context,
@@ -179,7 +179,6 @@ class MyPlantContainer extends StatefulWidget {
   final String label;
   final int plantId;
   final Plant plantCard;
-  final Database db;
   final VoidCallback onLongPressOverlay;
   final GlobalKey containerKey;
   final VoidCallback onContainerPressed;
@@ -188,7 +187,6 @@ class MyPlantContainer extends StatefulWidget {
     required this.label,
     required this.plantId,
     required this.plantCard,
-    required this.db,
     required this.onLongPressOverlay,
     required this.containerKey,
     required this.onContainerPressed,
@@ -211,7 +209,6 @@ class _MyPlantContainerState extends State<MyPlantContainer> {
                 (context) => MyPlantStat(
                   plantId: widget.plantId,
                   plantCard: widget.plantCard,
-                  database: widget.db,
                 ),
           ),
         );

@@ -1,28 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:plant_monitor/main.dart';
 
 import 'package:sqflite/sqflite.dart';
 import 'package:plant_monitor/data/plant.dart';
 import 'package:plant_monitor/data/plant_type.dart';
 import 'package:plant_monitor/bluetooth_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AddPlant extends StatefulWidget {
+class AddPlant extends ConsumerStatefulWidget {
   // TODO: figure out if there is a way not to define this function again..
   final void Function(Database database, String table, Plant newPlant)
   onAddPlant;
-  final Database database;
   final List<PlantType> plantingTypes;
   const AddPlant({
     super.key,
     required this.onAddPlant,
-    required this.database,
     required this.plantingTypes,
   });
 
   @override
-  State<AddPlant> createState() => _AddPlantState();
+  ConsumerState<AddPlant> createState() => _AddPlantState();
 }
 
-class _AddPlantState extends State<AddPlant> {
+class _AddPlantState extends ConsumerState<AddPlant> {
   // controller for text input
   final TextEditingController _controller = TextEditingController();
   @override
@@ -79,7 +79,6 @@ class _AddPlantState extends State<AddPlant> {
           ),
           Text('Sensor enheder'),
           MyBluetooth(
-            database: widget.database,
             onAddDevice: addedPlant,
             exitAddPlant: exitAddPlant,
             currentPlantId: selectedPlantId!,
@@ -107,7 +106,7 @@ class _AddPlantState extends State<AddPlant> {
                 airTempMin: widget.plantingTypes[_value!].airTempMin,
               );
               // add plant!!!
-              widget.onAddPlant(widget.database, 'plants', newPlant);
+              widget.onAddPlant(ref.read(appDatabase), 'plants', newPlant);
               // should add sensor device to database and also add autoconnect
               setState(() {
                 selectedPlantId = newPlant.id;
