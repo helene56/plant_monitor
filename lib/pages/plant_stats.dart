@@ -6,7 +6,6 @@ import 'package:plant_monitor/data/database_helper.dart';
 import 'package:plant_monitor/data/plant.dart';
 import 'package:plant_monitor/data/plant_sensor_data.dart';
 import 'package:plant_monitor/main.dart';
-// import 'package:sqflite/sqflite.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
