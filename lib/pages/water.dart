@@ -17,7 +17,7 @@ class MyWater extends ConsumerStatefulWidget {
 
 class _MyWaterState extends ConsumerState<MyWater> {
   PlantSensorData? plantSensor;
-  int? pumpStatus; // or int pumpStatus = 0;
+
   int pump = 0;
   @override
   void initState() {
@@ -27,35 +27,30 @@ class _MyWaterState extends ConsumerState<MyWater> {
 
   void initializeSensor() async {
     final db = ref.read(appDatabase);
-    PlantSensorData data = await getSensor(
-      db,
-      widget.plantCard[0].id,
-    );
+    // TODO: need to figure out how to store water container data..
+    // should not index first element from plantCard
+    PlantSensorData data = await getSensor(db, widget.plantCard[0].id);
     final int? status = await subscibeGetPumpStatus(
-    BluetoothDevice.fromId(data.sensorId),
-    db,
-  );
+      BluetoothDevice.fromId(data.sensorId),
+      db,
+    );
+    // maybe it should default to last known state?
     final int gotPumpStatus = status ?? 0; // <-- Default to 0 if null
 
-  setState(() {
-    plantSensor = data;
-    pumpStatus = gotPumpStatus; // <-- Store as int
-    pump = gotPumpStatus;
-  });
 
-  print('Pump status: $gotPumpStatus');
+    setState(() {
+      plantSensor = data;
+      pump = gotPumpStatus;
+    });
 
-    
-    
+    print('Pump status: $gotPumpStatus');
   }
-  
+
   @override
   Widget build(BuildContext context) {
-    // if (pumpStatus == null)
-    // {
-    //   int gotPumpStatus = 0;
-    // }
-    return Center(child: Text('my text for water container. This is the stat: $pump'));
+
+    return Center(
+      child: Text('my text for water container. This is the stat: $pump'),
+    );
   }
 }
-
