@@ -199,56 +199,111 @@ Future<Database> initializeDatabase() async {
   // Importing 'package:flutter/widgets.dart' is required.
   WidgetsFlutterBinding.ensureInitialized();
 
+  String sql = '''
+    CREATE TABLE plants(
+      id INTEGER PRIMARY KEY,
+      name TEXT,
+      type TEXT,
+      waterNeedsMin INTEGER,
+      waterNeedsMax INTEGER,
+      sunLuxMin INTEGER,
+      sunLuxMax INTEGER,
+      airTempMin INTEGER,
+      airTempMax INTEGER,
+      humidityMin INTEGER,
+      humidityMax INTEGER
+    );
+    CREATE TABLE plant_types(
+      id INTEGER PRIMARY KEY,
+      label TEXT,
+      type TEXT,
+      waterNeedsMin INTEGER,
+      waterNeedsMax INTEGER,
+      sunLuxMin INTEGER,
+      sunLuxMax INTEGER,
+      airTempMin INTEGER,
+      airTempMax INTEGER,
+      humidityMin INTEGER,
+      humidityMax INTEGER
+    );
+    CREATE TABLE plant_sensor(
+      id INTEGER PRIMARY KEY,
+      sensorId TEXT,
+      sensorName TEXT,
+      water INTEGER,
+      sunLux INTEGER,
+      airTemp INTEGER,
+      earthTemp INTEGER,
+      humidity INTEGER
+    );
+    CREATE TABLE containers(
+      id INTEGER PRIMARY KEY,
+      current_water_level REAL,
+    );
+    CREATE TABLE plant_containers(
+      plant_id INTEGER,
+      container_id INTEGER,
+      PRIMARY KEY (plant_id, container_id),
+      FOREIGN KEY (plant_id) REFERENCES plants (plant_id)
+        ON UPDATE SET NULL
+        ON DELETE SET NULL,
+      FOREIGN KEY (container_id) REFERENCES containers (container_id)
+        ON UPDATE SET NULL
+        ON DELETE SET NULL,
+    );
+  ''';
+
   // Open the database and store the reference.
   final database = await openDatabase(
     join(await getDatabasesPath(), 'plantkeeper.db'),
     // When the database is first created, create a table to store plants.
     onCreate: (db, version) {
       // Run the CREATE TABLE statement on the database.
-      db.execute(
-        'CREATE TABLE plants('
-        'id INTEGER PRIMARY KEY, '
-        'name TEXT, '
-        'type TEXT, '
-        'waterNeedsMin INTEGER, '
-        'waterNeedsMax INTEGER, '
-        'sunLuxMin INTEGER, '
-        'sunLuxMax INTEGER, '
-        'airTempMin INTEGER, '
-        'airTempMax INTEGER, '
-        'humidityMin INTEGER, '
-        'humidityMax INTEGER'
-        ')',
-      );
+      db.execute(sql);
+      // db.execute(
+      //   'CREATE TABLE plants('
+      //   'id INTEGER PRIMARY KEY, '
+      //   'name TEXT, '
+      //   'type TEXT, '
+      //   'waterNeedsMin INTEGER, '
+      //   'waterNeedsMax INTEGER, '
+      //   'sunLuxMin INTEGER, '
+      //   'sunLuxMax INTEGER, '
+      //   'airTempMin INTEGER, '
+      //   'airTempMax INTEGER, '
+      //   'humidityMin INTEGER, '
+      //   'humidityMax INTEGER'
+      //   ')',
+      // );
 
-      db.execute(
-        'CREATE TABLE plant_types('
-        'id INTEGER PRIMARY KEY,'
-        'label TEXT,'
-        'type TEXT, '
-        'waterNeedsMin INTEGER, '
-        'waterNeedsMax INTEGER, '
-        'sunLuxMin INTEGER, '
-        'sunLuxMax INTEGER, '
-        'airTempMin INTEGER, '
-        'airTempMax INTEGER, '
-        'humidityMin INTEGER, '
-        'humidityMax INTEGER'
-        ')',
-      );
+      // db.execute(
+      //   'CREATE TABLE plant_types('
+      //   'id INTEGER PRIMARY KEY,'
+      //   'label TEXT,'
+      //   'type TEXT, '
+      //   'waterNeedsMin INTEGER, '
+      //   'waterNeedsMax INTEGER, '
+      //   'sunLuxMin INTEGER, '
+      //   'sunLuxMax INTEGER, '
+      //   'airTempMin INTEGER, '
+      //   'airTempMax INTEGER, '
+      //   'humidityMin INTEGER, '
+      //   'humidityMax INTEGER'
+      //   ')',
+      // );
 
-      db.execute(
-        'CREATE TABLE plant_sensor('
-        'id INTEGER PRIMARY KEY,'
-        'sensorId TEXT, '
-        'sensorName TEXT, '
-        'water INTEGER, '
-        'sunLux INTEGER, '
-        'airTemp INTEGER, '
-        'earthTemp INTEGER, '
-        'humidity INTEGER '
-        ')',
-      );
+      // db.execute(
+      //   'CREATE TABLE plant_sensor('
+      //   'id INTEGER PRIMARY KEY,'
+      //   'sensorId TEXT, '
+      //   'sensorName TEXT, '
+      //   'water INTEGER, '
+      //   'sunLux INTEGER, '
+      //   'airTemp INTEGER, '
+      //   'earthTemp INTEGER, '
+      //   'humidity INTEGER '
+      //   ')',
+      // );
     },
     version: 1,
   );
