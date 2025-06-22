@@ -194,6 +194,13 @@ Future<void> deleteRecord(Database database, String table, int id) async {
   );
 }
 
+
+Future<void> getLatestEntry(Database database, String table) async {
+  final db = database;
+  await db.query(table, orderBy: 'id DESC', limit: 1);
+}
+
+
 Future<Database> initializeDatabase() async {
   // Avoid errors caused by flutter upgrade.
   // Importing 'package:flutter/widgets.dart' is required.
@@ -241,9 +248,9 @@ Future<Database> initializeDatabase() async {
       current_water_level REAL,
     );
     CREATE TABLE plant_containers(
+      id INTEGER PRIMARY KEY,
       plant_id INTEGER,
       container_id INTEGER,
-      PRIMARY KEY (plant_id, container_id),
       FOREIGN KEY (plant_id) REFERENCES plants (plant_id)
         ON UPDATE SET NULL
         ON DELETE SET NULL,
