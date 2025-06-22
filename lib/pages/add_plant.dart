@@ -6,6 +6,9 @@ import 'package:plant_monitor/data/plant.dart';
 import 'package:plant_monitor/data/plant_type.dart';
 import 'package:plant_monitor/bluetooth_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plant_monitor/data/database_helper.dart';
+import 'package:plant_monitor/data/water_container.dart';
+import 'package:plant_monitor/data/plant_container.dart';
 
 class AddPlant extends ConsumerStatefulWidget {
   // TODO: figure out if there is a way not to define this function again..
@@ -107,6 +110,12 @@ class _AddPlantState extends ConsumerState<AddPlant> {
               );
               // add plant!!!
               widget.onAddPlant(ref.read(appDatabase), 'plants', newPlant);
+              // insert current val of water from container
+              // for now lets just initalize with 0
+              var newWaterContainer = WaterContainer(id: DateTime.now().millisecondsSinceEpoch, currentWaterLevel: 0);
+              var newPlantWaterRelation = PlantContainer(plantId: newPlant.id, containerId: newWaterContainer.id);
+              insertRecord(ref.read(appDatabase), 'containers', newWaterContainer.toMap());
+              insertRecord(ref.read(appDatabase), 'plant_containers', newPlantWaterRelation.toMap());
               // should add sensor device to database and also add autoconnect
               setState(() {
                 selectedPlantId = newPlant.id;
