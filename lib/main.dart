@@ -88,7 +88,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   Widget build(BuildContext context) {
 
     final List<Widget> widgetOptions = [
-      MyWater(plantCard: plantsCards,),
+      MyWater(plantCards: plantsCards,),
       MyHome(plantsCards: plantsCards),
       MyStats(),
     ];
