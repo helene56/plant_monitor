@@ -8,8 +8,8 @@ import 'package:plant_monitor/main.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class MyWater extends ConsumerStatefulWidget {
-  final List<Plant> plantCard;
-  const MyWater({super.key, required this.plantCard});
+  final List<Plant> plantCards;
+  const MyWater({super.key, required this.plantCards});
 
   @override
   ConsumerState<MyWater> createState() => _MyWaterState();
@@ -29,12 +29,12 @@ class _MyWaterState extends ConsumerState<MyWater> {
     final db = ref.read(appDatabase);
     // TODO: need to figure out how to store water container data..
     // should not index first element from plantCard
-    PlantSensorData data = await getSensor(db, widget.plantCard[0].id);
+    PlantSensorData data = await getSensor(db, widget.plantCards[0].id);
     final int? status = await subscibeGetPumpStatus(
       BluetoothDevice.fromId(data.sensorId),
       db,
     );
-    // maybe it should default to last known state?
+    // maybe it should default to last known state from database?
     final int gotPumpStatus = status ?? 0; // <-- Default to 0 if null
 
 
