@@ -11,7 +11,7 @@ Future<void> autoConnectDevice(Database db) async {
   if (!kIsWeb && Platform.isAndroid) {
     await FlutterBluePlus.turnOn();
   }
-  List<PlantSensorData> sensors = await getSensors(db);
+  List<PlantSensorData> sensors = await getAllSensors(db);
   for (var sensor in sensors) {
     var device = BluetoothDevice.fromId(sensor.sensorId);
     await device.connect(autoConnect: true, mtu: null).then((_) {});
