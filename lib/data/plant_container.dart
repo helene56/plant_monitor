@@ -11,8 +11,8 @@ class PlantContainer {
 
   Map<String, Object?> toMap() {
     return {
-      'id': plantId,
-      'currentWaterLevel': containerId,
+      'plantId': plantId,
+      'containerId': containerId,
     };
   }
 }
