@@ -66,6 +66,7 @@ class _MyBluetoothState extends ConsumerState<MyBluetooth> {
     BluetoothDevice selectedDevice,
     int airTemperature,
   ) async {
+    // TODO: give sensor its own id, should just make sqlite update it automatically -> see plant_containers
     var sensor = PlantSensorData(
       id: widget.currentPlantId,
       sensorId: selectedDevice.remoteId.toString(),
@@ -231,7 +232,7 @@ class _MyBluetoothState extends ConsumerState<MyBluetooth> {
       await FlutterBluePlus.turnOn();
     }
     
-    List<PlantSensorData> sensors = await getSensors(db);
+    List<PlantSensorData> sensors = await getAllSensors(db);
     for (var sensor in sensors) {
       var device = BluetoothDevice.fromId(sensor.sensorId);
       await device.connect(autoConnect: true, mtu: null).then((_) {});
