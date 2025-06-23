@@ -17,6 +17,7 @@ class MyWater extends ConsumerStatefulWidget {
 
 class _MyWaterState extends ConsumerState<MyWater> {
   PlantSensorData? plantSensor;
+  List<int> statuses = [];
 
   int pump = 0;
   @override
@@ -26,31 +27,59 @@ class _MyWaterState extends ConsumerState<MyWater> {
   }
 
   void initializeSensor() async {
+    List<int> newStatuses = [];
     final db = ref.read(appDatabase);
     // TODO: need to figure out how to store water container data..
     // should not index first element from plantCard
-    PlantSensorData data = await getSensor(db, widget.plantCards[0].id);
-    final int? status = await subscibeGetPumpStatus(
-      BluetoothDevice.fromId(data.sensorId),
-      db,
-    );
-    // maybe it should default to last known state from database?
-    final int gotPumpStatus = status ?? 0; // <-- Default to 0 if null
-
+    List<PlantSensorData> allSensors = await getAllSensors(db);
+    List<String> selectSensors = await getSelectedSensors(db, allSensors);
+    // PlantSensorData data = await getSensor(db, widget.plantCards[0].id);
+    for (var sensorId in selectSensors) {
+      final int? status = await subscibeGetPumpStatus(
+        BluetoothDevice.fromId(sensorId),
+        db,
+      );
+      newStatuses.add(status!);
+    }
 
     setState(() {
-      plantSensor = data;
-      pump = gotPumpStatus;
+      statuses = newStatuses;
     });
 
-    print('Pump status: $gotPumpStatus');
+    // maybe it should default to last known state from database?
+    // final int gotPumpStatus = status ?? 0; // <-- Default to 0 if null
+
+    // setState(() {
+    //   plantSensor = data;
+    //   pump = gotPumpStatus;
+    // });
+
+    // print('Pump status: $gotPumpStatus');
   }
 
   @override
   Widget build(BuildContext context) {
-
-    return Center(
-      child: Text('my text for water container. This is the stat: $pump'),
+    return SafeArea(
+      child: ListView.builder(
+        padding: const EdgeInsets.all(8),
+        itemCount: statuses.length,
+        itemBuilder: (BuildContext context, int index) {
+          return Container(
+            height: 50,
+            color: Colors.amber,
+            child: Center(
+              child: Text(
+                'my text for water container. This is the stat: ${statuses[index]}',
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
+
+
+// Center(
+//       child: Text('my text for water container. This is the stat: $pump'),
+//     );
