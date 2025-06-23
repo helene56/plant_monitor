@@ -49,7 +49,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
     if (!kIsWeb && Platform.isAndroid) {
       await FlutterBluePlus.turnOn();
     }
-    List<PlantSensorData> sensors = await getSensors(ref.read(appDatabase));
+    List<PlantSensorData> sensors = await getAllSensors(ref.read(appDatabase));
     for (var sensor in sensors) {
       var device = BluetoothDevice.fromId(sensor.sensorId);
       await device.connect(autoConnect: true, mtu: null).then((_) {});
