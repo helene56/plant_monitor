@@ -48,7 +48,25 @@ class _MyStatsState extends State<MyStats> {
           ],
         ),
         children: [
-          IconButton(onPressed: () {}, icon: Icon(Icons.energy_savings_leaf)),
+          Tooltip(
+            preferBelow: true,
+            triggerMode: TooltipTriggerMode.tap,
+            message: 'hey',
+            child: SizedBox(
+              height: 20,
+              width: 20,
+              child: GestureDetector(
+                // behavior: HitTestBehavior.opaque, // Makes the entire padded area tappable
+                onTap: () {
+                  print("heyy you clicked.");
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: IconButton(onPressed: (){}, icon: Icon(Icons.energy_savings_leaf)),
+                ),
+              ),
+            ),
+          ),
           Icon(Icons.spa),
           Icon(Icons.grass),
           Icon(Icons.eco),
