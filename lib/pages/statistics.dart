@@ -9,6 +9,8 @@ class MyStats extends StatefulWidget {
 }
 
 class _MyStatsState extends State<MyStats> {
+  final GlobalKey<TooltipState> _tooltipKey = GlobalKey<TooltipState>();
+
   @override
   // TODO: move to water page
   Widget build(BuildContext context) {
@@ -48,23 +50,17 @@ class _MyStatsState extends State<MyStats> {
           ],
         ),
         children: [
-          Tooltip(
-            preferBelow: true,
-            triggerMode: TooltipTriggerMode.tap,
-            message: 'hey',
-            child: SizedBox(
-              height: 20,
-              width: 20,
-              child: GestureDetector(
-                // behavior: HitTestBehavior.opaque, // Makes the entire padded area tappable
-                onTap: () {
-                  print("heyy you clicked.");
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: IconButton(onPressed: (){}, icon: Icon(Icons.energy_savings_leaf)),
-                ),
-              ),
+          GestureDetector(
+            onTap: () {
+              final dynamic tooltip = _tooltipKey.currentState;
+              tooltip?.ensureTooltipVisible();
+              print("Tapped!");
+            },
+            child: Tooltip(
+              key: _tooltipKey,
+              message: 'hey',
+              triggerMode: TooltipTriggerMode.manual, // Important!
+              child: Icon(Icons.energy_savings_leaf),
             ),
           ),
           Icon(Icons.spa),
