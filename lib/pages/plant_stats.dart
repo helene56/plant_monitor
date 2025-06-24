@@ -10,11 +10,9 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class MyPlantStat extends ConsumerStatefulWidget {
-  final int plantId;
   final Plant plantCard;
   const MyPlantStat({
     super.key,
-    required this.plantId,
     required this.plantCard,
   });
 
