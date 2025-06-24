@@ -118,8 +118,8 @@ Future<List<String>> getSelectedSensors(
           in plantContainerMap)
         PlantContainer(plantId: id, containerId: containerId),
     ];
-    var plantyplants = await allPlants(db);
-    var containyPlants = await allPlantContainers(db);
+    // TODO: for now each plant get a container, at some point there should be 
+    // an option to share a container between plants
     for (var plantContainer in plantContainers) {
       if (!waterContainerId.contains(plantContainer.containerId)) {
         waterContainerId.add(plantContainer.containerId);
@@ -129,6 +129,28 @@ Future<List<String>> getSelectedSensors(
   }
 
   return selectedSensorsId;
+}
+
+
+Future<List<WaterContainer>> getAllWaterContainers(Database database) async {
+  // Get a reference to the database.
+  final db = database;
+
+  final List<Map<String, Object?>> waterContainerMap = await db.query(
+    'containers',
+  );
+
+  return [
+    for (var {
+          'id': id as int,
+          'currentWaterLevel': currentWaterLevel,
+        }
+        in waterContainerMap)
+      WaterContainer(
+        id: id,
+        currentWaterLevel: (currentWaterLevel as double).toInt(),
+      ),
+  ];
 }
 
 Future<List<PlantSensorData>> getAllSensors(Database database) async {
