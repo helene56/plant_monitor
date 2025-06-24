@@ -23,29 +23,28 @@ Future<void> autoConnectDevice(Database db) async {
 }
 
 Future<int?> subscibeGetPumpStatus(BluetoothDevice device, Database db) async {
-  // Try to connect if disconnected
-  if (device.isDisconnected) {
+
+  // Wait for the device to be connected, or try to connect if disconnected
+  BluetoothConnectionState state = await device.connectionState.first;
+  if (state == BluetoothConnectionState.disconnected) {
     try {
       await device.connect(autoConnect: true, mtu: null)
-          .timeout(const Duration(milliseconds: 100));
-      // Wait until the device is connected, with a timeout
-      await device.connectionState
-          .firstWhere((state) => state == BluetoothConnectionState.connected)
-          .timeout(const Duration(milliseconds: 100));
-    } catch (e) {
-      // Connection failed or timed out
-      return -1;
-    }
-  } else {
-    // If already connecting/connected, still wait for connected state with timeout
-    try {
-      await device.connectionState
-          .firstWhere((state) => state == BluetoothConnectionState.connected)
           .timeout(const Duration(milliseconds: 100));
     } catch (e) {
       return -1;
     }
   }
+
+  // Wait until the device is connected (with timeout)
+  try {
+    await device.connectionState
+        .firstWhere((s) => s == BluetoothConnectionState.connected)
+        .timeout(const Duration(milliseconds: 100));
+  } catch (e) {
+    return -1;
+  }
+
+
 
   List<BluetoothService> services = await device.discoverServices();
   for (var service in services) {
