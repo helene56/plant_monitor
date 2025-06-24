@@ -150,8 +150,6 @@ class _MyHomeState extends ConsumerState<MyHome> {
                               GlobalKey(); // unique key for each container
                           // TODO: maybe passing plant alone is enough in MyPlantContainer?
                           return MyPlantContainer(
-                            label: plant.name,
-                            plantId: plant.id,
                             plantCard: plant,
                             containerKey: key,
                             onLongPressOverlay:
@@ -176,16 +174,12 @@ class _MyHomeState extends ConsumerState<MyHome> {
 }
 
 class MyPlantContainer extends StatefulWidget {
-  final String label;
-  final int plantId;
   final Plant plantCard;
   final VoidCallback onLongPressOverlay;
   final GlobalKey containerKey;
   final VoidCallback onContainerPressed;
   const MyPlantContainer({
     super.key,
-    required this.label,
-    required this.plantId,
     required this.plantCard,
     required this.onLongPressOverlay,
     required this.containerKey,
@@ -207,7 +201,6 @@ class _MyPlantContainerState extends State<MyPlantContainer> {
           MaterialPageRoute(
             builder:
                 (context) => MyPlantStat(
-                  plantId: widget.plantId,
                   plantCard: widget.plantCard,
                 ),
           ),
@@ -243,7 +236,7 @@ class _MyPlantContainerState extends State<MyPlantContainer> {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
-                    widget.label,
+                    widget.plantCard.name,
                     style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
                   ),
                 ),
