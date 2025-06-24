@@ -10,6 +10,7 @@ class MyStats extends StatefulWidget {
 
 class _MyStatsState extends State<MyStats> {
   @override
+  // TODO: move to water page
   Widget build(BuildContext context) {
     return Center(
       child: CircleList(
