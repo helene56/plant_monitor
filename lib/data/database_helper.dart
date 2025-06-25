@@ -153,6 +153,28 @@ Future<List<WaterContainer>> getAllWaterContainers(Database database) async {
   ];
 }
 
+Future<List<PlantContainer>> getAllPlantContainers(Database database) async {
+  // Get a reference to the database.
+  final db = database;
+
+  final List<Map<String, Object?>> plantContainerMap = await db.query(
+    'plant_containers',
+  );
+
+  return [
+    for (var {
+          'plantId': plantId as int,
+          'containerId': containerId as int,
+        }
+        in plantContainerMap)
+      PlantContainer(
+        plantId: plantId,
+        containerId: containerId,
+      ),
+  ];
+}
+
+
 Future<List<PlantSensorData>> getAllSensors(Database database) async {
   // Get a reference to the database.
   final db = database;

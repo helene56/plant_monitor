@@ -20,25 +20,55 @@ class MyWater extends ConsumerStatefulWidget {
 class _MywaterFill extends ConsumerState<MyWater> {
   PlantSensorData? plantSensor;
   List<int> statuses = [];
+  List<int> containerId = [];
+  Map<int, List<String>> plantInfo = {};
 
   int pump = 0;
   @override
   void initState() {
     super.initState();
-    // TODO: should initalize first from database, then from program.
-    // when connected of course this is maybe overwritten.
+    lastKnownPumpStatus().then((_) {
+      getPlants();
+    }); // initialize with values from db
     initializeSensor();
+    // getPlants();
   }
 
-  void lastKnownPumpStatus() async {
+  void getPlants() async {
+    final db = ref.read(appDatabase);
+    Map<int, List<String>> plantRelation = {
+      for (var container in containerId) container: <String>[],
+    };
+    // get all plants
+    var getPlants = await allPlants(db);
+    // look up in db plant_containers, what container each plant has
+    var getPlantContainerRelation = await getAllPlantContainers(db);
+    // add plant to correct container displayed
+    for (var plant in getPlants) {
+      for (var containerRelation in getPlantContainerRelation) {
+        if (plant.id == containerRelation.plantId) {
+          plantRelation[containerRelation.containerId]?.add(plant.name);
+        }
+      }
+    }
+
+    setState(() {
+      plantInfo = plantRelation;
+    });
+  }
+
+  Future<void> lastKnownPumpStatus() async {
     List<int> newStatuses = [];
+    List<int> currentContainerId = [];
     final db = ref.read(appDatabase);
     List<WaterContainer> waterContainers = await getAllWaterContainers(db);
     for (var container in waterContainers) {
       newStatuses.add(container.currentWaterLevel);
+      currentContainerId.add(container.id);
     }
     setState(() {
       statuses = newStatuses;
+      containerId = currentContainerId;
     });
   }
 
@@ -55,7 +85,6 @@ class _MywaterFill extends ConsumerState<MyWater> {
         db,
       );
       if (status == -1) {
-        lastKnownPumpStatus();
         return;
       }
       newStatuses.add(status!);
@@ -72,14 +101,17 @@ class _MywaterFill extends ConsumerState<MyWater> {
       child: SizedBox(
         height: 697.4,
         child: ListView.builder(
-          // scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.all(8),
           itemCount: statuses.length,
           itemBuilder: (BuildContext context, int index) {
             return Container(
               margin: EdgeInsets.all(15),
               child: Center(
-                child: CustomCircleIcons(waterFill: statuses[index]),
+                child: CustomCircleIcons(
+                  plantRelation: plantInfo,
+                  waterFill: statuses[index],
+                  relationKey: containerId[index],
+                ),
               ),
             );
           },
@@ -91,7 +123,14 @@ class _MywaterFill extends ConsumerState<MyWater> {
 
 class CustomCircleIcons extends StatelessWidget {
   final int waterFill;
-  const CustomCircleIcons({super.key, required this.waterFill});
+  final Map<int, List<String>> plantRelation;
+  final int relationKey;
+  const CustomCircleIcons({
+    super.key,
+    required this.waterFill,
+    required this.plantRelation,
+    required this.relationKey,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -99,14 +138,12 @@ class CustomCircleIcons extends StatelessWidget {
     final double outerRadius = 100;
     final double iconRadius = 24;
     final double iconCircleRadius = outerRadius * 0.8;
-    final List<IconData> icons = [
-      Icons.home,
-      Icons.favorite,
-      Icons.settings,
-      Icons.person,
-      Icons.lightbulb,
-      Icons.abc,
-    ];
+    final List<IconData> icons = [];
+    if (plantRelation[relationKey] != null) {
+      for (var plants in plantRelation[relationKey]!) {
+        icons.add(Icons.eco);
+      }
+    }
 
     return Center(
       child: SizedBox(
@@ -173,7 +210,10 @@ class CustomCircleIcons extends StatelessWidget {
                   width: iconRadius * 2,
                   height: iconRadius * 2,
                   child: Tooltip(
-                    message: 'hey',
+                    message:
+                        plantRelation[relationKey] != null
+                            ? plantRelation[relationKey]![i]
+                            : '',
                     triggerMode: TooltipTriggerMode.tap,
                     preferBelow: false,
                     child: Icon(icons[i], size: 28, color: Colors.blueAccent),
