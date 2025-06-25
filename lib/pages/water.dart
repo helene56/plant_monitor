@@ -9,6 +9,8 @@ import 'package:plant_monitor/main.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:math';
 
+// TODO: better naming in this file..
+
 class MyWater extends ConsumerStatefulWidget {
   final List<Plant> plantCards;
   const MyWater({super.key, required this.plantCards});
