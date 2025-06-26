@@ -118,7 +118,7 @@ Future<List<String>> getSelectedSensors(
           in plantContainerMap)
         PlantContainer(plantId: id, containerId: containerId),
     ];
-    // TODO: for now each plant get a container, at some point there should be 
+    // TODO: for now each plant get a container, at some point there should be
     // an option to share a container between plants
     for (var plantContainer in plantContainers) {
       if (!waterContainerId.contains(plantContainer.containerId)) {
@@ -131,7 +131,6 @@ Future<List<String>> getSelectedSensors(
   return selectedSensorsId;
 }
 
-
 Future<List<WaterContainer>> getAllWaterContainers(Database database) async {
   // Get a reference to the database.
   final db = database;
@@ -141,10 +140,7 @@ Future<List<WaterContainer>> getAllWaterContainers(Database database) async {
   );
 
   return [
-    for (var {
-          'id': id as int,
-          'currentWaterLevel': currentWaterLevel,
-        }
+    for (var {'id': id as int, 'currentWaterLevel': currentWaterLevel}
         in waterContainerMap)
       WaterContainer(
         id: id,
@@ -162,18 +158,11 @@ Future<List<PlantContainer>> getAllPlantContainers(Database database) async {
   );
 
   return [
-    for (var {
-          'plantId': plantId as int,
-          'containerId': containerId as int,
-        }
+    for (var {'plantId': plantId as int, 'containerId': containerId as int}
         in plantContainerMap)
-      PlantContainer(
-        plantId: plantId,
-        containerId: containerId,
-      ),
+      PlantContainer(plantId: plantId, containerId: containerId),
   ];
 }
-
 
 Future<List<PlantSensorData>> getAllSensors(Database database) async {
   // Get a reference to the database.
@@ -253,23 +242,17 @@ Future<List<PlantContainer>> allPlantContainers(Database database) async {
   // Get a reference to the database.
   final db = database;
   // Query the table for all the plants.
-  final List<Map<String, Object?>> plantMapContainers = await db.query('plant_containers');
+  final List<Map<String, Object?>> plantMapContainers = await db.query(
+    'plant_containers',
+  );
 
   // Convert the list of each plant's fields into a list of `Plant` objects.
   return [
-    for (final {
-          'plantId': plantId as int,
-          'containerId': containerId as int,
-        }
+    for (final {'plantId': plantId as int, 'containerId': containerId as int}
         in plantMapContainers)
-      PlantContainer(
-        plantId: plantId,
-        containerId: containerId,
-      ),
+      PlantContainer(plantId: plantId, containerId: containerId),
   ];
 }
-
-
 
 Future<void> updateRecord(
   Database database,
@@ -305,60 +288,6 @@ Future<Database> initializeDatabase() async {
   // Avoid errors caused by flutter upgrade.
   // Importing 'package:flutter/widgets.dart' is required.
   WidgetsFlutterBinding.ensureInitialized();
-
-  // String sql = '''
-  //   CREATE TABLE plants(
-  //     id INTEGER PRIMARY KEY,
-  //     name TEXT,
-  //     type TEXT,
-  //     waterNeedsMin INTEGER,
-  //     waterNeedsMax INTEGER,
-  //     sunLuxMin INTEGER,
-  //     sunLuxMax INTEGER,
-  //     airTempMin INTEGER,
-  //     airTempMax INTEGER,
-  //     humidityMin INTEGER,
-  //     humidityMax INTEGER
-  //   );
-  //   CREATE TABLE plant_types(
-  //     id INTEGER PRIMARY KEY,
-  //     label TEXT,
-  //     type TEXT,
-  //     waterNeedsMin INTEGER,
-  //     waterNeedsMax INTEGER,
-  //     sunLuxMin INTEGER,
-  //     sunLuxMax INTEGER,
-  //     airTempMin INTEGER,
-  //     airTempMax INTEGER,
-  //     humidityMin INTEGER,
-  //     humidityMax INTEGER
-  //   );
-  //   CREATE TABLE plant_sensor(
-  //     id INTEGER PRIMARY KEY,
-  //     sensorId TEXT,
-  //     sensorName TEXT,
-  //     water INTEGER,
-  //     sunLux INTEGER,
-  //     airTemp INTEGER,
-  //     earthTemp INTEGER,
-  //     humidity INTEGER
-  //   );
-  //   CREATE TABLE containers(
-  //     id INTEGER PRIMARY KEY,
-  //     current_water_level REAL,
-  //   );
-  //   CREATE TABLE plant_containers(
-  //     id INTEGER PRIMARY KEY,
-  //     plant_id INTEGER,
-  //     container_id INTEGER,
-  //     FOREIGN KEY (plant_id) REFERENCES plants (plant_id)
-  //       ON UPDATE SET NULL
-  //       ON DELETE SET NULL,
-  //     FOREIGN KEY (container_id) REFERENCES containers (container_id)
-  //       ON UPDATE SET NULL
-  //       ON DELETE SET NULL,
-  //   );
-  // ''';
 
   // Open the database and store the reference.
   final database = await openDatabase(
