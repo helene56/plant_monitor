@@ -86,6 +86,8 @@ class _AddPlantState extends ConsumerState<AddPlant> {
             exitAddPlant: exitAddPlant,
             currentPlantId: selectedPlantId!,
           ),
+          Text('Vand beholdere'),
+          ExistingWaterContainers(),
         ],
       ),
       actions: [
@@ -112,10 +114,24 @@ class _AddPlantState extends ConsumerState<AddPlant> {
               widget.onAddPlant(ref.read(appDatabase), 'plants', newPlant);
               // insert current val of water from container
               // for now lets just initalize with 0
-              var newWaterContainer = WaterContainer(id: DateTime.now().millisecondsSinceEpoch, currentWaterLevel: 0);
-              var newPlantWaterRelation = PlantContainer(plantId: newPlant.id, containerId: newWaterContainer.id);
-              insertRecord(ref.read(appDatabase), 'containers', newWaterContainer.toMap());
-              insertRecord(ref.read(appDatabase), 'plant_containers', newPlantWaterRelation.toMap());
+              var newWaterContainer = WaterContainer(
+                id: DateTime.now().millisecondsSinceEpoch,
+                currentWaterLevel: 0,
+              );
+              var newPlantWaterRelation = PlantContainer(
+                plantId: newPlant.id,
+                containerId: newWaterContainer.id,
+              );
+              insertRecord(
+                ref.read(appDatabase),
+                'containers',
+                newWaterContainer.toMap(),
+              );
+              insertRecord(
+                ref.read(appDatabase),
+                'plant_containers',
+                newPlantWaterRelation.toMap(),
+              );
               // should add sensor device to database and also add autoconnect
               setState(() {
                 selectedPlantId = newPlant.id;
@@ -144,6 +160,65 @@ class _AddPlantState extends ConsumerState<AddPlant> {
           },
           child: Text('Luk'),
         ),
+      ],
+    );
+  }
+}
+
+class ExistingWaterContainers extends ConsumerStatefulWidget {
+  const ExistingWaterContainers({super.key});
+
+  @override
+  ConsumerState<ExistingWaterContainers> createState() =>
+      _ExistingWaterContainersState();
+}
+
+class _ExistingWaterContainersState
+    extends ConsumerState<ExistingWaterContainers> {
+  int numContainers = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNumContainers();
+  }
+
+  Future<void> _loadNumContainers() async {
+    final containers = await allPlantContainers(ref.read(appDatabase));
+    setState(() {
+      numContainers = containers.length;
+    });
+  }
+
+  int? selectedContainer = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 5.0,
+      children: [
+        // Standard option always shown first
+        ChoiceChip(
+          label: Text('Ny'),
+          selected: selectedContainer == null,
+          onSelected: (bool selected) {
+            setState(() {
+              selectedContainer = selected ? null : selectedContainer;
+            });
+          },
+        ),
+        // Dynamically generated chips
+        ...List<Widget>.generate(numContainers, (int index) {
+          return ChoiceChip(
+            label: Text('Beholder ${index + 1}'),
+            selected: selectedContainer == index,
+            onSelected: (bool selected) {
+              setState(() {
+                selectedContainer = selected ? index : null;
+              });
+            },
+          );
+        }),
       ],
     );
   }
