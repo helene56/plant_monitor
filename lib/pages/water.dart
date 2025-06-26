@@ -208,7 +208,7 @@ class CustomCircleIcons extends StatelessWidget {
               return Positioned(
                 left: outerRadius + x - iconRadius,
                 top: outerRadius + y - iconRadius,
-                child: Container(
+                child: SizedBox(
                   width: iconRadius * 2,
                   height: iconRadius * 2,
                   child: Tooltip(
