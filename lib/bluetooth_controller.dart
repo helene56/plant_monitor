@@ -45,6 +45,7 @@ class _MyBluetoothState extends ConsumerState<MyBluetooth> {
   }
 
   Future<void> addDevice() async {
+    // TODO: deal with the situation where no device is connected
     if (_value != null) {
       var selectedDevice = devices[_value!]['device'];
 
