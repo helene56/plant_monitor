@@ -40,6 +40,13 @@ class _AddPlantState extends ConsumerState<AddPlant> {
   bool addedPlant = false;
   bool exitAddPlant = false;
   int? selectedPlantId = 0;
+  int? selectedContainerId;
+
+  void _onSelectedContainerChanged(int? id) {
+    setState(() {
+      selectedContainerId = id;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +94,9 @@ class _AddPlantState extends ConsumerState<AddPlant> {
             currentPlantId: selectedPlantId!,
           ),
           Text('Vand beholdere'),
-          ExistingWaterContainers(),
+          ExistingWaterContainers(
+            onSelectedContainerChanged: _onSelectedContainerChanged,
+          ),
         ],
       ),
       actions: [
@@ -114,19 +123,31 @@ class _AddPlantState extends ConsumerState<AddPlant> {
               widget.onAddPlant(ref.read(appDatabase), 'plants', newPlant);
               // insert current val of water from container
               // for now lets just initalize with 0
-              var newWaterContainer = WaterContainer(
-                id: DateTime.now().millisecondsSinceEpoch,
-                currentWaterLevel: 0,
-              );
+              // if 'Ny' was selected, create new container
+              // TODO: see if i can clean this logic up in the onpressed a bit..
+              if (selectedContainerId == -1) {
+                var newWaterContainer = WaterContainer(
+                  id: DateTime.now().millisecondsSinceEpoch,
+                  currentWaterLevel: 0,
+                );
+                insertRecord(
+                  ref.read(appDatabase),
+                  'containers',
+                  newWaterContainer.toMap(),
+                );
+                selectedContainerId = newWaterContainer.id;
+              } else if (selectedContainerId == null) {
+                setState(() {
+                  _errorText = 'Husk at vælge en beholder!';
+                });
+                return;
+              } 
+
               var newPlantWaterRelation = PlantContainer(
                 plantId: newPlant.id,
-                containerId: newWaterContainer.id,
+                containerId: selectedContainerId!,
               );
-              insertRecord(
-                ref.read(appDatabase),
-                'containers',
-                newWaterContainer.toMap(),
-              );
+
               insertRecord(
                 ref.read(appDatabase),
                 'plant_containers',
@@ -166,7 +187,11 @@ class _AddPlantState extends ConsumerState<AddPlant> {
 }
 
 class ExistingWaterContainers extends ConsumerStatefulWidget {
-  const ExistingWaterContainers({super.key});
+  final ValueChanged<int?> onSelectedContainerChanged;
+  const ExistingWaterContainers({
+    super.key,
+    required this.onSelectedContainerChanged,
+  });
 
   @override
   ConsumerState<ExistingWaterContainers> createState() =>
@@ -176,6 +201,7 @@ class ExistingWaterContainers extends ConsumerStatefulWidget {
 class _ExistingWaterContainersState
     extends ConsumerState<ExistingWaterContainers> {
   int numContainers = 0;
+  List<PlantContainer> plantContainers = [];
 
   @override
   void initState() {
@@ -187,10 +213,11 @@ class _ExistingWaterContainersState
     final containers = await allPlantContainers(ref.read(appDatabase));
     setState(() {
       numContainers = containers.length;
+      plantContainers = containers;
     });
   }
 
-  int? selectedContainer = 0;
+  int? selectedContainer;
 
   @override
   Widget build(BuildContext context) {
@@ -200,10 +227,11 @@ class _ExistingWaterContainersState
         // Standard option always shown first
         ChoiceChip(
           label: Text('Ny'),
-          selected: selectedContainer == null,
+          selected: selectedContainer == -1,
           onSelected: (bool selected) {
             setState(() {
-              selectedContainer = selected ? null : selectedContainer;
+              selectedContainer = selected ? -1 : selectedContainer;
+              widget.onSelectedContainerChanged(selectedContainer);
             });
           },
         ),
@@ -215,6 +243,9 @@ class _ExistingWaterContainersState
             onSelected: (bool selected) {
               setState(() {
                 selectedContainer = selected ? index : null;
+                widget.onSelectedContainerChanged(
+                  plantContainers[index].containerId,
+                );
               });
             },
           );
