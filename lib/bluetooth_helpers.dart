@@ -28,8 +28,8 @@ Future<int?> subscibeGetPumpStatus(BluetoothDevice device, Database db) async {
   if (state == BluetoothConnectionState.disconnected) {
     try {
       await device
-          .connect(autoConnect: true, mtu: null)
-          .timeout(const Duration(milliseconds: 100));
+          .connect(autoConnect: false)
+          .timeout(const Duration(seconds: 2));
     } catch (e) {
       return -1;
     }
@@ -39,7 +39,7 @@ Future<int?> subscibeGetPumpStatus(BluetoothDevice device, Database db) async {
   try {
     await device.connectionState
         .firstWhere((s) => s == BluetoothConnectionState.connected)
-        .timeout(const Duration(milliseconds: 100));
+        .timeout(const Duration(seconds: 2));
   } catch (e) {
     return -1;
   }
