@@ -19,99 +19,25 @@ class MyWater extends ConsumerStatefulWidget {
 }
 
 class _MywaterFill extends ConsumerState<MyWater> {
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   // Initialize data when widget first loads
-  //   WidgetsBinding.instance.addPostFrameCallback((_) {
-  //     ref.read(waterDataProvider.notifier).loadAll();
-  //   });
-  // }
-  // List<int> statuses = [];
-  // List<int> containerId = [];
-  // Map<int, List<String>> plantInfo = {};
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   lastKnownPumpStatus().then((_) {
-  //     getPlants();
-  //   }); // initialize with values from db
-  //   initializeSensor();
-  //   // getPlants();
-  // }
-
-  // void getPlants() async {
-  //   final db = ref.read(appDatabase);
-  //   Map<int, List<String>> plantRelation = {
-  //     for (var container in containerId) container: <String>[],
-  //   };
-  //   // get all plants
-  //   var getPlants = await allPlants(db);
-  //   // look up in db plant_containers, what container each plant has
-  //   var getPlantContainerRelation = await getAllPlantContainers(db);
-  //   // add plant to correct container displayed
-  //   for (var plant in getPlants) {
-  //     for (var containerRelation in getPlantContainerRelation) {
-  //       if (plant.id == containerRelation.plantId) {
-  //         plantRelation[containerRelation.containerId]?.add(plant.name);
-  //       }
-  //     }
-  //   }
-
-  //   setState(() {
-  //     plantInfo = plantRelation;
-  //   });
-  // }
-
-  // Future<void> lastKnownPumpStatus() async {
-  //   List<int> newStatuses = [];
-  //   List<int> currentContainerId = [];
-  //   final db = ref.read(appDatabase);
-  //   List<WaterContainer> waterContainers = await getAllWaterContainers(db);
-  //   for (var container in waterContainers) {
-  //     newStatuses.add(container.currentWaterLevel);
-  //     currentContainerId.add(container.id);
-  //   }
-  //   setState(() {
-  //     statuses = newStatuses;
-  //     containerId = currentContainerId;
-  //   });
-  // }
-
-  // void initializeSensor() async {
-  //   List<int> newStatuses = [];
-  //   final db = ref.read(appDatabase);
-
-  //   List<PlantSensorData> allSensors = await getAllSensors(db);
-  //   List<String> selectSensors = await getSelectedSensors(db, allSensors);
-
-  //   for (var sensorId in selectSensors) {
-  //     final int? status = await subscibeGetPumpStatus(
-  //       BluetoothDevice.fromId(sensorId),
-  //       db,
-  //     );
-  //     if (status == -1) {
-  //       return;
-  //     }
-  //     newStatuses.add(status!);
-  //   }
-
-  //   setState(() {
-  //     statuses = newStatuses;
-  //   });
-  // }
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // initialize sensor when building widget
+      ref.read(waterDataProvider.notifier).initializeSensor();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final waterData = ref.watch(waterDataProvider);
-    
+
     return SafeArea(
       child: SizedBox(
         height: 697.4,
         child: ListView.builder(
           padding: const EdgeInsets.all(8),
-          itemCount: waterData.statuses.length,
+          itemCount: waterData.containerIds.length,
           itemBuilder: (BuildContext context, int index) {
             return Container(
               margin: EdgeInsets.all(15),
