@@ -241,7 +241,7 @@ class _MyBluetoothState extends ConsumerState<MyBluetooth> {
       await device.connectionState.firstWhere(
         (state) => state == BluetoothConnectionState.connected,
       );
-
+      // TODO: if add page is already open and trying to connect, error will occur
       if (!isInList(device)) {
         setState(() {
           devices.add({'device': device, 'deviceName': sensor.sensorName});
