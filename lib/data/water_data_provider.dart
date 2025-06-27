@@ -41,7 +41,6 @@ class WaterDataNotifier extends StateNotifier<WaterDataState> {
   Future<void> loadAll() async {
     await lastKnownPumpStatus();
     await getPlants();
-    // await initializeSensor();
 
   }
 
