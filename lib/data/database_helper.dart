@@ -144,7 +144,7 @@ Future<List<WaterContainer>> getAllWaterContainers(Database database) async {
         in waterContainerMap)
       WaterContainer(
         id: id,
-        currentWaterLevel: (currentWaterLevel as double).toInt(),
+        currentWaterLevel: (currentWaterLevel as double),
       ),
   ];
 }
