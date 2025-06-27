@@ -137,12 +137,14 @@ class CustomCircleIcons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Configuration
+    final List<MaterialColor> colorSelector = [Colors.green, Colors.blue, Colors.red, Colors.orange];
+    final int maxColors = colorSelector.length;
     final double outerRadius = 100;
     final double iconRadius = 24;
     final double iconCircleRadius = outerRadius * 0.8;
     final List<IconData> icons = [];
     if (plantRelation[relationKey] != null) {
-      for (var plants in plantRelation[relationKey]!) {
+      for (var _ in plantRelation[relationKey]!) {
         icons.add(Icons.eco);
       }
     }
@@ -218,7 +220,7 @@ class CustomCircleIcons extends StatelessWidget {
                             : '',
                     triggerMode: TooltipTriggerMode.tap,
                     preferBelow: false,
-                    child: Icon(icons[i], size: 28, color: Colors.blueAccent),
+                    child: Icon(icons[i], size: 28, color: colorSelector[i % maxColors]),
                   ),
                 ),
               );
