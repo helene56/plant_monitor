@@ -32,7 +32,9 @@ class _MyHomeState extends ConsumerState<MyHome> {
     });
     // remove plant from database
     deleteRecord(ref.read(appDatabase), 'plants', plantId);
-    
+
+    // remove any container which does not show up in plant_containers
+    deleteContainer(ref.read(appDatabase));
   }
 
   void _showOverlay(
@@ -199,10 +201,7 @@ class _MyPlantContainerState extends State<MyPlantContainer> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => MyPlantStat(
-                  plantCard: widget.plantCard,
-                ),
+            builder: (context) => MyPlantStat(plantCard: widget.plantCard),
           ),
         );
       },

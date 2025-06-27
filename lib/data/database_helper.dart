@@ -279,6 +279,19 @@ Future<void> deleteRecord(Database database, String table, int id) async {
   );
 }
 
+Future<void> deleteContainer(Database database) async {
+  final db = database;
+
+  await db.rawDelete('''
+    DELETE FROM containers
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM plant_containers
+      WHERE plant_containers.containerId = containers.id
+    )
+  ''');
+}
+
 Future<void> getLatestEntry(Database database, String table) async {
   final db = database;
   await db.query(table, orderBy: 'id DESC', limit: 1);
@@ -356,11 +369,15 @@ Future<Database> initializeDatabase() async {
         'plantId INTEGER,'
         'containerId INTEGER,'
         'FOREIGN KEY (plantId) REFERENCES plants(id) '
-        'ON UPDATE SET NULL ON DELETE SET NULL,'
+        'ON DELETE CASCADE,'
         'FOREIGN KEY (containerId) REFERENCES containers(id) '
-        'ON UPDATE SET NULL ON DELETE SET NULL'
+        'ON DELETE CASCADE'
         ')',
       );
+    },
+
+    onOpen: (db) async {
+      await db.execute('PRAGMA foreign_keys = ON');
     },
     version: 1,
   );
