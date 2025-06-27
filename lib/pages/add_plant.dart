@@ -52,52 +52,54 @@ class _AddPlantState extends ConsumerState<AddPlant> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('Tilføj plante'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('Her kan du tilføje en plante.'),
-          if (_errorText != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Text(_errorText!, style: TextStyle(color: Colors.red)),
-            ),
-          SizedBox(
-            child: TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'plante navn',
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Her kan du tilføje en plante.'),
+            if (_errorText != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text(_errorText!, style: TextStyle(color: Colors.red)),
+              ),
+            SizedBox(
+              child: TextField(
+                controller: _controller,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'plante navn',
+                ),
               ),
             ),
-          ),
-          SizedBox(height: 20),
-          Text('Plante type'),
-          Wrap(
-            spacing: 5.0,
-            children:
-                List<Widget>.generate(widget.plantingTypes.length, (int index) {
-                  return ChoiceChip(
-                    label: Text(widget.plantingTypes[index].label),
-                    selected: _value == index,
-                    onSelected: (bool selected) {
-                      setState(() {
-                        _value = selected ? index : null;
-                      });
-                    },
-                  );
-                }).toList(),
-          ),
-          Text('Sensor enheder'),
-          MyBluetooth(
-            onAddDevice: addedPlant,
-            exitAddPlant: exitAddPlant,
-            currentPlantId: selectedPlantId!,
-          ),
-          Text('Vand beholdere'),
-          ExistingWaterContainers(
-            onSelectedContainerChanged: _onSelectedContainerChanged,
-          ),
-        ],
+            SizedBox(height: 20),
+            Text('Plante type'),
+            Wrap(
+              spacing: 5.0,
+              children:
+                  List<Widget>.generate(widget.plantingTypes.length, (int index) {
+                    return ChoiceChip(
+                      label: Text(widget.plantingTypes[index].label),
+                      selected: _value == index,
+                      onSelected: (bool selected) {
+                        setState(() {
+                          _value = selected ? index : null;
+                        });
+                      },
+                    );
+                  }).toList(),
+            ),
+            Text('Sensor enheder'),
+            MyBluetooth(
+              onAddDevice: addedPlant,
+              exitAddPlant: exitAddPlant,
+              currentPlantId: selectedPlantId!,
+            ),
+            Text('Vand beholdere'),
+            ExistingWaterContainers(
+              onSelectedContainerChanged: _onSelectedContainerChanged,
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
