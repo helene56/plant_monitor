@@ -1,118 +1,125 @@
 import 'package:flutter/material.dart';
 import 'package:plant_monitor/bluetooth_helpers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:plant_monitor/data/plant.dart';
 import 'package:plant_monitor/data/plant_sensor_data.dart';
 import 'package:plant_monitor/data/database_helper.dart';
 import 'package:plant_monitor/data/water_container.dart';
 import 'package:plant_monitor/main.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:math';
+import '../data/water_data_provider.dart';
 
 // TODO: better naming in this file..
 
 class MyWater extends ConsumerStatefulWidget {
-  final List<Plant> plantCards;
-  const MyWater({super.key, required this.plantCards});
+  const MyWater({super.key});
 
   @override
   ConsumerState<MyWater> createState() => _MywaterFill();
 }
 
 class _MywaterFill extends ConsumerState<MyWater> {
-  PlantSensorData? plantSensor;
-  List<int> statuses = [];
-  List<int> containerId = [];
-  Map<int, List<String>> plantInfo = {};
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   // Initialize data when widget first loads
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     ref.read(waterDataProvider.notifier).loadAll();
+  //   });
+  // }
+  // List<int> statuses = [];
+  // List<int> containerId = [];
+  // Map<int, List<String>> plantInfo = {};
 
-  int pump = 0;
-  @override
-  void initState() {
-    super.initState();
-    lastKnownPumpStatus().then((_) {
-      getPlants();
-    }); // initialize with values from db
-    initializeSensor();
-    // getPlants();
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   lastKnownPumpStatus().then((_) {
+  //     getPlants();
+  //   }); // initialize with values from db
+  //   initializeSensor();
+  //   // getPlants();
+  // }
 
-  void getPlants() async {
-    final db = ref.read(appDatabase);
-    Map<int, List<String>> plantRelation = {
-      for (var container in containerId) container: <String>[],
-    };
-    // get all plants
-    var getPlants = await allPlants(db);
-    // look up in db plant_containers, what container each plant has
-    var getPlantContainerRelation = await getAllPlantContainers(db);
-    // add plant to correct container displayed
-    for (var plant in getPlants) {
-      for (var containerRelation in getPlantContainerRelation) {
-        if (plant.id == containerRelation.plantId) {
-          plantRelation[containerRelation.containerId]?.add(plant.name);
-        }
-      }
-    }
+  // void getPlants() async {
+  //   final db = ref.read(appDatabase);
+  //   Map<int, List<String>> plantRelation = {
+  //     for (var container in containerId) container: <String>[],
+  //   };
+  //   // get all plants
+  //   var getPlants = await allPlants(db);
+  //   // look up in db plant_containers, what container each plant has
+  //   var getPlantContainerRelation = await getAllPlantContainers(db);
+  //   // add plant to correct container displayed
+  //   for (var plant in getPlants) {
+  //     for (var containerRelation in getPlantContainerRelation) {
+  //       if (plant.id == containerRelation.plantId) {
+  //         plantRelation[containerRelation.containerId]?.add(plant.name);
+  //       }
+  //     }
+  //   }
 
-    setState(() {
-      plantInfo = plantRelation;
-    });
-  }
+  //   setState(() {
+  //     plantInfo = plantRelation;
+  //   });
+  // }
 
-  Future<void> lastKnownPumpStatus() async {
-    List<int> newStatuses = [];
-    List<int> currentContainerId = [];
-    final db = ref.read(appDatabase);
-    List<WaterContainer> waterContainers = await getAllWaterContainers(db);
-    for (var container in waterContainers) {
-      newStatuses.add(container.currentWaterLevel);
-      currentContainerId.add(container.id);
-    }
-    setState(() {
-      statuses = newStatuses;
-      containerId = currentContainerId;
-    });
-  }
+  // Future<void> lastKnownPumpStatus() async {
+  //   List<int> newStatuses = [];
+  //   List<int> currentContainerId = [];
+  //   final db = ref.read(appDatabase);
+  //   List<WaterContainer> waterContainers = await getAllWaterContainers(db);
+  //   for (var container in waterContainers) {
+  //     newStatuses.add(container.currentWaterLevel);
+  //     currentContainerId.add(container.id);
+  //   }
+  //   setState(() {
+  //     statuses = newStatuses;
+  //     containerId = currentContainerId;
+  //   });
+  // }
 
-  void initializeSensor() async {
-    List<int> newStatuses = [];
-    final db = ref.read(appDatabase);
+  // void initializeSensor() async {
+  //   List<int> newStatuses = [];
+  //   final db = ref.read(appDatabase);
 
-    List<PlantSensorData> allSensors = await getAllSensors(db);
-    List<String> selectSensors = await getSelectedSensors(db, allSensors);
+  //   List<PlantSensorData> allSensors = await getAllSensors(db);
+  //   List<String> selectSensors = await getSelectedSensors(db, allSensors);
 
-    for (var sensorId in selectSensors) {
-      final int? status = await subscibeGetPumpStatus(
-        BluetoothDevice.fromId(sensorId),
-        db,
-      );
-      if (status == -1) {
-        return;
-      }
-      newStatuses.add(status!);
-    }
+  //   for (var sensorId in selectSensors) {
+  //     final int? status = await subscibeGetPumpStatus(
+  //       BluetoothDevice.fromId(sensorId),
+  //       db,
+  //     );
+  //     if (status == -1) {
+  //       return;
+  //     }
+  //     newStatuses.add(status!);
+  //   }
 
-    setState(() {
-      statuses = newStatuses;
-    });
-  }
+  //   setState(() {
+  //     statuses = newStatuses;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
+    final waterData = ref.watch(waterDataProvider);
+    
     return SafeArea(
       child: SizedBox(
         height: 697.4,
         child: ListView.builder(
           padding: const EdgeInsets.all(8),
-          itemCount: statuses.length,
+          itemCount: waterData.statuses.length,
           itemBuilder: (BuildContext context, int index) {
             return Container(
               margin: EdgeInsets.all(15),
               child: Center(
                 child: CustomCircleIcons(
-                  plantRelation: plantInfo,
-                  waterFill: statuses[index],
-                  relationKey: containerId[index],
+                  plantRelation: waterData.plantInfo,
+                  waterFill: waterData.statuses[index],
+                  relationKey: waterData.containerIds[index],
                 ),
               ),
             );
@@ -137,7 +144,12 @@ class CustomCircleIcons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Configuration
-    final List<MaterialColor> colorSelector = [Colors.green, Colors.blue, Colors.red, Colors.orange];
+    final List<MaterialColor> colorSelector = [
+      Colors.green,
+      Colors.blue,
+      Colors.red,
+      Colors.orange,
+    ];
     final int maxColors = colorSelector.length;
     final double outerRadius = 100;
     final double iconRadius = 24;
@@ -220,7 +232,11 @@ class CustomCircleIcons extends StatelessWidget {
                             : '',
                     triggerMode: TooltipTriggerMode.tap,
                     preferBelow: false,
-                    child: Icon(icons[i], size: 28, color: colorSelector[i % maxColors]),
+                    child: Icon(
+                      icons[i],
+                      size: 28,
+                      color: colorSelector[i % maxColors],
+                    ),
                   ),
                 ),
               );
