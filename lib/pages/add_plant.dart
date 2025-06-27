@@ -213,9 +213,16 @@ class _ExistingWaterContainersState
 
   Future<void> _loadNumContainers() async {
     final containers = await allPlantContainers(ref.read(appDatabase));
+    final uniqueByContainer = containers
+    .fold<Map<int, PlantContainer>>({}, (map, item) {
+      map[item.containerId] = item;
+      return map;
+    })
+    .values
+    .toList();
     setState(() {
-      numContainers = containers.length;
-      plantContainers = containers;
+      numContainers = uniqueByContainer.length;
+      plantContainers = uniqueByContainer;
     });
   }
 
