@@ -58,7 +58,7 @@ class _MywaterFill extends ConsumerState<MyWater> {
                   ref.read(waterDataProvider.notifier).initializeSensor();
                 },
                 icon: Icon(Icons.refresh),
-                iconSize: 32,
+                iconSize: 30,
               ),
             ),
           ),
