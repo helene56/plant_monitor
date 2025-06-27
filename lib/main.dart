@@ -9,6 +9,7 @@ import 'package:sqflite/sqflite.dart';
 import 'data/plant.dart';
 import 'package:plant_monitor/data/plant_type.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import '../data/water_data_provider.dart';
 
 
 final appDatabase = Provider<Database>((ref) {
@@ -72,6 +73,9 @@ class _MyAppState extends ConsumerState<MyApp> {
     if (result == null) {
       FlutterBluePlus.stopScan();
     }
+    // Always refresh after dialog closes
+    await ref.read(waterDataProvider.notifier).loadAll();
+    
   }
 
   // add a new plant card
@@ -88,7 +92,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   Widget build(BuildContext context) {
 
     final List<Widget> widgetOptions = [
-      MyWater(plantCards: plantsCards,),
+      MyWater(),
       MyHome(plantsCards: plantsCards),
       MyStats(),
     ];
