@@ -7,7 +7,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:plant_monitor/bluetooth_helpers.dart';
 
 class WaterDataState {
-  final List<int> statuses;
+  final List<double> statuses;
   final List<int> containerIds;
   final Map<int, List<String>> plantInfo;
 
@@ -18,7 +18,7 @@ class WaterDataState {
   });
 
   WaterDataState copyWith({
-    List<int>? statuses,
+    List<double>? statuses,
     List<int>? containerIds,
     Map<int, List<String>>? plantInfo,
   }) {
@@ -46,11 +46,11 @@ class WaterDataNotifier extends StateNotifier<WaterDataState> {
 
   Future<void> lastKnownPumpStatus() async {
     final db = ref.read(appDatabase);
-    List<int> newStatuses = [];
+    List<double> newStatuses = [];
     List<int> currentContainerId = [];
     List<WaterContainer> waterContainers = await getAllWaterContainers(db);
     for (var container in waterContainers) {
-      newStatuses.add(container.currentWaterLevel);
+      newStatuses.add(container.currentWaterLevel as double);
       currentContainerId.add(container.id);
     }
     state = state.copyWith(
@@ -87,14 +87,14 @@ class WaterDataNotifier extends StateNotifier<WaterDataState> {
     // You can implement sensor logic here if needed, similar to your original initializeSensor
     // For now, this is a placeholder
     // If you want to update statuses based on sensors, do it here and call state = state.copyWith(statuses: ...)
-    List<int> newStatuses = [];
+    List<double> newStatuses = [];
     final db = ref.read(appDatabase);
 
     List<PlantSensorData> allSensors = await getAllSensors(db);
     List<String> selectSensors = await getSelectedSensors(db, allSensors);
 
     for (var sensorId in selectSensors) {
-      final int? status = await subscibeGetPumpStatus(
+      final double? status = await subscibeGetPumpStatus(
         BluetoothDevice.fromId(sensorId),
         db,
       );
