@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 import '../data/water_data_provider.dart';
 
-// TODO: better naming in this file..
-
 class MyWater extends ConsumerStatefulWidget {
   const MyWater({super.key});
 
@@ -69,7 +67,7 @@ class _MywaterFill extends ConsumerState<MyWater> {
 }
 
 class CustomCircleIcons extends StatelessWidget {
-  final int waterFill;
+  final double waterFill;
   final Map<int, List<String>> plantRelation;
   final int relationKey;
   const CustomCircleIcons({
@@ -78,7 +76,8 @@ class CustomCircleIcons extends StatelessWidget {
     required this.plantRelation,
     required this.relationKey,
   });
-
+  // TODO: use another name than waterFill
+  // TODO: the statuses should also be renamed. also should be initialized with the max amount of water in the container.
   @override
   Widget build(BuildContext context) {
     // Configuration
@@ -144,7 +143,7 @@ class CustomCircleIcons extends StatelessWidget {
                       '$waterFill%',
                       style: TextStyle(
                         fontSize: 18,
-                        color: Colors.black,
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
