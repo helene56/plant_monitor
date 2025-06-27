@@ -27,24 +27,42 @@ class _MywaterFill extends ConsumerState<MyWater> {
     final waterData = ref.watch(waterDataProvider);
 
     return SafeArea(
-      child: SizedBox(
-        height: 697.4,
-        child: ListView.builder(
-          padding: const EdgeInsets.all(8),
-          itemCount: waterData.containerIds.length,
-          itemBuilder: (BuildContext context, int index) {
-            return Container(
-              margin: EdgeInsets.all(15),
-              child: Center(
-                child: CustomCircleIcons(
-                  plantRelation: waterData.plantInfo,
-                  waterFill: waterData.statuses[index],
-                  relationKey: waterData.containerIds[index],
-                ),
+      child: Stack(
+        children: [
+          // The scrollable list
+          Positioned.fill(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: waterData.containerIds.length,
+              itemBuilder: (BuildContext context, int index) {
+                return Container(
+                  margin: EdgeInsets.all(15),
+                  child: Center(
+                    child: CustomCircleIcons(
+                      plantRelation: waterData.plantInfo,
+                      waterFill: waterData.statuses[index],
+                      relationKey: waterData.containerIds[index],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          // The refresh button in the top left corner
+          Positioned(
+            top: 0,
+            right: 10,
+            child: SafeArea(
+              child: IconButton(
+                onPressed: () {
+                  ref.read(waterDataProvider.notifier).initializeSensor();
+                },
+                icon: Icon(Icons.refresh),
+                iconSize: 32,
               ),
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
