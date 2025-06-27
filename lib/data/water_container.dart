@@ -2,7 +2,7 @@
 
 class WaterContainer {
   final int id;
-  final int currentWaterLevel;
+  final double currentWaterLevel;
 
   const WaterContainer({
     required this.id,
