@@ -22,7 +22,7 @@ Future<void> autoConnectDevice(Database db) async {
   }
 }
 
-Future<int?> subscibeGetPumpStatus(BluetoothDevice device, Database db) async {
+Future<double?> subscibeGetPumpStatus(BluetoothDevice device, Database db) async {
   // Wait for the device to be connected, or try to connect if disconnected
   BluetoothConnectionState state = await device.connectionState.first;
   if (state == BluetoothConnectionState.disconnected) {
@@ -53,7 +53,37 @@ Future<int?> subscibeGetPumpStatus(BluetoothDevice device, Database db) async {
           if (c.properties.read) {
             List<int> value = await c.read();
             print('pump status: $value');
-            return value[0];
+            // expecting 5 * 4 bytes
+            if (value.length != 20) {
+              print("Unexpected length: ${value.length}");
+              return -1;
+            }
+
+            // Convert List<int> to ByteData for parsing
+            final byteData = ByteData.sublistView(Uint8List.fromList(value));
+
+            List<int> uint32Values = [];
+            for (int i = 0; i < 5; i++) {
+              uint32Values.add(byteData.getUint32(i * 4, Endian.little));
+            }
+
+            print('pump status in 32bits: $uint32Values');
+            // for now just send off the latest value
+            // but first lets calculate how much water is left
+            // waterflow = 3L/min.
+            // value is in ms
+            // min to ms: 1 min = 60000 ms
+            // 3L/60000 ms
+            for (int i = 4; i > 0; --i) {
+                if (uint32Values[i] != 0)
+                {
+                  // convert to water output
+                  double waterOutput = uint32Values[i] * (3/60000); // L
+                  return waterOutput;
+                }
+            }
+
+            // return value[0];
           }
         }
       }
