@@ -9,15 +9,16 @@ import 'data/plant_sensor_data.dart';
 import 'data/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'data/add_device_provider.dart';
 
 class MyBluetooth extends ConsumerStatefulWidget {
-  final bool onAddDevice;
+  // final bool onAddDevice;
   final bool exitAddPlant;
   final int currentPlantId;
   // final Function(DeviceIdentifier) onDataSubmit;
   const MyBluetooth({
     super.key,
-    required this.onAddDevice,
+    // required this.onAddDevice,
     required this.exitAddPlant,
     required this.currentPlantId,
     // required this.onDataSubmit
@@ -60,6 +61,9 @@ class _MyBluetoothState extends ConsumerState<MyBluetooth> {
       }
 
       print("connected to $selectedDevice.advertisementData.advName");
+    }
+    else {
+      ref.read(chipSelectSensor.notifier).state = false;
     }
   }
 
@@ -271,13 +275,13 @@ class _MyBluetoothState extends ConsumerState<MyBluetooth> {
     }
   }
 
-  int? _value = 0;
+  int? _value;
   List<Map<String, dynamic>> devices = [];
 
   @override
   Widget build(BuildContext context) {
     
-    if (widget.onAddDevice) {
+    if (ref.watch(addPlantSensor)) {
       addDevice();
     }
     if (widget.exitAddPlant) {

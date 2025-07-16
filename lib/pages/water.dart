@@ -38,7 +38,7 @@ class _MywaterFill extends ConsumerState<MyWater> {
                   child: Center(
                     child: CustomCircleIcons(
                       plantRelation: waterData.plantInfo,
-                      waterFill: waterData.statuses[index],
+                      waterFill: waterData.waterLevel[index],
                       relationKey: waterData.containerIds[index],
                     ),
                   ),
@@ -130,7 +130,7 @@ class CustomCircleIcons extends StatelessWidget {
                     width: 90,
                     height: 90,
                     child: CircularProgressIndicator(
-                      value: waterFill / 100, // 50% fill
+                      value: waterFill / 5, // 5L max
                       strokeWidth: 8,
                       backgroundColor: Colors.blue[50],
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
@@ -140,9 +140,9 @@ class CustomCircleIcons extends StatelessWidget {
                   Positioned(
                     top: 30,
                     child: Text(
-                      '$waterFill%',
+                      '${waterFill.toStringAsFixed(2)}L' ,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 12,
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),

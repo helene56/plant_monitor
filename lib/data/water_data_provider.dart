@@ -7,23 +7,23 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:plant_monitor/bluetooth_helpers.dart';
 
 class WaterDataState {
-  final List<double> statuses;
+  final List<double> waterLevel;
   final List<int> containerIds;
   final Map<int, List<String>> plantInfo;
 
   WaterDataState({
-    required this.statuses,
+    required this.waterLevel,
     required this.containerIds,
     required this.plantInfo,
   });
 
   WaterDataState copyWith({
-    List<double>? statuses,
+    List<double>? waterLevel,
     List<int>? containerIds,
     Map<int, List<String>>? plantInfo,
   }) {
     return WaterDataState(
-      statuses: statuses ?? this.statuses,
+      waterLevel: waterLevel ?? this.waterLevel,
       containerIds: containerIds ?? this.containerIds,
       plantInfo: plantInfo ?? this.plantInfo,
     );
@@ -32,7 +32,7 @@ class WaterDataState {
 
 class WaterDataNotifier extends StateNotifier<WaterDataState> {
   WaterDataNotifier(this.ref)
-    : super(WaterDataState(statuses: [], containerIds: [], plantInfo: {})) {
+    : super(WaterDataState(waterLevel: [], containerIds: [], plantInfo: {})) {
     loadAll();
   }
 
@@ -46,15 +46,15 @@ class WaterDataNotifier extends StateNotifier<WaterDataState> {
 
   Future<void> lastKnownPumpStatus() async {
     final db = ref.read(appDatabase);
-    List<double> newStatuses = [];
+    List<double> newWaterLevel = [];
     List<int> currentContainerId = [];
     List<WaterContainer> waterContainers = await getAllWaterContainers(db);
     for (var container in waterContainers) {
-      newStatuses.add(container.currentWaterLevel as double);
+      newWaterLevel.add(container.currentWaterLevel);
       currentContainerId.add(container.id);
     }
     state = state.copyWith(
-      statuses: newStatuses,
+      waterLevel: newWaterLevel,
       containerIds: currentContainerId,
     );
   }
@@ -86,25 +86,31 @@ class WaterDataNotifier extends StateNotifier<WaterDataState> {
     // so maybe watch a state to determine if connected?
     // You can implement sensor logic here if needed, similar to your original initializeSensor
     // For now, this is a placeholder
-    // If you want to update statuses based on sensors, do it here and call state = state.copyWith(statuses: ...)
-    List<double> newStatuses = [];
+    // If you want to update waterLevel based on sensors, do it here and call state = state.copyWith(waterLevel: ...)
+    List<double> newWaterLevel = [];
     final db = ref.read(appDatabase);
 
     List<PlantSensorData> allSensors = await getAllSensors(db);
     List<String> selectSensors = await getSelectedSensors(db, allSensors);
 
     for (var sensorId in selectSensors) {
-      final double? status = await subscibeGetPumpStatus(
+      final double? waterOutput = await subscibeGetPumpWater(
         BluetoothDevice.fromId(sensorId),
         db,
       );
-      if (status == -1) {
+      if (waterOutput == -1) {
         return;
       }
-      newStatuses.add(status!);
+      newWaterLevel.add(waterOutput!);
     }
 
-    state = state.copyWith(statuses: newStatuses);
+    // Subtract newWaterLevel from the current state.waterLevel, element-wise
+    List<double> updatedWaterLevel = List.generate(
+      state.waterLevel.length,
+      (i) => state.waterLevel[i] - (i < newWaterLevel.length ? newWaterLevel[i] : 0),
+    );
+
+    state = state.copyWith(waterLevel: updatedWaterLevel);
   }
 }
 

@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plant_monitor/data/database_helper.dart';
 import 'package:plant_monitor/data/water_container.dart';
 import 'package:plant_monitor/data/plant_container.dart';
+import '../data/add_device_provider.dart';
 
 class AddPlant extends ConsumerStatefulWidget {
   // TODO: figure out if there is a way not to define this function again..
@@ -37,7 +38,7 @@ class _AddPlantState extends ConsumerState<AddPlant> {
 
   int? _value = 0;
   String? _errorText;
-  bool addedPlant = false;
+  // bool addedPlant = false;
   bool exitAddPlant = false;
   int? selectedPlantId = 0;
   int? selectedContainerId;
@@ -90,7 +91,7 @@ class _AddPlantState extends ConsumerState<AddPlant> {
             ),
             Text('Sensor enheder'),
             MyBluetooth(
-              onAddDevice: addedPlant,
+              // onAddDevice: addedPlant,
               exitAddPlant: exitAddPlant,
               currentPlantId: selectedPlantId!,
             ),
@@ -104,7 +105,7 @@ class _AddPlantState extends ConsumerState<AddPlant> {
       actions: [
         TextButton(
           onPressed: () {
-            if (_controller.text.isNotEmpty && _value != null) {
+            if (_controller.text.isNotEmpty && _value != null && ref.watch(addPlantSensor)) {
               var newPlant = Plant(
                 id: DateTime.now().millisecondsSinceEpoch,
                 name: _controller.text,
@@ -130,7 +131,7 @@ class _AddPlantState extends ConsumerState<AddPlant> {
               if (selectedContainerId == -1) {
                 var newWaterContainer = WaterContainer(
                   id: DateTime.now().millisecondsSinceEpoch,
-                  currentWaterLevel: 0,
+                  currentWaterLevel: 5,
                 );
                 insertRecord(
                   ref.read(appDatabase),
@@ -158,7 +159,8 @@ class _AddPlantState extends ConsumerState<AddPlant> {
               // should add sensor device to database and also add autoconnect
               setState(() {
                 selectedPlantId = newPlant.id;
-                addedPlant = true;
+                ref.read(addPlantSensor.notifier).state = true;
+                // addedPlant = true;
                 exitAddPlant = true;
               });
               Navigator.of(context).pop();
@@ -166,7 +168,13 @@ class _AddPlantState extends ConsumerState<AddPlant> {
               setState(() {
                 _errorText = 'Husk at vælge en plante type!';
               });
-            } else {
+            } else if (!ref.watch(addPlantSensor)) {
+              setState(() {
+                _errorText = 'Ingen sensor valgt!';
+                ref.read(addPlantSensor.notifier).state = true;
+              });
+            }
+            else {
               setState(() {
                 _errorText = 'Feltet må ikke være tomt!';
               });

@@ -22,7 +22,7 @@ Future<void> autoConnectDevice(Database db) async {
   }
 }
 
-Future<double?> subscibeGetPumpStatus(BluetoothDevice device, Database db) async {
+Future<double?> subscibeGetPumpWater(BluetoothDevice device, Database db) async {
   // Wait for the device to be connected, or try to connect if disconnected
   BluetoothConnectionState state = await device.connectionState.first;
   if (state == BluetoothConnectionState.disconnected) {
@@ -89,5 +89,5 @@ Future<double?> subscibeGetPumpStatus(BluetoothDevice device, Database db) async
       }
     }
   }
-  return null; // If not found
+  return -1; // If not found
 }
