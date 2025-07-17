@@ -10,6 +10,8 @@ import 'package:plant_monitor/data/database_helper.dart';
 import 'package:plant_monitor/data/water_container.dart';
 import 'package:plant_monitor/data/plant_container.dart';
 import '../data/add_device_provider.dart';
+import '/bluetooth/device_manager.dart';
+import 'sensor_list.dart';
 
 class AddPlant extends ConsumerStatefulWidget {
   // TODO: figure out if there is a way not to define this function again..
@@ -49,8 +51,13 @@ class _AddPlantState extends ConsumerState<AddPlant> {
     });
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
+    final hasSensorSelected = ref.watch(
+      deviceManagerProvider.select((state) => state.selectedIndex != null),
+    );
     return AlertDialog(
       title: Text('Tilføj plante'),
       content: SingleChildScrollView(
@@ -90,11 +97,12 @@ class _AddPlantState extends ConsumerState<AddPlant> {
                   }).toList(),
             ),
             Text('Sensor enheder'),
-            MyBluetooth(
-              // onAddDevice: addedPlant,
-              exitAddPlant: exitAddPlant,
-              currentPlantId: selectedPlantId!,
-            ),
+            // MyBluetooth(
+            //   // onAddDevice: addedPlant,
+            //   exitAddPlant: exitAddPlant,
+            //   currentPlantId: selectedPlantId!,
+            // ),
+            SensorList(),
             Text('Vand beholdere'),
             ExistingWaterContainers(
               onSelectedContainerChanged: _onSelectedContainerChanged,
@@ -105,7 +113,7 @@ class _AddPlantState extends ConsumerState<AddPlant> {
       actions: [
         TextButton(
           onPressed: () {
-            if (_controller.text.isNotEmpty && _value != null && ref.watch(addPlantSensor)) {
+            if (_controller.text.isNotEmpty && _value != null && hasSensorSelected) {
               var newPlant = Plant(
                 id: DateTime.now().millisecondsSinceEpoch,
                 name: _controller.text,
@@ -159,19 +167,22 @@ class _AddPlantState extends ConsumerState<AddPlant> {
               // should add sensor device to database and also add autoconnect
               setState(() {
                 selectedPlantId = newPlant.id;
-                ref.read(addPlantSensor.notifier).state = true;
+                // ref.read(addPlantSensor.notifier).state = true;
+                ref.read(deviceManagerProvider.notifier).setTimeToAddSensor(true);
                 // addedPlant = true;
                 exitAddPlant = true;
               });
+              // set plant id
+              ref.read(deviceManagerProvider.notifier).addSensor(newPlant.id);
               Navigator.of(context).pop();
             } else if (_value == null) {
               setState(() {
                 _errorText = 'Husk at vælge en plante type!';
               });
-            } else if (!ref.watch(addPlantSensor)) {
+            } else if (!hasSensorSelected) {
               setState(() {
                 _errorText = 'Ingen sensor valgt!';
-                ref.read(addPlantSensor.notifier).state = true;
+                // ref.read(addPlantSensor.notifier).state = true;
               });
             }
             else {
