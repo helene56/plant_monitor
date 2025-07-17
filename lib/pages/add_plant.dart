@@ -40,8 +40,6 @@ class _AddPlantState extends ConsumerState<AddPlant> {
 
   int? _value = 0;
   String? _errorText;
-  // bool addedPlant = false;
-  bool exitAddPlant = false;
   int? selectedPlantId = 0;
   int? selectedContainerId;
 
@@ -51,10 +49,9 @@ class _AddPlantState extends ConsumerState<AddPlant> {
     });
   }
 
-  
-
   @override
   Widget build(BuildContext context) {
+    // which sensor has been selected form SensorList
     final hasSensorSelected = ref.watch(
       deviceManagerProvider.select((state) => state.selectedIndex != null),
     );
@@ -84,7 +81,9 @@ class _AddPlantState extends ConsumerState<AddPlant> {
             Wrap(
               spacing: 5.0,
               children:
-                  List<Widget>.generate(widget.plantingTypes.length, (int index) {
+                  List<Widget>.generate(widget.plantingTypes.length, (
+                    int index,
+                  ) {
                     return ChoiceChip(
                       label: Text(widget.plantingTypes[index].label),
                       selected: _value == index,
@@ -97,11 +96,7 @@ class _AddPlantState extends ConsumerState<AddPlant> {
                   }).toList(),
             ),
             Text('Sensor enheder'),
-            // MyBluetooth(
-            //   // onAddDevice: addedPlant,
-            //   exitAddPlant: exitAddPlant,
-            //   currentPlantId: selectedPlantId!,
-            // ),
+            // add availible sensors
             SensorList(),
             Text('Vand beholdere'),
             ExistingWaterContainers(
@@ -113,7 +108,9 @@ class _AddPlantState extends ConsumerState<AddPlant> {
       actions: [
         TextButton(
           onPressed: () {
-            if (_controller.text.isNotEmpty && _value != null && hasSensorSelected) {
+            if (_controller.text.isNotEmpty &&
+                _value != null &&
+                hasSensorSelected) {
               var newPlant = Plant(
                 id: DateTime.now().millisecondsSinceEpoch,
                 name: _controller.text,
@@ -152,7 +149,7 @@ class _AddPlantState extends ConsumerState<AddPlant> {
                   _errorText = 'Husk at vælge en beholder!';
                 });
                 return;
-              } 
+              }
 
               var newPlantWaterRelation = PlantContainer(
                 plantId: newPlant.id,
@@ -164,15 +161,9 @@ class _AddPlantState extends ConsumerState<AddPlant> {
                 'plant_containers',
                 newPlantWaterRelation.toMap(),
               );
-              // should add sensor device to database and also add autoconnect
-              setState(() {
-                selectedPlantId = newPlant.id;
-                // ref.read(addPlantSensor.notifier).state = true;
-                ref.read(deviceManagerProvider.notifier).setTimeToAddSensor(true);
-                // addedPlant = true;
-                exitAddPlant = true;
-              });
-              // set plant id
+              // time to add sensor - TODO: is this necessary? maybe addSensor is enough
+              ref.read(deviceManagerProvider.notifier).setTimeToAddSensor(true);
+              // set plant id when adding sensor
               ref.read(deviceManagerProvider.notifier).addSensor(newPlant.id);
               Navigator.of(context).pop();
             } else if (_value == null) {
@@ -184,8 +175,7 @@ class _AddPlantState extends ConsumerState<AddPlant> {
                 _errorText = 'Ingen sensor valgt!';
                 // ref.read(addPlantSensor.notifier).state = true;
               });
-            }
-            else {
+            } else {
               setState(() {
                 _errorText = 'Feltet må ikke være tomt!';
               });
@@ -195,9 +185,6 @@ class _AddPlantState extends ConsumerState<AddPlant> {
         ),
         TextButton(
           onPressed: () {
-            setState(() {
-              exitAddPlant = true;
-            });
             Navigator.of(context).pop();
           },
           child: Text('Luk'),
@@ -232,13 +219,14 @@ class _ExistingWaterContainersState
 
   Future<void> _loadNumContainers() async {
     final containers = await allPlantContainers(ref.read(appDatabase));
-    final uniqueByContainer = containers
-    .fold<Map<int, PlantContainer>>({}, (map, item) {
-      map[item.containerId] = item;
-      return map;
-    })
-    .values
-    .toList();
+    final uniqueByContainer =
+        containers
+            .fold<Map<int, PlantContainer>>({}, (map, item) {
+              map[item.containerId] = item;
+              return map;
+            })
+            .values
+            .toList();
     setState(() {
       numContainers = uniqueByContainer.length;
       plantContainers = uniqueByContainer;
