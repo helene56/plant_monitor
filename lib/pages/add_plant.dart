@@ -4,12 +4,10 @@ import 'package:plant_monitor/main.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:plant_monitor/data/plant.dart';
 import 'package:plant_monitor/data/plant_type.dart';
-import 'package:plant_monitor/bluetooth_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plant_monitor/data/database_helper.dart';
 import 'package:plant_monitor/data/water_container.dart';
 import 'package:plant_monitor/data/plant_container.dart';
-import '../data/add_device_provider.dart';
 import '/bluetooth/device_manager.dart';
 import 'sensor_list.dart';
 
