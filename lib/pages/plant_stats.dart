@@ -86,8 +86,16 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
                   }
                   // update plantsensor -- should update database
                   if (mounted) {
+                    final byteData = ByteData.sublistView(Uint8List.fromList(value));
+                    int rawTemp = byteData.getInt16(0, Endian.little);
+                    print('Temperature: ${rawTemp / 10.0} °C');
+
+                    double read_air_temp = rawTemp / 10;
+                    rawTemp = byteData.getInt16(2, Endian.little);
+                    double read_air_humidity = rawTemp / 10;
                     setState(() {
-                      plantSensor = plantSensor!.copyWith(airTemp: value[0]);
+                      plantSensor = plantSensor!.copyWith(airTemp: read_air_temp);
+                      plantSensor = plantSensor!.copyWith(humidity: read_air_humidity);
                     });
                   }
 
@@ -145,11 +153,11 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
       return const CircularProgressIndicator(); // Or some loading widget
     }
 
-    int waterSensor = plantSensor!.water;
-    int sunSensor = plantSensor!.sunLux;
-    int airTempSensor = plantSensor!.airTemp;
-    int earthTempSensor = plantSensor!.earthTemp;
-    int humiditySensor = plantSensor!.humidity;
+    double waterSensor = plantSensor!.water;
+    double sunSensor = plantSensor!.sunLux;
+    double airTempSensor = plantSensor!.airTemp;
+    double earthTempSensor = plantSensor!.earthTemp;
+    double humiditySensor = plantSensor!.humidity;
 
     return GestureDetector(
       onTap: () async {
@@ -275,7 +283,7 @@ class TooltipIcon extends StatelessWidget {
   }
 }
 
-double getProgressBarPercentage(int sensorValue, int maxValue) {
+double getProgressBarPercentage(double sensorValue, int maxValue) {
   return (sensorValue / maxValue);
 }
 
@@ -284,7 +292,7 @@ List<Widget> buildSensorProgress(
   String unitName,
   IconData icon,
   GlobalKey<TooltipState> tooltipKey,
-  int sensorValue,
+  double sensorValue,
   int maxValue,
   List<int> colorCode,
 ) {

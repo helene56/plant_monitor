@@ -17,7 +17,7 @@ class Device {
 
 // todo add ? to the values as it might not get the services
 class SensorReadings {
-  final int airTemp;
+  final double airTemp;
   final List<int> pumpValue;
 
   const SensorReadings({required this.airTemp, required this.pumpValue});
@@ -221,7 +221,7 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
   Future<SensorReadings> getServices(BluetoothDevice device) async {
     // Note: You must call discoverServices after every re-connection!
     List<BluetoothService> services = await device.discoverServices();
-    int airTemperature = 0;
+    double airTemperature = 0;
     List<int> pumpValue = [0];
     for (var service in services) {
       if (service.serviceUuid.toString() ==
@@ -230,7 +230,7 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
           if (c.uuid.toString() == "0f956142-6b9c-4a41-a6df-977ac4b99d78") {
             if (c.properties.read) {
               List<int> temperatureValue = await c.read();
-              airTemperature = temperatureValue[0];
+              airTemperature = temperatureValue[0].toDouble();
               print("Temperature: $temperatureValue");
             }
           }

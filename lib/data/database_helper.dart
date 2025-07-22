@@ -77,11 +77,11 @@ Future<PlantSensorData> getSensor(Database database, int id) async {
           'id': id as int,
           'sensorId': sensorId as String,
           'sensorName': sensorName as String,
-          'water': water as int,
-          'sunLux': sunLux as int,
-          'airTemp': airTemp as int,
-          'earthTemp': earthTemp as int,
-          'humidity': humidity as int,
+          'water': water as double,
+          'sunLux': sunLux as double,
+          'airTemp': airTemp as double,
+          'earthTemp': earthTemp as double,
+          'humidity': humidity as double,
         }
         in plantSensorMap)
       PlantSensorData(
@@ -178,11 +178,11 @@ Future<List<PlantSensorData>> getAllSensors(Database database) async {
           'id': id as int,
           'sensorId': sensorId as String,
           'sensorName': sensorName as String,
-          'water': water as int,
-          'sunLux': sunLux as int,
-          'airTemp': airTemp as int,
-          'earthTemp': earthTemp as int,
-          'humidity': humidity as int,
+          'water': water as double,
+          'sunLux': sunLux as double,
+          'airTemp': airTemp as double,
+          'earthTemp': earthTemp as double,
+          'humidity': humidity as double,
         }
         in plantSensorMap)
       PlantSensorData(
@@ -346,11 +346,11 @@ Future<Database> initializeDatabase() async {
         'id INTEGER PRIMARY KEY,'
         'sensorId TEXT, '
         'sensorName TEXT, '
-        'water INTEGER, '
-        'sunLux INTEGER, '
-        'airTemp INTEGER, '
-        'earthTemp INTEGER, '
-        'humidity INTEGER '
+        'water REAL, '
+        'sunLux REAL, '
+        'airTemp REAL, '
+        'earthTemp REAL, '
+        'humidity REAL '
         ')',
       );
 

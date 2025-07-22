@@ -5,11 +5,11 @@ class PlantSensorData {
   final int id; // should be initialized with id from Plant
   final String sensorId;
   final String sensorName;
-  int water;
-  int sunLux;
-  int airTemp;
-  int earthTemp;
-  int humidity;
+  double water;
+  double sunLux;
+  double airTemp;
+  double earthTemp;
+  double humidity;
 
   PlantSensorData({
     required this.id,
@@ -36,11 +36,11 @@ class PlantSensorData {
   }
 
   PlantSensorData copyWith({
-    int? airTemp,
-    int? water,
-    int? sunLux,
-    int? earthTemp,
-    int? humidity,
+    double? airTemp,
+    double? water,
+    double? sunLux,
+    double? earthTemp,
+    double? humidity,
     String? sensorId,
     String? sensorName,
     int? id,
