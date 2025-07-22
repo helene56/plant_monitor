@@ -11,10 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class MyPlantStat extends ConsumerStatefulWidget {
   final Plant plantCard;
-  const MyPlantStat({
-    super.key,
-    required this.plantCard,
-  });
+  const MyPlantStat({super.key, required this.plantCard});
 
   @override
   ConsumerState<MyPlantStat> createState() => _MyPlantStatState();
@@ -24,6 +21,8 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
   bool showingToolTips = false;
   PlantSensorData? plantSensor;
   StreamSubscription? _bluetoothSubscription;
+  int sensorStatus = 0; // assumes sensor is off
+  late final BluetoothDevice _device;
   @override
   void initState() {
     super.initState();
@@ -38,7 +37,42 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
     setState(() {
       plantSensor = data;
     });
-    subscibeToDevice(BluetoothDevice.fromId(plantSensor!.sensorId));
+    _device = BluetoothDevice.fromId(plantSensor!.sensorId);
+    toggleSensorStatus(_device);
+    subscibeToDevice(_device);
+  }
+
+  Future<void> toggleSensorStatus(BluetoothDevice device) async {
+    if (device.isDisconnected) {
+      // Connect to the device
+      await autoConnectDevice();
+    }
+
+    device.connectionState.listen((state) async {
+      if (state == BluetoothConnectionState.connected) {
+        List<BluetoothService> services = await device.discoverServices();
+        for (var service in services) {
+          // do something with service
+          if (service.serviceUuid.toString() ==
+              "0f956141-6b9c-4a41-a6df-977ac4b99d78") {
+            // Iterate through characteristics
+            for (var characteristic in service.characteristics) {
+              if (characteristic.characteristicUuid.toString() ==
+                  "0f956144-6b9c-4a41-a6df-977ac4b99d78") {
+                // toggle sensor on/off
+                sensorStatus ^= 1;
+                // Write to the characteristic
+                await characteristic.write([
+                  sensorStatus,
+                ]); // Example value to turn on the LED
+
+                print("Toggled sensor");
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   Future<void> autoConnectDevice() async {
@@ -86,7 +120,9 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
                   }
                   // update plantsensor -- should update database
                   if (mounted) {
-                    final byteData = ByteData.sublistView(Uint8List.fromList(value));
+                    final byteData = ByteData.sublistView(
+                      Uint8List.fromList(value),
+                    );
                     int rawTemp = byteData.getInt16(0, Endian.little);
                     print('Temperature: ${rawTemp / 10.0} °C');
 
@@ -94,8 +130,12 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
                     rawTemp = byteData.getInt16(2, Endian.little);
                     double read_air_humidity = rawTemp / 10;
                     setState(() {
-                      plantSensor = plantSensor!.copyWith(airTemp: read_air_temp);
-                      plantSensor = plantSensor!.copyWith(humidity: read_air_humidity);
+                      plantSensor = plantSensor!.copyWith(
+                        airTemp: read_air_temp,
+                      );
+                      plantSensor = plantSensor!.copyWith(
+                        humidity: read_air_humidity,
+                      );
                     });
                   }
 
@@ -159,89 +199,98 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
     double earthTempSensor = plantSensor!.earthTemp;
     double humiditySensor = plantSensor!.humidity;
 
-    return GestureDetector(
-      onTap: () async {
-        if (showingToolTips) return;
-        showingToolTips = true;
-
-        for (var tool in tooltips) {
-          tool.currentState?.ensureTooltipVisible();
-          await Future.delayed(Duration(milliseconds: 200), () {
-            Tooltip.dismissAllToolTips();
-          });
-        }
-
-        showingToolTips = false;
+    return PopScope(
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
+        print('Back button pressed or page is trying to pop');
+        toggleSensorStatus(_device);
       },
-      child: Scaffold(
-        appBar: AppBar(title: Text(widget.plantCard.name), centerTitle: true),
-        body: Column(
-          // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            SizedBox(width: 300, child: Image.asset('./images/plant_test.png')),
-            Center(
-              child: Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 255, 245, 235),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white, width: 3),
-                ),
-                width: 350,
-                height: 350,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ...buildSensorProgress(
-                      'Vand',
-                      '$waterPercentage%',
-                      Icons.water_drop,
-                      waterKey,
-                      waterSensor,
-                      waterMax,
-                      [255, 120, 180, 220],
-                    ),
-                    ...buildSensorProgress(
-                      'Sollys',
-                      'Lux',
-                      Icons.wb_sunny,
-                      sunKey,
-                      sunSensor,
-                      sunMax,
-                      [255, 255, 213, 79],
-                    ),
-                    ...buildSensorProgress(
-                      'Fugt',
-                      '%',
-                      Icons.foggy,
-                      humidityKey,
-                      humiditySensor,
-                      humidityMax,
-                      [255, 139, 193, 183],
-                    ),
-                    ...buildSensorProgress(
-                      'Luft temperatur',
-                      '℃',
-                      Icons.thermostat,
-                      airTempKey,
-                      airTempSensor,
-                      airTempMax,
-                      [255, 255, 183, 77],
-                    ),
-                    ...buildSensorProgress(
-                      'Jord temperatur',
-                      '℃',
-                      Icons.thermostat,
-                      earthTempKey,
-                      earthTempSensor,
-                      30,
-                      [255, 188, 170, 164],
-                    ),
-                  ],
+      child: GestureDetector(
+        onTap: () async {
+          if (showingToolTips) return;
+          showingToolTips = true;
+
+          for (var tool in tooltips) {
+            tool.currentState?.ensureTooltipVisible();
+            await Future.delayed(Duration(milliseconds: 200), () {
+              Tooltip.dismissAllToolTips();
+            });
+          }
+
+          showingToolTips = false;
+        },
+        child: Scaffold(
+          appBar: AppBar(title: Text(widget.plantCard.name), centerTitle: true),
+          body: Column(
+            // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              SizedBox(
+                width: 300,
+                child: Image.asset('./images/plant_test.png'),
+              ),
+              Center(
+                child: Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Color.fromARGB(255, 255, 245, 235),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white, width: 3),
+                  ),
+                  width: 350,
+                  height: 350,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ...buildSensorProgress(
+                        'Vand',
+                        '$waterPercentage%',
+                        Icons.water_drop,
+                        waterKey,
+                        waterSensor,
+                        waterMax,
+                        [255, 120, 180, 220],
+                      ),
+                      ...buildSensorProgress(
+                        'Sollys',
+                        'Lux',
+                        Icons.wb_sunny,
+                        sunKey,
+                        sunSensor,
+                        sunMax,
+                        [255, 255, 213, 79],
+                      ),
+                      ...buildSensorProgress(
+                        'Fugt',
+                        '%',
+                        Icons.foggy,
+                        humidityKey,
+                        humiditySensor,
+                        humidityMax,
+                        [255, 139, 193, 183],
+                      ),
+                      ...buildSensorProgress(
+                        'Luft temperatur',
+                        '℃',
+                        Icons.thermostat,
+                        airTempKey,
+                        airTempSensor,
+                        airTempMax,
+                        [255, 255, 183, 77],
+                      ),
+                      ...buildSensorProgress(
+                        'Jord temperatur',
+                        '℃',
+                        Icons.thermostat,
+                        earthTempKey,
+                        earthTempSensor,
+                        30,
+                        [255, 188, 170, 164],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
