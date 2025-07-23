@@ -17,6 +17,7 @@ class MyPlantStat extends ConsumerStatefulWidget {
   ConsumerState<MyPlantStat> createState() => _MyPlantStatState();
 }
 
+
 class _MyPlantStatState extends ConsumerState<MyPlantStat> {
   bool showingToolTips = false;
   PlantSensorData? plantSensor;
@@ -80,10 +81,9 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
           print('Error reading characteristic: $e');
           if (mounted) {
             setState(() {
-            connectionStatus = "Ikke\nTilsluttet";
-          });
+              connectionStatus = "Ikke\nTilsluttet";
+            });
           }
-          
         }
       }
     });
@@ -117,10 +117,10 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
         print('Device is connected');
         if (mounted) {
           setState(() {
-          connectionStatus = "Tilsluttet";
-        });
+            connectionStatus = "Tilsluttet";
+          });
         }
-        
+
         try {
           List<BluetoothService> services = await device.discoverServices();
           for (var service in services) {
@@ -178,10 +178,9 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
                     print('Error reading characteristic: $e');
                     if (mounted) {
                       setState(() {
-                      connectionStatus = "Ikke\nTilsluttet";
-                    });
+                        connectionStatus = "Ikke\nTilsluttet";
+                      });
                     }
-                    
                   }
                 } else if (c.uuid.toString() ==
                     "0f956143-6b9c-4a41-a6df-977ac4b99d78") {
@@ -195,22 +194,21 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
           }
         } catch (e) {
           print('Error reading characteristic: $e');
-          if (mounted){
+          if (mounted) {
             setState(() {
-            connectionStatus = "Ikke\nTilsluttet";
-          });
+              connectionStatus = "Ikke\nTilsluttet";
+            });
           }
-          
         }
       } else if (state == BluetoothConnectionState.disconnected) {
         print('ddevice is disconnected');
         print('this means it went out of range??');
         if (mounted) {
-           setState(() {
-          connectionStatus = "Ikke\ntilsluttet";
-        });
+          setState(() {
+            connectionStatus = "Ikke\ntilsluttet";
+            sensorStatus = 0;
+          });
         }
-       
       }
     });
   }
