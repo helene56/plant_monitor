@@ -78,9 +78,12 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
           }
         } catch (e) {
           print('Error reading characteristic: $e');
-          setState(() {
+          if (mounted) {
+            setState(() {
             connectionStatus = "Ikke\nTilsluttet";
           });
+          }
+          
         }
       }
     });
@@ -112,9 +115,12 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
     device.connectionState.listen((state) async {
       if (state == BluetoothConnectionState.connected) {
         print('Device is connected');
-        setState(() {
+        if (mounted) {
+          setState(() {
           connectionStatus = "Tilsluttet";
         });
+        }
+        
         try {
           List<BluetoothService> services = await device.discoverServices();
           for (var service in services) {
@@ -170,9 +176,12 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
                     device.cancelWhenDisconnected(bluetoothSubscription);
                   } catch (e) {
                     print('Error reading characteristic: $e');
-                    setState(() {
+                    if (mounted) {
+                      setState(() {
                       connectionStatus = "Ikke\nTilsluttet";
                     });
+                    }
+                    
                   }
                 } else if (c.uuid.toString() ==
                     "0f956143-6b9c-4a41-a6df-977ac4b99d78") {
@@ -186,16 +195,22 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
           }
         } catch (e) {
           print('Error reading characteristic: $e');
-          setState(() {
+          if (mounted){
+            setState(() {
             connectionStatus = "Ikke\nTilsluttet";
           });
+          }
+          
         }
       } else if (state == BluetoothConnectionState.disconnected) {
         print('ddevice is disconnected');
         print('this means it went out of range??');
-        setState(() {
+        if (mounted) {
+           setState(() {
           connectionStatus = "Ikke\ntilsluttet";
         });
+        }
+       
       }
     });
   }
