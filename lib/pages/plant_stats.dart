@@ -23,10 +23,13 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
   StreamSubscription? _bluetoothSubscription;
   int sensorStatus = 0; // assumes sensor is off
   late final BluetoothDevice _device;
+  String connectionStatus = "Ikke\ntilsluttet";
   @override
   void initState() {
     super.initState();
     initializeSensor();
+    // should be connected by now
+    // connectionStatus = "Tilsluttet";
   }
 
   void initializeSensor() async {
@@ -50,26 +53,34 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
 
     device.connectionState.listen((state) async {
       if (state == BluetoothConnectionState.connected) {
-        List<BluetoothService> services = await device.discoverServices();
-        for (var service in services) {
-          // do something with service
-          if (service.serviceUuid.toString() ==
-              "0f956141-6b9c-4a41-a6df-977ac4b99d78") {
-            // Iterate through characteristics
-            for (var characteristic in service.characteristics) {
-              if (characteristic.characteristicUuid.toString() ==
-                  "0f956144-6b9c-4a41-a6df-977ac4b99d78") {
-                // toggle sensor on/off
-                sensorStatus ^= 1;
-                // Write to the characteristic
-                await characteristic.write([
-                  sensorStatus,
-                ]); // Example value to turn on the LED
+        try {
+          List<BluetoothService> services = await device.discoverServices();
+          for (var service in services) {
+            // do something with service
+            if (service.serviceUuid.toString() ==
+                "0f956141-6b9c-4a41-a6df-977ac4b99d78") {
+              // Iterate through characteristics
+              for (var characteristic in service.characteristics) {
+                if (characteristic.characteristicUuid.toString() ==
+                    "0f956144-6b9c-4a41-a6df-977ac4b99d78") {
+                  // toggle sensor on/off
+                  sensorStatus ^= 1;
+                  // TODO: try catch before await here as well
+                  // Write to the characteristic
+                  await characteristic.write([
+                    sensorStatus,
+                  ]); // Example value to turn on the LED
 
-                print("Toggled sensor");
+                  print("Toggled sensor");
+                }
               }
             }
           }
+        } catch (e) {
+          print('Error reading characteristic: $e');
+          setState(() {
+            connectionStatus = "Ikke\nTilsluttet";
+          });
         }
       }
     });
@@ -101,67 +112,90 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
     device.connectionState.listen((state) async {
       if (state == BluetoothConnectionState.connected) {
         print('Device is connected');
-        List<BluetoothService> services = await device.discoverServices();
-        for (var service in services) {
-          if (service.serviceUuid.toString() ==
-              "0f956141-6b9c-4a41-a6df-977ac4b99d78") {
-            for (var c in service.characteristics) {
-              if (c.uuid.toString() == "0f956142-6b9c-4a41-a6df-977ac4b99d78") {
-                // Enable notifications
-                await c.setNotifyValue(true);
-                // Listen for value changes
-                final bluetoothSubscription = c.onValueReceived.listen((
-                  value,
-                ) async {
-                  if (!mounted) return; // Check if the widget is still mounted
-                  if (plantSensor == null) {
-                    // Still not ready, so skip this update
-                    return;
-                  }
-                  // update plantsensor -- should update database
-                  if (mounted) {
-                    final byteData = ByteData.sublistView(
-                      Uint8List.fromList(value),
-                    );
-                    int rawTemp = byteData.getInt16(0, Endian.little);
-                    print('Temperature: ${rawTemp / 10.0} °C');
+        setState(() {
+          connectionStatus = "Tilsluttet";
+        });
+        try {
+          List<BluetoothService> services = await device.discoverServices();
+          for (var service in services) {
+            if (service.serviceUuid.toString() ==
+                "0f956141-6b9c-4a41-a6df-977ac4b99d78") {
+              for (var c in service.characteristics) {
+                if (c.uuid.toString() ==
+                    "0f956142-6b9c-4a41-a6df-977ac4b99d78") {
+                  try {
+                    // Enable notifications
+                    await c.setNotifyValue(true);
+                    // Listen for value changes
+                    final bluetoothSubscription = c.onValueReceived.listen((
+                      value,
+                    ) async {
+                      if (!mounted)
+                        return; // Check if the widget is still mounted
+                      if (plantSensor == null) {
+                        // Still not ready, so skip this update
+                        return;
+                      }
+                      // update plantsensor -- should update database
+                      if (mounted) {
+                        final byteData = ByteData.sublistView(
+                          Uint8List.fromList(value),
+                        );
+                        int rawTemp = byteData.getInt16(0, Endian.little);
+                        print('Temperature: ${rawTemp / 10.0} °C');
 
-                    double read_air_temp = rawTemp / 10;
-                    rawTemp = byteData.getInt16(2, Endian.little);
-                    double read_air_humidity = rawTemp / 10;
+                        double readAirTemp = rawTemp / 10;
+                        rawTemp = byteData.getInt16(2, Endian.little);
+                        double readAirHumidity = rawTemp / 10;
+                        setState(() {
+                          plantSensor = plantSensor!.copyWith(
+                            airTemp: readAirTemp,
+                          );
+                          plantSensor = plantSensor!.copyWith(
+                            humidity: readAirHumidity,
+                          );
+                        });
+                      }
+
+                      // Update the database (async, outside of setState)
+                      await updateRecord(
+                        ref.read(appDatabase),
+                        'plant_sensor',
+                        plantSensor!.toMap(),
+                      );
+
+                      print('Sensor data: $value');
+                    });
+                    // Automatically cancel subscription when device disconnects
+                    device.cancelWhenDisconnected(bluetoothSubscription);
+                  } catch (e) {
+                    print('Error reading characteristic: $e');
                     setState(() {
-                      plantSensor = plantSensor!.copyWith(
-                        airTemp: read_air_temp,
-                      );
-                      plantSensor = plantSensor!.copyWith(
-                        humidity: read_air_humidity,
-                      );
+                      connectionStatus = "Ikke\nTilsluttet";
                     });
                   }
-
-                  // Update the database (async, outside of setState)
-                  await updateRecord(
-                    ref.read(appDatabase),
-                    'plant_sensor',
-                    plantSensor!.toMap(),
-                  );
-
-                  print('Sensor data: $value');
-                });
-                // Automatically cancel subscription when device disconnects
-                device.cancelWhenDisconnected(bluetoothSubscription);
-              } else if (c.uuid.toString() ==
-                  "0f956143-6b9c-4a41-a6df-977ac4b99d78") {
-                if (c.properties.read) {
-                  List<int> value = await c.read();
-                  print('pump status: $value');
+                } else if (c.uuid.toString() ==
+                    "0f956143-6b9c-4a41-a6df-977ac4b99d78") {
+                  if (c.properties.read) {
+                    List<int> value = await c.read();
+                    print('pump status: $value');
+                  }
                 }
               }
             }
           }
+        } catch (e) {
+          print('Error reading characteristic: $e');
+          setState(() {
+            connectionStatus = "Ikke\nTilsluttet";
+          });
         }
       } else if (state == BluetoothConnectionState.disconnected) {
-        print('Device is disconnected');
+        print('ddevice is disconnected');
+        print('this means it went out of range??');
+        setState(() {
+          connectionStatus = "Ikke\ntilsluttet";
+        });
       }
     });
   }
@@ -199,6 +233,15 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
     double earthTempSensor = plantSensor!.earthTemp;
     double humiditySensor = plantSensor!.humidity;
 
+    // _device.connectionState.listen((state) async {
+    //   if (state == BluetoothConnectionState.disconnected) {
+    //     connectionStatus = "Ikke\ntilsluttet";
+    //   }
+    //   else {
+    //     connectionStatus = "tilsluttet";
+    //   }
+    // });
+
     return PopScope(
       onPopInvokedWithResult: (bool didPop, Object? result) async {
         print('Back button pressed or page is trying to pop');
@@ -221,11 +264,15 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
         child: Scaffold(
           appBar: AppBar(title: Text(widget.plantCard.name), centerTitle: true),
           body: Column(
-            // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              SizedBox(
-                width: 300,
-                child: Image.asset('./images/plant_test.png'),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 300,
+                    child: Image.asset('./images/plant_test.png'),
+                  ),
+                  Text("Status:\n$connectionStatus"),
+                ],
               ),
               Center(
                 child: Container(
