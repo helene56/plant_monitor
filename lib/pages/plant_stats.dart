@@ -17,7 +17,6 @@ class MyPlantStat extends ConsumerStatefulWidget {
   ConsumerState<MyPlantStat> createState() => _MyPlantStatState();
 }
 
-
 class _MyPlantStatState extends ConsumerState<MyPlantStat> {
   bool showingToolTips = false;
   PlantSensorData? plantSensor;
@@ -245,15 +244,6 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
     double airTempSensor = plantSensor!.airTemp;
     double earthTempSensor = plantSensor!.earthTemp;
     double humiditySensor = plantSensor!.humidity;
-
-    // _device.connectionState.listen((state) async {
-    //   if (state == BluetoothConnectionState.disconnected) {
-    //     connectionStatus = "Ikke\ntilsluttet";
-    //   }
-    //   else {
-    //     connectionStatus = "tilsluttet";
-    //   }
-    // });
 
     return PopScope(
       onPopInvokedWithResult: (bool didPop, Object? result) async {

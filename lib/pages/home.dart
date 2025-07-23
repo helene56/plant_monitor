@@ -5,6 +5,7 @@ import 'package:plant_monitor/data/plant.dart';
 // import 'package:sqflite/sqflite.dart';
 import 'package:plant_monitor/data/database_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:haptic_feedback/haptic_feedback.dart';
 
 class MyHome extends ConsumerStatefulWidget {
   final List<Plant> plantsCards;
@@ -207,10 +208,10 @@ class _MyPlantContainerState extends State<MyPlantContainer> {
       },
       onLongPress: () {
         print("long press");
+        Haptics.vibrate(HapticsType.light);
         // pop up saying delete
         // if pop up clicked ask are you sure, add a show dialog button with delete
         widget.onLongPressOverlay();
-        // IconButton(icon: const Icon(Icons.android), color: Colors.white, onPressed: () {});
       },
       child: Container(
         key: widget.containerKey,
