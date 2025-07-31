@@ -65,11 +65,11 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
                   // toggle sensor on/off
                   sensorStatus ^= 1;
                   int status = sensorStatus << 7;
-                  int onOffTemp = status | SensorCmdId.temperature;
+                  int onOffTempHumidity = status | SensorCmdId.temperatureHumidity;
                   // TODO: try catch before await here as well
                   // Write to the characteristic
                   await characteristic.write([
-                    onOffTemp,
+                    onOffTempHumidity,
                   ]);
 
                   print("Toggled sensor");
