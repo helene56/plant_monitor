@@ -8,6 +8,7 @@ import 'package:plant_monitor/data/plant_sensor_data.dart';
 import 'package:plant_monitor/main.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plant_monitor/data/sensor_cmd_id.dart';
 
 class MyPlantStat extends ConsumerStatefulWidget {
   final Plant plantCard;
@@ -28,8 +29,6 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
   void initState() {
     super.initState();
     initializeSensor();
-    // should be connected by now
-    // connectionStatus = "Tilsluttet";
   }
 
   void initializeSensor() async {
@@ -41,11 +40,11 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
       plantSensor = data;
     });
     _device = BluetoothDevice.fromId(plantSensor!.sensorId);
-    toggleSensorStatus(_device);
-    subscibeToDevice(_device);
+    toggleSensorTemperature(_device); // activate sensor reading
+    subscibeToDevice(_device);  // subscribe to get sensor readings
   }
 
-  Future<void> toggleSensorStatus(BluetoothDevice device) async {
+  Future<void> toggleSensorTemperature(BluetoothDevice device) async {
     if (device.isDisconnected) {
       // Connect to the device
       await autoConnectDevice();
@@ -65,11 +64,13 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
                     "0f956144-6b9c-4a41-a6df-977ac4b99d78") {
                   // toggle sensor on/off
                   sensorStatus ^= 1;
+                  int status = sensorStatus << 7;
+                  int onOffTemp = status | SensorCmdId.temperature;
                   // TODO: try catch before await here as well
                   // Write to the characteristic
                   await characteristic.write([
-                    sensorStatus,
-                  ]); // Example value to turn on the LED
+                    onOffTemp,
+                  ]);
 
                   print("Toggled sensor");
                 }
@@ -135,8 +136,9 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
                     final bluetoothSubscription = c.onValueReceived.listen((
                       value,
                     ) async {
-                      if (!mounted)
+                      if (!mounted) {
                         return; // Check if the widget is still mounted
+                      }
                       if (plantSensor == null) {
                         // Still not ready, so skip this update
                         return;
@@ -248,7 +250,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
     return PopScope(
       onPopInvokedWithResult: (bool didPop, Object? result) async {
         print('Back button pressed or page is trying to pop');
-        toggleSensorStatus(_device);
+        toggleSensorTemperature(_device); // dont recieve sensor readings anymore
       },
       child: GestureDetector(
         onTap: () async {
