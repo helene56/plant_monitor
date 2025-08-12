@@ -18,17 +18,28 @@ class MyPlantStat extends ConsumerStatefulWidget {
   ConsumerState<MyPlantStat> createState() => _MyPlantStatState();
 }
 
-class _MyPlantStatState extends ConsumerState<MyPlantStat> {
+class _MyPlantStatState extends ConsumerState<MyPlantStat>
+    with TickerProviderStateMixin {
   bool showingToolTips = false;
   PlantSensorData? plantSensor;
   StreamSubscription? _bluetoothSubscription;
   int sensorStatus = 0; // assumes sensor is off
   late final BluetoothDevice _device;
   String connectionStatus = "Ikke\ntilsluttet";
+  late AnimationController controller;
+  bool showCalibrationProgress = false;
   @override
   void initState() {
     super.initState();
     initializeSensor();
+    controller = AnimationController(
+      /// [AnimationController]s can be created with `vsync: this` because of
+      /// [TickerProviderStateMixin].
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..addListener(() {
+      setState(() {});
+    });
   }
 
   void initializeSensor() async {
@@ -41,7 +52,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
     });
     _device = BluetoothDevice.fromId(plantSensor!.sensorId);
     toggleSensorTemperature(_device); // activate sensor reading
-    subscibeToDevice(_device);  // subscribe to get sensor readings
+    subscibeToDevice(_device); // subscribe to get sensor readings
   }
 
   Future<void> toggleSensorTemperature(BluetoothDevice device) async {
@@ -65,12 +76,11 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
                   // toggle sensor on/off
                   sensorStatus ^= 1;
                   int status = sensorStatus << 7;
-                  int onOffTempHumidity = status | SensorCmdId.temperatureHumidity;
+                  int onOffTempHumidity =
+                      status | SensorCmdId.temperatureHumidity;
                   // TODO: try catch before await here as well
                   // Write to the characteristic
-                  await characteristic.write([
-                    onOffTempHumidity,
-                  ]);
+                  await characteristic.write([onOffTempHumidity]);
 
                   print("Toggled sensor");
                 }
@@ -221,6 +231,8 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
     super.dispose();
   }
 
+  String calibrationText = 'Kalibrér';
+
   @override
   Widget build(BuildContext context) {
     final GlobalKey<TooltipState> waterKey = GlobalKey<TooltipState>();
@@ -250,7 +262,9 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
     return PopScope(
       onPopInvokedWithResult: (bool didPop, Object? result) async {
         print('Back button pressed or page is trying to pop');
-        toggleSensorTemperature(_device); // dont recieve sensor readings anymore
+        toggleSensorTemperature(
+          _device,
+        ); // dont recieve sensor readings anymore
       },
       child: GestureDetector(
         onTap: () async {
@@ -271,12 +285,52 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat> {
           body: Column(
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
                     width: 300,
                     child: Image.asset('./images/plant_test.png'),
                   ),
-                  Text("Status:\n$connectionStatus"),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 40),
+                      if (showCalibrationProgress)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(7, 16, 7, 16),
+                          child: SizedBox(
+                            width: 95, // or any width you want
+                            child: LinearProgressIndicator(
+                              value: controller.value,
+                            ),
+                          ),
+                        ),
+                      FilledButton(
+                        onPressed: () {
+                          setState(() {
+                            calibrationText = 'Kalibrerer';
+                            showCalibrationProgress = true;
+                            controller.reset();
+                            controller.forward();
+                          });
+                          Future.delayed(const Duration(seconds: 12), () {
+                            if (mounted) {
+                              setState(() {
+                                showCalibrationProgress = false;
+                                calibrationText = 'Kalibrér';
+                              });
+                            }
+                          });
+                        },
+                        child: Text(calibrationText),
+                      ),
+                      SizedBox(height: 50),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 30.0),
+                        child: Text('Status:\n$connectionStatus'),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               Center(
