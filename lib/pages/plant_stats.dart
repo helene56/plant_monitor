@@ -232,6 +232,8 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
   }
 
   String calibrationText = 'Kalibrér';
+  String soilSensorText = 'Ikke\nkalibreret';
+  Color calibrationButtonColor = Color.fromARGB(255, 85, 185, 125);
 
   @override
   Widget build(BuildContext context) {
@@ -297,15 +299,21 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                       SizedBox(height: 40),
                       if (showCalibrationProgress)
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(7, 16, 7, 16),
+                          padding: const EdgeInsets.fromLTRB(7, 0, 7, 0),
                           child: SizedBox(
-                            width: 95, // or any width you want
+                            width: 95,
                             child: LinearProgressIndicator(
                               value: controller.value,
                             ),
                           ),
                         ),
+                      SizedBox(height: 5),
                       FilledButton(
+                        style: ButtonStyle(
+                          backgroundColor: WidgetStateProperty.all(
+                            calibrationButtonColor,
+                          ),
+                        ),
                         onPressed: () {
                           setState(() {
                             calibrationText = 'Kalibrerer';
@@ -313,22 +321,28 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                             controller.reset();
                             controller.forward();
                           });
-                          Future.delayed(const Duration(seconds: 12), () {
+                          Future.delayed(const Duration(seconds: 11), () {
                             if (mounted) {
                               setState(() {
                                 showCalibrationProgress = false;
                                 calibrationText = 'Kalibrér';
+                                soilSensorText = 'Kalibreret';
+                                calibrationButtonColor = Color.fromARGB(
+                                  177,
+                                  104,
+                                  219,
+                                  150,
+                                );
                               });
                             }
                           });
                         },
                         child: Text(calibrationText),
                       ),
-                      SizedBox(height: 50),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 30.0),
-                        child: Text('Status:\n$connectionStatus'),
-                      ),
+                      SizedBox(height: 25),
+                      Text('Status:\n$connectionStatus'),
+                      SizedBox(height: 25),
+                      Text('Jord sensor:\n$soilSensorText'),
                     ],
                   ),
                 ],
