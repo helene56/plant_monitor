@@ -55,13 +55,19 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     subscibeToDevice(_device); // subscribe to get sensor readings
   }
 
-  Future<void> toggleSensorTemperature(BluetoothDevice device) async {
+  Future<bool> _writeToSensor(
+    BluetoothDevice device,
+    int cmdId,
+    int cmdVal,
+  ) async {
+    final completer = Completer<bool>();
+
     if (device.isDisconnected) {
       // Connect to the device
       await autoConnectDevice();
     }
-
-    device.connectionState.listen((state) async {
+    late StreamSubscription sub;
+    sub = device.connectionState.listen((state) async {
       if (state == BluetoothConnectionState.connected) {
         try {
           List<BluetoothService> services = await device.discoverServices();
@@ -73,22 +79,25 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
               for (var characteristic in service.characteristics) {
                 if (characteristic.characteristicUuid.toString() ==
                     "0f956144-6b9c-4a41-a6df-977ac4b99d78") {
-                  // toggle sensor on/off
-                  sensorStatus ^= 1;
-                  int status = sensorStatus << 7;
-                  int onOffTempHumidity =
-                      status | SensorCmdId.temperatureHumidity;
+                  int shiftedCmdVal = cmdVal << 7;
+                  int finalCmdByte = shiftedCmdVal | cmdId;
                   // TODO: try catch before await here as well
                   // Write to the characteristic
-                  await characteristic.write([onOffTempHumidity]);
-
-                  print("Toggled sensor");
+                  await characteristic.write([finalCmdByte]);
+                  print("Succusesfully wrote to sensor");
+                  if (!completer.isCompleted) completer.complete(true);
+                  await sub.cancel();
+                  return;
                 }
               }
             }
           }
+          if (!completer.isCompleted) completer.complete(false);
+          await sub.cancel();
         } catch (e) {
           print('Error reading characteristic: $e');
+          if (!completer.isCompleted) completer.complete(false);
+          await sub.cancel();
           if (mounted) {
             setState(() {
               connectionStatus = "Ikke\nTilsluttet";
@@ -97,6 +106,26 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
         }
       }
     });
+
+    return completer.future;
+  }
+
+  Future<void> toggleSensorTemperature(BluetoothDevice device) async {
+    // toggle sensor
+    sensorStatus ^= 1;
+    bool success = await _writeToSensor(
+      device,
+      SensorCmdId.temperatureHumidity,
+      sensorStatus,
+    );
+    if (!success) {
+      sensorStatus ^= 1; // revert
+      if (mounted) {
+        setState(() {
+          connectionStatus = "Ikke\nTilsluttet";
+        });
+      }
+    }
   }
 
   Future<void> autoConnectDevice() async {
@@ -326,6 +355,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                               setState(() {
                                 showCalibrationProgress = false;
                                 calibrationText = 'Kalibrér';
+                                // TODO: get acknowledgement from sensor that calibration is done
                                 soilSensorText = 'Kalibreret';
                                 calibrationButtonColor = Color.fromARGB(
                                   177,
