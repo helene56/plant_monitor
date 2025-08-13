@@ -356,6 +356,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                                 showCalibrationProgress = false;
                                 calibrationText = 'Kalibrér';
                                 // TODO: get acknowledgement from sensor that calibration is done
+                                // TODO: should add to db if a plant has been calibrated once
                                 soilSensorText = 'Kalibreret';
                                 calibrationButtonColor = Color.fromARGB(
                                   177,
