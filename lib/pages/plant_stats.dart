@@ -525,7 +525,7 @@ Widget buildCalibration1(BuildContext context) {
   return AlertDialog(
     title: Text('Kalibrering'),
     content: Text(
-      'Trin 1: Indsæt sensor i potteplanten.\nTrin 2: Vent på færdig kalibrering i tør tilstand\nTrin 3: Vand planten',
+      'Trin 1: Indsæt sensor i potteplanten og sørg for at have tilsuttet pumpen til vand.\nTrin 2: Vent på færdig kalibrering i tør tilstand.\nTrin 3: Planten vandes automatisk.',
     ),
     actions: [
       TextButton(
@@ -547,7 +547,7 @@ Widget buildCalibration2(BuildContext context) {
       height: 245,
       child: Column(
         children: [
-          const Text('Indsæt sensor'),
+          const Text('Indsæt sensor og tilslut pumpe'),
           Image.asset('./images/plant-sensor-guide-dry.png'),
         ],
       ),
@@ -596,7 +596,7 @@ Widget buildCalibration4(BuildContext context) {
       height: 245,
       child: Column(
         children: [
-          const Text('Vand planten'),
+          const Text('Planten vandes'),
           Image.asset('./images/plant-sensor-guide-water.png'),
         ],
       ),
