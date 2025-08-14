@@ -263,6 +263,8 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
   String calibrationText = 'Kalibrér';
   String soilSensorText = 'Ikke\nkalibreret';
   Color calibrationButtonColor = Color.fromARGB(255, 85, 185, 125);
+  String popUpDialog =
+      'Trin 1: Indsæt sensor i potteplanten.\nTrin 2: Vent på færdig kalibrering i tør tilstand\nTrin 3: Vand planten';
 
   @override
   Widget build(BuildContext context) {
@@ -344,29 +346,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                           ),
                         ),
                         onPressed: () {
-                          setState(() {
-                            calibrationText = 'Kalibrerer';
-                            showCalibrationProgress = true;
-                            controller.reset();
-                            controller.forward();
-                          });
-                          Future.delayed(const Duration(seconds: 11), () {
-                            if (mounted) {
-                              setState(() {
-                                showCalibrationProgress = false;
-                                calibrationText = 'Kalibrér';
-                                // TODO: get acknowledgement from sensor that calibration is done
-                                // TODO: should add to db if a plant has been calibrated once
-                                soilSensorText = 'Kalibreret';
-                                calibrationButtonColor = Color.fromARGB(
-                                  177,
-                                  104,
-                                  219,
-                                  150,
-                                );
-                              });
-                            }
-                          });
+                          showCalibrationDialogFlow(context, controller);
                         },
                         child: Text(calibrationText),
                       ),
@@ -539,4 +519,197 @@ List<Widget> buildSensorProgress(
       ],
     ),
   ];
+}
+
+Widget buildCalibration1(BuildContext context) {
+  return AlertDialog(
+    title: Text('Kalibrering'),
+    content: Text(
+      'Trin 1: Indsæt sensor i potteplanten.\nTrin 2: Vent på færdig kalibrering i tør tilstand\nTrin 3: Vand planten',
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context, 'Fortryd'),
+        child: const Text('Fortryd'),
+      ),
+      TextButton(
+        onPressed: () => Navigator.pop(context, 'START'),
+        child: const Text('START'),
+      ),
+    ],
+  );
+}
+
+Widget buildCalibration2(BuildContext context) {
+  return AlertDialog(
+    title: Text('Trin 1'),
+    content: SizedBox(
+      height: 245,
+      child: Column(
+        children: [
+          const Text('Indsæt sensor'),
+          Image.asset('./images/plant-sensor-guide-dry.png'),
+        ],
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context, 'OK'),
+        child: const Text('OK'),
+      ),
+    ],
+  );
+}
+
+Widget buildCalibration3(BuildContext context, controller) {
+  return AlertDialog(
+    title: Text('Trin 2'),
+    content: SizedBox(
+      height: 245,
+      child: Column(
+        children: [
+          const Text('Vent'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(7, 0, 7, 0),
+            child: SizedBox(
+              width: 95,
+              child: LinearProgressIndicator(value: controller.value),
+            ),
+          ),
+          Image.asset('./images/plant-sensor-guide-dry.png'),
+        ],
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context, 'OK'),
+        child: const Text('OK'),
+      ),
+    ],
+  );
+}
+
+Widget buildCalibration4(BuildContext context) {
+  return AlertDialog(
+    title: Text('Trin 3'),
+    content: SizedBox(
+      height: 245,
+      child: Column(
+        children: [
+          const Text('Vand planten'),
+          Image.asset('./images/plant-sensor-guide-water.png'),
+        ],
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context, 'Færdig'),
+        child: const Text('Færdig'),
+      ),
+    ],
+  );
+}
+
+Widget buildCalibration5(BuildContext context) {
+  return AlertDialog(
+    title: Text('Færdig'),
+    content: Text('din plante er nu klar :)'),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context, 'OK'),
+        child: const Text('OK'),
+      ),
+    ],
+  );
+}
+
+Future<void> showCalibrationDialogFlow(
+  BuildContext context,
+  AnimationController controller,
+) async {
+  // Step 1
+  final step1 = await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => buildCalibration1(context),
+  );
+  if (step1 != 'START') return;
+
+  // Step 2
+  final step2 = await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => buildCalibration2(context),
+  );
+  if (step2 != 'OK') return;
+
+  // Step 3 (wait 5 seconds before showing OK)
+  // await controller.forward(from: 0); // animate progress bar if needed
+  controller.reset();
+  controller.forward();
+  final step3 = await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      bool showOk = false;
+      return StatefulBuilder(
+        builder: (context, setState) {
+          if (!showOk) {
+            Future.delayed(const Duration(seconds: 11), () {
+              setState(() => showOk = true);
+            });
+          }
+          return AlertDialog(
+            title: Text('Trin 2'),
+            content: SizedBox(
+              height: 245,
+              child: Column(
+                children: [
+                  const Text('Vent'),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(7, 0, 7, 0),
+                    child: SizedBox(
+                      width: 95,
+                      child: AnimatedBuilder(
+                        animation: controller,
+                        builder: (context, child) {
+                          return LinearProgressIndicator(
+                            value: controller.value,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  Image.asset('./images/plant-sensor-guide-dry.png'),
+                ],
+              ),
+            ),
+            actions: [
+              if (showOk)
+                TextButton(
+                  onPressed: () => Navigator.pop(context, 'OK'),
+                  child: const Text('OK'),
+                ),
+            ],
+          );
+        },
+      );
+    },
+  );
+  if (step3 != 'OK') return;
+
+  // Step 4
+  final step4 = await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => buildCalibration4(context),
+  );
+  if (step4 != 'Færdig') return;
+
+  // Step 5
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => buildCalibration5(context),
+  );
 }
