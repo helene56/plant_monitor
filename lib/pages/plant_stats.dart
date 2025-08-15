@@ -36,7 +36,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
       /// [AnimationController]s can be created with `vsync: this` because of
       /// [TickerProviderStateMixin].
       vsync: this,
-      duration: const Duration(seconds: 10),
+      duration: const Duration(seconds: 11),
     )..addListener(() {
       setState(() {});
     });
@@ -110,6 +110,50 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     return completer.future;
   }
 
+
+  Future<int> subscibeToCalibration(BluetoothDevice device) async {
+  // Ensure device is connected
+  if (device.isDisconnected) {
+    await autoConnectDevice(); // make sure this awaits the connection
+  }
+
+  // Wait until device reports it is connected
+  await device.connectionState
+      .firstWhere((state) => state == BluetoothConnectionState.connected);
+
+  // Now we are sure device is connected
+  print('Device is connected');
+
+
+  try {
+    final services = await device.discoverServices();
+
+    final targetService = services.firstWhere(
+      (s) => s.serviceUuid.toString() == "0f956141-6b9c-4a41-a6df-977ac4b99d78",
+      orElse: () => throw Exception("Service not found"),
+    );
+
+    final targetChar = targetService.characteristics.firstWhere(
+      (c) => c.uuid.toString() == "0f956145-6b9c-4a41-a6df-977ac4b99d78",
+      orElse: () => throw Exception("Characteristic not found"),
+    );
+
+    await targetChar.setNotifyValue(true);
+
+    // Wait for the first calibration value
+    final value = await targetChar.lastValueStream.firstWhere(
+      (data) => data.isNotEmpty && data[0] == 1,
+    );
+
+    print("Received value: $value");
+    return 1;
+
+  } catch (e) {
+    print("Error: $e");
+    return -1; // return error code
+  }
+}
+
   Future<void> toggleSensorTemperature(BluetoothDevice device) async {
     // toggle sensor
     sensorStatus ^= 1;
@@ -130,6 +174,11 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
 
   Future<void> startSoilCalibration(BluetoothDevice device) async {
     _writeToSensor(device, SensorCmdId.soilCal, 1);
+  }
+
+  Future<void> startPump(BluetoothDevice device) async {
+    print("app: turning pump on.");
+    _writeToSensor(device, SensorCmdId.pump, 1);
   }
 
   Future<void> autoConnectDevice() async {
@@ -350,7 +399,14 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                           ),
                         ),
                         onPressed: () async {
-                          await showCalibrationDialogFlow(context, controller, _device, startSoilCalibration);
+                          await showCalibrationDialogFlow(
+                            context,
+                            controller,
+                            _device,
+                            startSoilCalibration,
+                            startPump,
+                            subscibeToCalibration
+                          );
                           setState(() {
                             soilSensorText = 'Kalibreret';
                             calibrationButtonColor = const Color(0xFFB0F5C8);
@@ -573,7 +629,6 @@ Widget buildCalibration2(BuildContext context) {
   );
 }
 
-
 Widget buildCalibration4(BuildContext context) {
   return AlertDialog(
     title: Text('Trin 3'),
@@ -611,12 +666,14 @@ Widget buildCalibration5(BuildContext context) {
     ],
   );
 }
-
+// TODO: this flow of dialog is very messy.. URGENT TO CLEARN UP!
 Future<void> showCalibrationDialogFlow(
   BuildContext context,
   AnimationController controller,
   BluetoothDevice device,
   Future<void> Function(BluetoothDevice) startSoilCalibrationCallback,
+  Future<void> Function(BluetoothDevice) startPumpCallback,
+  Future<int> Function(BluetoothDevice) getCalibrationStatus,
 ) async {
   // Step 1
   final step1 = await showDialog(
@@ -636,6 +693,7 @@ Future<void> showCalibrationDialogFlow(
   // TODO: write to sensor to start calibrating
   await startSoilCalibrationCallback(device);
   // Step 3 (wait 11 seconds before showing OK)
+  // TODO: dont show ok before actually getting the OK from sensor that it completed the calibration
   controller.reset();
   controller.forward();
   final step3 = await showDialog(
@@ -646,7 +704,9 @@ Future<void> showCalibrationDialogFlow(
       return StatefulBuilder(
         builder: (context, setState) {
           if (!showOk) {
-            Future.delayed(const Duration(seconds: 11), () {
+            Future.delayed(const Duration(seconds: 0), () async {
+              // try to read sensor ok status
+              await getCalibrationStatus(device);
               setState(() => showOk = true);
             });
           }
@@ -676,13 +736,16 @@ Future<void> showCalibrationDialogFlow(
               ),
             ),
             actions: [
-              if (showOk)
-              // TODO: write to sensor to turn pump on
-              Text('Pumpen starter ved tryk:'),
+              if (showOk) ...[
+                Text('Pumpen starter ved tryk:'),
                 TextButton(
-                  onPressed: () => Navigator.pop(context, 'OK'),
+                  onPressed: () async {
+                    await startPumpCallback(device);
+                    Navigator.pop(context, 'OK');
+                  },
                   child: const Text('OK'),
                 ),
+              ],
             ],
           );
         },
