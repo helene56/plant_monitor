@@ -128,6 +128,10 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     }
   }
 
+  Future<void> startSoilCalibration(BluetoothDevice device) async {
+    _writeToSensor(device, SensorCmdId.soilCal, 1);
+  }
+
   Future<void> autoConnectDevice() async {
     // if getSensor is not empty
     // autoconnect device and add to devices
@@ -262,7 +266,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
 
   String calibrationText = 'Kalibrér';
   String soilSensorText = 'Ikke\nkalibreret';
-  Color calibrationButtonColor = Color.fromARGB(255, 85, 185, 125);
+  Color calibrationButtonColor = const Color(0xFF55B97D);
   String popUpDialog =
       'Trin 1: Indsæt sensor i potteplanten.\nTrin 2: Vent på færdig kalibrering i tør tilstand\nTrin 3: Vand planten';
 
@@ -345,8 +349,12 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                             calibrationButtonColor,
                           ),
                         ),
-                        onPressed: () {
-                          showCalibrationDialogFlow(context, controller);
+                        onPressed: () async {
+                          await showCalibrationDialogFlow(context, controller, _device, startSoilCalibration);
+                          setState(() {
+                            soilSensorText = 'Kalibreret';
+                            calibrationButtonColor = const Color(0xFFB0F5C8);
+                          });
                         },
                         child: Text(calibrationText),
                       ),
@@ -548,7 +556,11 @@ Widget buildCalibration2(BuildContext context) {
       child: Column(
         children: [
           const Text('Indsæt sensor og tilslut pumpe'),
-          Image.asset('./images/plant-sensor-guide-dry.png'),
+          Image.asset(
+            './images/plant-sensor-guide-dry12.png',
+            width: 200,
+            height: 200,
+          ),
         ],
       ),
     ),
@@ -561,33 +573,6 @@ Widget buildCalibration2(BuildContext context) {
   );
 }
 
-Widget buildCalibration3(BuildContext context, controller) {
-  return AlertDialog(
-    title: Text('Trin 2'),
-    content: SizedBox(
-      height: 245,
-      child: Column(
-        children: [
-          const Text('Vent'),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(7, 0, 7, 0),
-            child: SizedBox(
-              width: 95,
-              child: LinearProgressIndicator(value: controller.value),
-            ),
-          ),
-          Image.asset('./images/plant-sensor-guide-dry.png'),
-        ],
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context, 'OK'),
-        child: const Text('OK'),
-      ),
-    ],
-  );
-}
 
 Widget buildCalibration4(BuildContext context) {
   return AlertDialog(
@@ -597,7 +582,11 @@ Widget buildCalibration4(BuildContext context) {
       child: Column(
         children: [
           const Text('Planten vandes'),
-          Image.asset('./images/plant-sensor-guide-water.png'),
+          Image.asset(
+            './images/plant-sensor-guide-wet12.png',
+            width: 200,
+            height: 200,
+          ),
         ],
       ),
     ),
@@ -626,6 +615,8 @@ Widget buildCalibration5(BuildContext context) {
 Future<void> showCalibrationDialogFlow(
   BuildContext context,
   AnimationController controller,
+  BluetoothDevice device,
+  Future<void> Function(BluetoothDevice) startSoilCalibrationCallback,
 ) async {
   // Step 1
   final step1 = await showDialog(
@@ -642,9 +633,9 @@ Future<void> showCalibrationDialogFlow(
     builder: (context) => buildCalibration2(context),
   );
   if (step2 != 'OK') return;
-
-  // Step 3 (wait 5 seconds before showing OK)
-  // await controller.forward(from: 0); // animate progress bar if needed
+  // TODO: write to sensor to start calibrating
+  await startSoilCalibrationCallback(device);
+  // Step 3 (wait 11 seconds before showing OK)
   controller.reset();
   controller.forward();
   final step3 = await showDialog(
@@ -686,6 +677,8 @@ Future<void> showCalibrationDialogFlow(
             ),
             actions: [
               if (showOk)
+              // TODO: write to sensor to turn pump on
+              Text('Pumpen starter ved tryk:'),
                 TextButton(
                   onPressed: () => Navigator.pop(context, 'OK'),
                   child: const Text('OK'),

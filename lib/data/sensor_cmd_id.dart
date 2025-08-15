@@ -3,4 +3,5 @@ class SensorCmdId {
   static const int light = 1;
   static const int soil = 2;
   static const int pump = 3;
+  static const int soilCal = 4;
 }
