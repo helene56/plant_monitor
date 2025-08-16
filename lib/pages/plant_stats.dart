@@ -52,7 +52,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     });
     _device = BluetoothDevice.fromId(plantSensor!.sensorId);
     toggleSensorTemperature(_device); // activate sensor reading
-    subscibeToDevice(_device); // subscribe to get sensor readings
+    subscribeToDevice(_device); // subscribe to get sensor readings
   }
 
   Future<bool> _writeToSensor(
@@ -84,7 +84,9 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                   // TODO: try catch before await here as well
                   // Write to the characteristic
                   await characteristic.write([finalCmdByte]);
-                  print("Succusesfully wrote to sensor");
+                  if (kDebugMode) {
+                    debugPrint("Succusesfully wrote to sensor");
+                  }
                   if (!completer.isCompleted) completer.complete(true);
                   await sub.cancel();
                   return;
@@ -95,7 +97,9 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
           if (!completer.isCompleted) completer.complete(false);
           await sub.cancel();
         } catch (e) {
-          print('Error reading characteristic: $e');
+          if (kDebugMode) {
+            debugPrint('Error reading characteristic: $e');
+          }
           if (!completer.isCompleted) completer.complete(false);
           await sub.cancel();
           if (mounted) {
@@ -122,7 +126,9 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     );
 
     // Now we are sure device is connected
-    print('Device is connected');
+    if (kDebugMode) {
+      debugPrint('Device is connected');
+    }
 
     try {
       final services = await device.discoverServices();
@@ -145,10 +151,14 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
         (data) => data.isNotEmpty && data[0] == 1,
       );
 
-      print("Received value: $value");
+      if (kDebugMode) {
+        debugPrint("Received value: $value");
+      }
       return 1;
     } catch (e) {
-      print("Error: $e");
+      if (kDebugMode) {
+        debugPrint("Error: $e");
+      }
       return -1; // return error code
     }
   }
@@ -176,7 +186,9 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
   }
 
   Future<void> startPump(BluetoothDevice device) async {
-    print("app: turning pump on.");
+    if (kDebugMode) {
+      debugPrint("app: turning pump on.");
+    }
     _writeToSensor(device, SensorCmdId.pump, 1);
   }
 
@@ -197,112 +209,111 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     }
   }
 
-  Future<void> subscibeToDevice(BluetoothDevice device) async {
+
+  Future<void> subscribeToDevice(BluetoothDevice device) async {
     if (device.isDisconnected) {
-      // Connect to the device
       await autoConnectDevice();
     }
 
     device.connectionState.listen((state) async {
+      if (!mounted) return;
+
       if (state == BluetoothConnectionState.connected) {
-        print('Device is connected');
-        if (mounted) {
-          setState(() {
-            connectionStatus = "Tilsluttet";
-          });
-        }
+        _updateConnectionStatus("Tilsluttet");
+        if (kDebugMode) debugPrint('Device is connected');
 
         try {
-          List<BluetoothService> services = await device.discoverServices();
-          for (var service in services) {
-            if (service.serviceUuid.toString() ==
-                "0f956141-6b9c-4a41-a6df-977ac4b99d78") {
-              for (var c in service.characteristics) {
-                if (c.uuid.toString() ==
-                    "0f956142-6b9c-4a41-a6df-977ac4b99d78") {
-                  try {
-                    // Enable notifications
-                    await c.setNotifyValue(true);
-                    // Listen for value changes
-                    final bluetoothSubscription = c.onValueReceived.listen((
-                      value,
-                    ) async {
-                      if (!mounted) {
-                        return; // Check if the widget is still mounted
-                      }
-                      if (plantSensor == null) {
-                        // Still not ready, so skip this update
-                        return;
-                      }
-                      // update plantsensor -- should update database
-                      if (mounted) {
-                        final byteData = ByteData.sublistView(
-                          Uint8List.fromList(value),
-                        );
-                        int rawTemp = byteData.getInt16(0, Endian.little);
-                        print('Temperature: ${rawTemp / 10.0} °C');
+          final services = await device.discoverServices();
+          final matchingServices = services.where(
+            (s) => s.serviceUuid.toString() == "0f956141-6b9c-4a41-a6df-977ac4b99d78",
+          );
 
-                        double readAirTemp = rawTemp / 10;
-                        rawTemp = byteData.getInt16(2, Endian.little);
-                        double readAirHumidity = rawTemp / 10;
-                        setState(() {
-                          plantSensor = plantSensor!.copyWith(
-                            airTemp: readAirTemp,
-                          );
-                          plantSensor = plantSensor!.copyWith(
-                            humidity: readAirHumidity,
-                          );
-                        });
-                      }
+          if (matchingServices.isEmpty) return;
 
-                      // Update the database (async, outside of setState)
-                      await updateRecord(
-                        ref.read(appDatabase),
-                        'plant_sensor',
-                        plantSensor!.toMap(),
-                      );
+          final targetService = matchingServices.first;
 
-                      print('Sensor data: $value');
-                    });
-                    // Automatically cancel subscription when device disconnects
-                    device.cancelWhenDisconnected(bluetoothSubscription);
-                  } catch (e) {
-                    print('Error reading characteristic: $e');
-                    if (mounted) {
-                      setState(() {
-                        connectionStatus = "Ikke\nTilsluttet";
-                      });
-                    }
-                  }
-                } else if (c.uuid.toString() ==
-                    "0f956143-6b9c-4a41-a6df-977ac4b99d78") {
-                  if (c.properties.read) {
-                    List<int> value = await c.read();
-                    print('pump status: $value');
-                  }
-                }
+          for (final c in targetService.characteristics) {
+            final uuid = c.uuid.toString();
+
+            if (uuid == "0f956142-6b9c-4a41-a6df-977ac4b99d78") {
+              _listenToSensor(c, device);
+            } else if (uuid == "0f956143-6b9c-4a41-a6df-977ac4b99d78") {
+              if (c.properties.read) {
+                final value = await c.read();
+                if (kDebugMode) debugPrint('Pump status: $value');
               }
             }
           }
         } catch (e) {
-          print('Error reading characteristic: $e');
-          if (mounted) {
-            setState(() {
-              connectionStatus = "Ikke\nTilsluttet";
-            });
-          }
+          _handleConnectionError(e);
         }
       } else if (state == BluetoothConnectionState.disconnected) {
-        print('ddevice is disconnected');
-        print('this means it went out of range??');
-        if (mounted) {
-          setState(() {
-            connectionStatus = "Ikke\ntilsluttet";
-            sensorStatus = 0;
-          });
+        _updateConnectionStatus("Ikke\ntilsluttet", sensorStatus: 0);
+        if (kDebugMode) {
+          debugPrint('Device is disconnected');
+          debugPrint('Possibly out of range?');
         }
       }
     });
+  }
+
+  /// Helper to update UI safely
+  void _updateConnectionStatus(String status, {int? sensorStatus}) {
+    if (!mounted) return;
+    setState(() {
+      connectionStatus = status;
+      if (sensorStatus != null) this.sensorStatus = sensorStatus;
+    });
+  }
+
+  /// Helper to handle errors
+  void _handleConnectionError(Object e) {
+    if (kDebugMode) debugPrint('Error reading characteristic: $e');
+    _updateConnectionStatus("Ikke\nTilsluttet");
+  }
+
+  /// Separate listener for sensor characteristic
+  Future<void> _listenToSensor(
+    BluetoothCharacteristic c,
+    BluetoothDevice device,
+  ) async {
+    try {
+      await c.setNotifyValue(true);
+      final subscription = c.onValueReceived.listen((value) async {
+        if (!mounted || plantSensor == null) return;
+
+        final byteData = ByteData.sublistView(Uint8List.fromList(value));
+        final readAirTemp = byteData.getInt16(0, Endian.little) / 10.0;
+        final readAirHumidity = byteData.getInt16(2, Endian.little) / 10.0;
+
+        if (kDebugMode)
+        {
+          debugPrint(
+            'Temperature: $readAirTemp °C, Humidity: $readAirHumidity%',
+          );
+        }
+          
+
+        setState(() {
+          plantSensor = plantSensor!.copyWith(
+            airTemp: readAirTemp,
+            humidity: readAirHumidity,
+          );
+        });
+
+        await updateRecord(
+          ref.read(appDatabase),
+          'plant_sensor',
+          plantSensor!.toMap(),
+        );
+
+        if (kDebugMode) debugPrint('Sensor data: $value');
+      });
+
+      device.cancelWhenDisconnected(subscription);
+    } catch (e) {
+      _handleConnectionError(e);
+    }
   }
 
   @override
@@ -347,7 +358,9 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
 
     return PopScope(
       onPopInvokedWithResult: (bool didPop, Object? result) async {
-        print('Back button pressed or page is trying to pop');
+        if (kDebugMode) {
+          debugPrint('Back button pressed or page is trying to pop');
+        }
         toggleSensorTemperature(
           _device,
         ); // dont recieve sensor readings anymore
@@ -603,7 +616,8 @@ Widget buildCalibration1(BuildContext context) {
   return AlertDialog(
     title: Text('Kalibrering'),
     content: Text(
-      'Trin 1: Indsæt sensor i potteplanten og sørg for at have tilsuttet pumpen til vand.\nTrin 2: Vent på færdig kalibrering i tør tilstand.\nTrin 3: Planten vandes automatisk.',
+      'Trin 1: Indsæt sensor i potteplanten og sørg for at have tilsuttet pumpen til vand.'
+      '\nTrin 2: Vent på færdig kalibrering i tør tilstand.\nTrin 3: Planten vandes automatisk.',
     ),
     actions: [
       TextButton(
@@ -705,10 +719,8 @@ Future<int> showCalibrationDialogFlow(
     builder: (context) => buildCalibration2(context),
   );
   if (step2 != 'OK') return -1;
-  // TODO: write to sensor to start calibrating
   await startSoilCalibrationCallback(device);
   // Step 3 (wait 11 seconds before showing OK)
-  // TODO: dont show ok before actually getting the OK from sensor that it completed the calibration
   controller.reset();
   controller.forward();
   final step3 = await showDialog(
@@ -783,6 +795,6 @@ Future<int> showCalibrationDialogFlow(
     barrierDismissible: false,
     builder: (context) => buildCalibration5(context),
   );
-  
+
   return 0;
 }
