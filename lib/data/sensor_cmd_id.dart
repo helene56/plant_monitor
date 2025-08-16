@@ -5,3 +5,9 @@ class SensorCmdId {
   static const int pump = 3;
   static const int soilCal = 4;
 }
+
+class CalibrationStates {
+  static const int dryFinish = 1;
+  static const int idealFinish = 2;
+  
+}
