@@ -110,49 +110,48 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     return completer.future;
   }
 
-
   Future<int> subscibeToCalibration(BluetoothDevice device) async {
-  // Ensure device is connected
-  if (device.isDisconnected) {
-    await autoConnectDevice(); // make sure this awaits the connection
+    // Ensure device is connected
+    if (device.isDisconnected) {
+      await autoConnectDevice(); // make sure this awaits the connection
+    }
+
+    // Wait until device reports it is connected
+    await device.connectionState.firstWhere(
+      (state) => state == BluetoothConnectionState.connected,
+    );
+
+    // Now we are sure device is connected
+    print('Device is connected');
+
+    try {
+      final services = await device.discoverServices();
+
+      final targetService = services.firstWhere(
+        (s) =>
+            s.serviceUuid.toString() == "0f956141-6b9c-4a41-a6df-977ac4b99d78",
+        orElse: () => throw Exception("Service not found"),
+      );
+
+      final targetChar = targetService.characteristics.firstWhere(
+        (c) => c.uuid.toString() == "0f956145-6b9c-4a41-a6df-977ac4b99d78",
+        orElse: () => throw Exception("Characteristic not found"),
+      );
+
+      await targetChar.setNotifyValue(true);
+
+      // Wait for the first calibration value
+      final value = await targetChar.lastValueStream.firstWhere(
+        (data) => data.isNotEmpty && data[0] == 1,
+      );
+
+      print("Received value: $value");
+      return 1;
+    } catch (e) {
+      print("Error: $e");
+      return -1; // return error code
+    }
   }
-
-  // Wait until device reports it is connected
-  await device.connectionState
-      .firstWhere((state) => state == BluetoothConnectionState.connected);
-
-  // Now we are sure device is connected
-  print('Device is connected');
-
-
-  try {
-    final services = await device.discoverServices();
-
-    final targetService = services.firstWhere(
-      (s) => s.serviceUuid.toString() == "0f956141-6b9c-4a41-a6df-977ac4b99d78",
-      orElse: () => throw Exception("Service not found"),
-    );
-
-    final targetChar = targetService.characteristics.firstWhere(
-      (c) => c.uuid.toString() == "0f956145-6b9c-4a41-a6df-977ac4b99d78",
-      orElse: () => throw Exception("Characteristic not found"),
-    );
-
-    await targetChar.setNotifyValue(true);
-
-    // Wait for the first calibration value
-    final value = await targetChar.lastValueStream.firstWhere(
-      (data) => data.isNotEmpty && data[0] == 1,
-    );
-
-    print("Received value: $value");
-    return 1;
-
-  } catch (e) {
-    print("Error: $e");
-    return -1; // return error code
-  }
-}
 
   Future<void> toggleSensorTemperature(BluetoothDevice device) async {
     // toggle sensor
@@ -326,6 +325,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     final GlobalKey<TooltipState> humidityKey = GlobalKey<TooltipState>();
     final GlobalKey<TooltipState> airTempKey = GlobalKey<TooltipState>();
     final GlobalKey<TooltipState> earthTempKey = GlobalKey<TooltipState>();
+    final GlobalKey<TooltipState> tooltipkey = GlobalKey<TooltipState>();
 
     List tooltips = [waterKey, sunKey, humidityKey, airTempKey, earthTempKey];
 
@@ -392,27 +392,41 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                           ),
                         ),
                       SizedBox(height: 5),
-                      FilledButton(
-                        style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all(
-                            calibrationButtonColor,
+                      Tooltip(
+                        message:
+                            _device.isConnected ? '' : 'sensor ikke tilsluttet',
+                        key: tooltipkey,
+                        triggerMode: TooltipTriggerMode.manual,
+                        preferBelow: false,
+                        child: FilledButton(
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.all(
+                              calibrationButtonColor,
+                            ),
                           ),
+                          onPressed: () async {
+                            tooltipkey.currentState?.ensureTooltipVisible();
+                            if (_device.isConnected) {
+                              int result = await showCalibrationDialogFlow(
+                                context,
+                                controller,
+                                _device,
+                                startSoilCalibration,
+                                startPump,
+                                subscibeToCalibration,
+                              );
+                              if (result != -1) {
+                                setState(() {
+                                  soilSensorText = 'Kalibreret';
+                                  calibrationButtonColor = const Color(
+                                    0xFFB0F5C8,
+                                  );
+                                });
+                              }
+                            }
+                          },
+                          child: Text(calibrationText),
                         ),
-                        onPressed: () async {
-                          await showCalibrationDialogFlow(
-                            context,
-                            controller,
-                            _device,
-                            startSoilCalibration,
-                            startPump,
-                            subscibeToCalibration
-                          );
-                          setState(() {
-                            soilSensorText = 'Kalibreret';
-                            calibrationButtonColor = const Color(0xFFB0F5C8);
-                          });
-                        },
-                        child: Text(calibrationText),
                       ),
                       SizedBox(height: 25),
                       Text('Status:\n$connectionStatus'),
@@ -666,8 +680,9 @@ Widget buildCalibration5(BuildContext context) {
     ],
   );
 }
+
 // TODO: this flow of dialog is very messy.. URGENT TO CLEARN UP!
-Future<void> showCalibrationDialogFlow(
+Future<int> showCalibrationDialogFlow(
   BuildContext context,
   AnimationController controller,
   BluetoothDevice device,
@@ -681,7 +696,7 @@ Future<void> showCalibrationDialogFlow(
     barrierDismissible: false,
     builder: (context) => buildCalibration1(context),
   );
-  if (step1 != 'START') return;
+  if (step1 != 'START') return -1;
 
   // Step 2
   final step2 = await showDialog(
@@ -689,7 +704,7 @@ Future<void> showCalibrationDialogFlow(
     barrierDismissible: false,
     builder: (context) => buildCalibration2(context),
   );
-  if (step2 != 'OK') return;
+  if (step2 != 'OK') return -1;
   // TODO: write to sensor to start calibrating
   await startSoilCalibrationCallback(device);
   // Step 3 (wait 11 seconds before showing OK)
@@ -752,7 +767,7 @@ Future<void> showCalibrationDialogFlow(
       );
     },
   );
-  if (step3 != 'OK') return;
+  if (step3 != 'OK') return -1;
 
   // Step 4
   final step4 = await showDialog(
@@ -760,7 +775,7 @@ Future<void> showCalibrationDialogFlow(
     barrierDismissible: false,
     builder: (context) => buildCalibration4(context),
   );
-  if (step4 != 'Færdig') return;
+  if (step4 != 'Færdig') return -1;
 
   // Step 5
   await showDialog(
@@ -768,4 +783,6 @@ Future<void> showCalibrationDialogFlow(
     barrierDismissible: false,
     builder: (context) => buildCalibration5(context),
   );
+  
+  return 0;
 }
