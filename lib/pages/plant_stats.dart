@@ -148,13 +148,16 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
 
       // Wait for the first calibration value
       final value = await targetChar.lastValueStream.firstWhere(
-        (data) => data.isNotEmpty && data[0] == 1,
+        (data) =>
+            data.isNotEmpty &&
+            (data[0] == CalibrationStates.dryFinish ||
+                data[0] == CalibrationStates.idealFinish),
       );
 
       if (kDebugMode) {
         debugPrint("Received value: $value");
       }
-      return 1;
+      return value[0];
     } catch (e) {
       if (kDebugMode) {
         debugPrint("Error: $e");
@@ -209,7 +212,6 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     }
   }
 
-
   Future<void> subscribeToDevice(BluetoothDevice device) async {
     if (device.isDisconnected) {
       await autoConnectDevice();
@@ -225,7 +227,9 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
         try {
           final services = await device.discoverServices();
           final matchingServices = services.where(
-            (s) => s.serviceUuid.toString() == "0f956141-6b9c-4a41-a6df-977ac4b99d78",
+            (s) =>
+                s.serviceUuid.toString() ==
+                "0f956141-6b9c-4a41-a6df-977ac4b99d78",
           );
 
           if (matchingServices.isEmpty) return;
@@ -286,13 +290,11 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
         final readAirTemp = byteData.getInt16(0, Endian.little) / 10.0;
         final readAirHumidity = byteData.getInt16(2, Endian.little) / 10.0;
 
-        if (kDebugMode)
-        {
+        if (kDebugMode) {
           debugPrint(
             'Temperature: $readAirTemp °C, Humidity: $readAirHumidity%',
           );
         }
-          
 
         setState(() {
           plantSensor = plantSensor!.copyWith(
@@ -316,6 +318,12 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     }
   }
 
+  String _tooltipMessage() {
+  if (!_device.isConnected) return 'sensor ikke tilsluttet';
+  if (calibrationWaitTime) return 'kalibrering stadig igang!';
+  return '';
+}
+
   @override
   void dispose() {
     _bluetoothSubscription?.cancel(); // Cancel the subscription
@@ -328,6 +336,8 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
   Color calibrationButtonColor = const Color(0xFF55B97D);
   String popUpDialog =
       'Trin 1: Indsæt sensor i potteplanten.\nTrin 2: Vent på færdig kalibrering i tør tilstand\nTrin 3: Vand planten';
+  bool calibrationWaitTime = false;
+  String tooltipCali = '';
 
   @override
   Widget build(BuildContext context) {
@@ -407,7 +417,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                       SizedBox(height: 5),
                       Tooltip(
                         message:
-                            _device.isConnected ? '' : 'sensor ikke tilsluttet',
+                            _tooltipMessage(),
                         key: tooltipkey,
                         triggerMode: TooltipTriggerMode.manual,
                         preferBelow: false,
@@ -419,7 +429,8 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                           ),
                           onPressed: () async {
                             tooltipkey.currentState?.ensureTooltipVisible();
-                            if (_device.isConnected) {
+
+                            if (_device.isConnected && !calibrationWaitTime) {
                               int result = await showCalibrationDialogFlow(
                                 context,
                                 controller,
@@ -430,10 +441,11 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                               );
                               if (result != -1) {
                                 setState(() {
-                                  soilSensorText = 'Kalibreret';
+                                  soilSensorText = '1/2 Kalibreret';
                                   calibrationButtonColor = const Color(
                                     0xFFB0F5C8,
                                   );
+                                  calibrationWaitTime = true;
                                 });
                               }
                             }
@@ -733,8 +745,10 @@ Future<int> showCalibrationDialogFlow(
           if (!showOk) {
             Future.delayed(const Duration(seconds: 0), () async {
               // try to read sensor ok status
-              await getCalibrationStatus(device);
-              setState(() => showOk = true);
+              int result = await getCalibrationStatus(device);
+              if (result == CalibrationStates.dryFinish) {
+                setState(() => showOk = true);
+              }
             });
           }
           return AlertDialog(
