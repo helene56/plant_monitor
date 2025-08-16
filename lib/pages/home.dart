@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:plant_monitor/main.dart';
 import 'package:plant_monitor/pages/plant_stats.dart';
@@ -207,7 +208,9 @@ class _MyPlantContainerState extends State<MyPlantContainer> {
         );
       },
       onLongPress: () {
-        print("long press");
+        if (kDebugMode) {
+          debugPrint("long press");
+        }
         Haptics.vibrate(HapticsType.light);
         // pop up saying delete
         // if pop up clicked ask are you sure, add a show dialog button with delete

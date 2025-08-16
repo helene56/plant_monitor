@@ -82,7 +82,9 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
     // first, check if bluetooth is supported by your hardware
     // Note: The platform is initialized on the first call to any FlutterBluePlus method.
     if (await FlutterBluePlus.isSupported == false) {
-      print("Bluetooth not supported by this device");
+      if (kDebugMode) {
+        debugPrint("Bluetooth not supported by this device");
+      }
       return;
     }
 
@@ -92,7 +94,6 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
     var subscription = FlutterBluePlus.adapterState.listen((
       BluetoothAdapterState state,
     ) {
-      print(state);
       if (state == BluetoothAdapterState.on) {
         // usually start scanning, connecting, etc
       } else {
@@ -190,7 +191,11 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
           );
         }
 
-        print('${r.device.remoteId}: "${r.advertisementData.advName}" found!');
+        if (kDebugMode) {
+          debugPrint(
+            '${r.device.remoteId}: "${r.advertisementData.advName}" found!',
+          );
+        }
       }
     }, onError: (e) => print(e));
 
@@ -231,13 +236,17 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
             if (c.properties.read) {
               List<int> temperatureValue = await c.read();
               airTemperature = temperatureValue[0].toDouble();
-              print("Temperature: $temperatureValue");
+              if (kDebugMode) {
+                debugPrint("Temperature: $temperatureValue");
+              }
             }
           }
           if (c.uuid.toString() == "0f956143-6b9c-4a41-a6df-977ac4b99d78") {
             if (c.properties.read) {
               pumpValue = await c.read();
-              print("Pump: $pumpValue");
+              if (kDebugMode) {
+                debugPrint("Pump: $pumpValue");
+              }
             }
           }
         }
