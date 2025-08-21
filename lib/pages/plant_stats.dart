@@ -11,6 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plant_monitor/data/sensor_cmd_id.dart';
 import 'package:haptic_feedback/haptic_feedback.dart';
 
+// TODO: somehow the page should remember the calibration state, as well as saving it to the db
+
 class MyPlantStat extends ConsumerStatefulWidget {
   final Plant plantCard;
   const MyPlantStat({super.key, required this.plantCard});
@@ -713,7 +715,7 @@ Widget buildCalibration4(BuildContext context) {
 Widget buildCalibration5(BuildContext context) {
   return AlertDialog(
     title: Text('Færdig'),
-    content: Text('din plante er nu klar :)'),
+    content: Text('Resten af kalibreringen klarer sensoren :)'),
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context, 'OK'),
@@ -723,7 +725,7 @@ Widget buildCalibration5(BuildContext context) {
   );
 }
 
-// TODO: this flow of dialog is very messy.. URGENT TO CLEARN UP!
+// TODO: this flow of dialog is very messy.. URGENT TO CLEAN UP!
 Future<int> showCalibrationDialogFlow(
   BuildContext context,
   AnimationController controller,
