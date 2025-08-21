@@ -9,6 +9,7 @@ import 'package:plant_monitor/main.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plant_monitor/data/sensor_cmd_id.dart';
+import 'package:haptic_feedback/haptic_feedback.dart';
 
 class MyPlantStat extends ConsumerStatefulWidget {
   final Plant plantCard;
@@ -147,7 +148,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
       await targetChar.setNotifyValue(true);
 
       // Wait for the first calibration value
-      final value = await targetChar.lastValueStream.firstWhere(
+      final value = await targetChar.onValueReceived.firstWhere(
         (data) =>
             data.isNotEmpty &&
             (data[0] == CalibrationStates.dryFinish ||
@@ -319,10 +320,10 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
   }
 
   String _tooltipMessage() {
-  if (!_device.isConnected) return 'sensor ikke tilsluttet';
-  if (calibrationWaitTime) return 'kalibrering stadig igang!';
-  return '';
-}
+    if (!_device.isConnected) return 'sensor ikke tilsluttet';
+    if (calibrationWaitTime) return 'kalibrering stadig igang!';
+    return '';
+  }
 
   @override
   void dispose() {
@@ -337,6 +338,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
   String popUpDialog =
       'Trin 1: Indsæt sensor i potteplanten.\nTrin 2: Vent på færdig kalibrering i tør tilstand\nTrin 3: Vand planten';
   bool calibrationWaitTime = false;
+  bool calibrationFinish = false;
   String tooltipCali = '';
 
   @override
@@ -416,8 +418,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                         ),
                       SizedBox(height: 5),
                       Tooltip(
-                        message:
-                            _tooltipMessage(),
+                        message: _tooltipMessage(),
                         key: tooltipkey,
                         triggerMode: TooltipTriggerMode.manual,
                         preferBelow: false,
@@ -429,7 +430,6 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                           ),
                           onPressed: () async {
                             tooltipkey.currentState?.ensureTooltipVisible();
-
                             if (_device.isConnected && !calibrationWaitTime) {
                               int result = await showCalibrationDialogFlow(
                                 context,
@@ -447,6 +447,22 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                                   );
                                   calibrationWaitTime = true;
                                 });
+                                int calibrationResult =
+                                    await subscibeToCalibration(_device);
+                                if (calibrationResult ==
+                                    CalibrationStates.idealFinish) {
+                                  await Haptics.vibrate(HapticsType.success);
+                                  setState(() {
+                                    soilSensorText = '2/2 Kalibreret';
+                                    calibrationWaitTime = false;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Kalibrering færdig! 🎉'),
+                                        duration: Duration(seconds: 4),
+                                      ),
+                                    );
+                                  });
+                                }
                               }
                             }
                           },
