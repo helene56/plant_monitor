@@ -36,7 +36,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
       /// [AnimationController]s can be created with `vsync: this` because of
       /// [TickerProviderStateMixin].
       vsync: this,
-      duration: const Duration(seconds: 11),
+      duration: const Duration(seconds: 21),
     )..addListener(() {
       setState(() {});
     });
