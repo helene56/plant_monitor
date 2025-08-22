@@ -257,6 +257,9 @@ class _AverageButton extends StatelessWidget {
 class _DailyBarChart extends StatelessWidget {
   const _DailyBarChart();
 
+  // how many times watered or how much water used?
+  // decide to show how much water was used in ml
+
   @override
   Widget build(BuildContext context) {
     return BarChart(
@@ -276,10 +279,12 @@ class _DailyBarChart extends StatelessWidget {
               reservedSize: 32,
               getTitlesWidget: (value, meta) {
                 const style = TextStyle(color: Colors.black, fontSize: 12);
-                if (value % 2 == 0) {
-                  return Text(value.toStringAsFixed(0), style: style);
+                const unitStyle = TextStyle(color: Colors.black, fontSize: 12);
+
+                if (value == meta.max) {
+                  return Text('mL', style: unitStyle);
                 }
-                return const Text('');
+                return Text(value.toStringAsFixed(0), style: style);
               },
             ),
           ),
@@ -367,6 +372,7 @@ class _DailyBarChart extends StatelessWidget {
               ),
             ],
           ),
+
           BarChartGroupData(
             x: 5,
             barRods: [
