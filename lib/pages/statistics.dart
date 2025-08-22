@@ -10,6 +10,13 @@ class MyStats extends StatefulWidget {
 
 class _MyStatsState extends State<MyStats> {
   _SelectedButton _selectedButton = _SelectedButton.water;
+  bool _showAvg = false;
+
+  void _toggleAvg() {
+    setState(() {
+      _showAvg = !_showAvg;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,32 +68,55 @@ class _MyStatsState extends State<MyStats> {
                       aspectRatio: 1.70,
                       child: _selectedButton == _SelectedButton.water
                           ? const _DailyBarChart()
-                          : const _MonthlyLineChart(),
+                          : _MonthlyLineChart(
+                              showAvg: _showAvg,
+                            ),
                     ),
                     const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _SelectableIconButton(
-                          isSelected: _selectedButton == _SelectedButton.water,
-                          icon: Icons.water_drop,
-                          onPressed: () {
-                            setState(() {
-                              _selectedButton = _SelectedButton.water;
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 20),
-                        _SelectableIconButton(
-                          isSelected: _selectedButton == _SelectedButton.temperature,
-                          icon: Icons.thermostat,
-                          onPressed: () {
-                            setState(() {
-                              _selectedButton = _SelectedButton.temperature;
-                            });
-                          },
-                        ),
-                      ],
+                    // Use a Stack to independently position the buttons
+                    SizedBox(
+                      height: 48, // Give the Stack a fixed height
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // This Row holds the two main icon buttons and remains centered
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _SelectableIconButton(
+                                isSelected: _selectedButton == _SelectedButton.water,
+                                icon: Icons.water_drop,
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedButton = _SelectedButton.water;
+                                  });
+                                },
+                              ),
+                              const SizedBox(width: 20),
+                              _SelectableIconButton(
+                                isSelected: _selectedButton == _SelectedButton.temperature,
+                                icon: Icons.thermostat,
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedButton = _SelectedButton.temperature;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                          // The Opacity and AverageButton are now positioned on the left
+                          Positioned(
+                            left: 0,
+                            child: Opacity(
+                              opacity: _selectedButton == _SelectedButton.temperature ? 1.0 : 0.0,
+                              child: _AverageButton(
+                                showAvg: _showAvg,
+                                onPressed: _toggleAvg,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -120,15 +150,16 @@ class _SelectableIconButton extends StatelessWidget {
       decoration: BoxDecoration(
         color: isSelected ? const Color(0xFF66CC88) : Colors.transparent,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: Colors.black.withAlpha(51),
-                  blurRadius: 4.0,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : [],
+        boxShadow:
+            isSelected
+                ? [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(51),
+                    blurRadius: 4.0,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+                : [],
       ),
       child: IconButton(
         icon: Icon(
@@ -138,6 +169,31 @@ class _SelectableIconButton extends StatelessWidget {
         highlightColor: Colors.transparent,
         splashColor: Colors.transparent,
         onPressed: onPressed,
+      ),
+    );
+  }
+}
+
+class _AverageButton extends StatelessWidget {
+  const _AverageButton({required this.showAvg, required this.onPressed});
+
+  final bool showAvg;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 60,
+      height: 34,
+      child: TextButton(
+        onPressed: onPressed,
+        child: Text(
+          'avg',
+          style: TextStyle(
+            fontSize: 12,
+            color: showAvg ? Colors.black.withAlpha(127) : Colors.black,
+          ),
+        ),
       ),
     );
   }
@@ -155,10 +211,7 @@ class _DailyBarChart extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           getDrawingHorizontalLine: (value) {
-            return FlLine(
-              color: Colors.grey.withAlpha(77),
-              strokeWidth: 1,
-            );
+            return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
           },
         ),
         titlesData: FlTitlesData(
@@ -211,33 +264,73 @@ class _DailyBarChart extends StatelessWidget {
         barGroups: [
           BarChartGroupData(
             x: 0,
-            barRods: [BarChartRodData(toY: 5, color: const Color(0xFF66CC88), width: 18)],
+            barRods: [
+              BarChartRodData(
+                toY: 5,
+                color: const Color(0xFF66CC88),
+                width: 18,
+              ),
+            ],
           ),
           BarChartGroupData(
             x: 1,
-            barRods: [BarChartRodData(toY: 6.5, color: const Color(0xFF66CC88), width: 18)],
+            barRods: [
+              BarChartRodData(
+                toY: 6.5,
+                color: const Color(0xFF66CC88),
+                width: 18,
+              ),
+            ],
           ),
           BarChartGroupData(
             x: 2,
-            barRods: [BarChartRodData(toY: 5, color: const Color(0xFF66CC88), width: 18)],
+            barRods: [
+              BarChartRodData(
+                toY: 5,
+                color: const Color(0xFF66CC88),
+                width: 18,
+              ),
+            ],
           ),
           BarChartGroupData(
             x: 3,
-            barRods: [BarChartRodData(toY: 7.5, color: const Color(0xFF66CC88), width: 18)],
+            barRods: [
+              BarChartRodData(
+                toY: 7.5,
+                color: const Color(0xFF66CC88),
+                width: 18,
+              ),
+            ],
           ),
           BarChartGroupData(
             x: 4,
-            barRods: [BarChartRodData(toY: 9, color: const Color(0xFF66CC88), width: 18)],
+            barRods: [
+              BarChartRodData(
+                toY: 9,
+                color: const Color(0xFF66CC88),
+                width: 18,
+              ),
+            ],
           ),
           BarChartGroupData(
             x: 5,
             barRods: [
-              BarChartRodData(toY: 11.5, color: const Color(0xFF66CC88), width: 18),
+              BarChartRodData(
+                toY: 11.5,
+                color: const Color(0xFF66CC88),
+                width: 18,
+              ),
             ],
           ),
           BarChartGroupData(
             x: 6,
-            barRods: [BarChartRodData(toY: 6.5, color: const Color(0xFF66CC88), width: 18)],
+            barRods: [
+              BarChartRodData(
+                toY: 6.5,
+                color: const Color(0xFF66CC88),
+                width: 18,
+              ),
+            ],
           ),
         ],
       ),
@@ -245,53 +338,18 @@ class _DailyBarChart extends StatelessWidget {
   }
 }
 
+class _MonthlyLineChart extends StatelessWidget {
+  const _MonthlyLineChart({required this.showAvg});
 
-class _MonthlyLineChart extends StatefulWidget {
-  const _MonthlyLineChart();
-
-  @override
-  State<_MonthlyLineChart> createState() => _MonthlyLineChartState();
-}
-
-class _MonthlyLineChartState extends State<_MonthlyLineChart> {
-  bool showAvg = false;
-
-  final List<Color> gradientColors = [
-    const Color(0xFF66CC88),
-    const Color(0xFF66CC88).withAlpha(127)
-  ];
+  final bool showAvg;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        LineChart(showAvg ? _avgData() : _mainData()),
-        SizedBox(
-          width: 60,
-          height: 34,
-          child: TextButton(
-            onPressed: () {
-              setState(() {
-                showAvg = !showAvg;
-              });
-            },
-            child: Text(
-              'avg',
-              style: TextStyle(
-                fontSize: 12,
-                color: showAvg
-                    ? Colors.black.withAlpha(127)
-                    : Colors.black,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+    return LineChart(showAvg ? _avgData() : _mainData());
   }
 
   Widget _bottomTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(fontWeight: FontWeight.bold, fontSize: 12);
+    const style = TextStyle(fontSize: 12);
     switch (value.toInt()) {
       case 2:
         return const Text('MAR', style: style);
@@ -305,24 +363,30 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
   }
 
   Widget _leftTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(fontWeight: FontWeight.bold, fontSize: 12);
+    const style = TextStyle(fontSize: 12);
     if (value % 2 == 0) {
-      return Text(value.toStringAsFixed(0), style: style, textAlign: TextAlign.left);
+      return Text(
+        value.toStringAsFixed(0),
+        style: style,
+        textAlign: TextAlign.left,
+      );
     }
     return const SizedBox.shrink();
   }
 
   LineChartData _mainData() {
+    final List<Color> gradientColors = [
+      const Color(0xFF66CC88),
+      const Color(0xFF66CC88).withAlpha(127),
+    ];
+
     return LineChartData(
       lineTouchData: const LineTouchData(enabled: false),
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
         getDrawingHorizontalLine: (value) {
-          return FlLine(
-            color: Colors.grey.withAlpha(77),
-            strokeWidth: 1,
-          );
+          return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
         },
       ),
       titlesData: FlTitlesData(
@@ -348,9 +412,7 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
           ),
         ),
       ),
-      borderData: FlBorderData(
-        show: false, // The border is now hidden
-      ),
+      borderData: FlBorderData(show: false),
       minX: 0,
       maxX: 11,
       minY: 0,
@@ -374,9 +436,8 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
           belowBarData: BarAreaData(
             show: true,
             gradient: LinearGradient(
-              colors: gradientColors
-                  .map((color) => color.withAlpha(77))
-                  .toList(),
+              colors:
+                  gradientColors.map((color) => color.withAlpha(77)).toList(),
             ),
           ),
         ),
@@ -385,16 +446,18 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
   }
 
   LineChartData _avgData() {
+    final List<Color> gradientColors = [
+      const Color(0xFF66CC88),
+      const Color(0xFF66CC88).withAlpha(127),
+    ];
+
     return LineChartData(
       lineTouchData: const LineTouchData(enabled: false),
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
         getDrawingHorizontalLine: (value) {
-          return FlLine(
-            color: Colors.grey.withAlpha(77),
-            strokeWidth: 1,
-          );
+          return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
         },
       ),
       titlesData: FlTitlesData(
@@ -420,9 +483,7 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
           sideTitles: SideTitles(showTitles: false),
         ),
       ),
-      borderData: FlBorderData(
-        show: false, // The border is now hidden
-      ),
+      borderData: FlBorderData(show: false),
       minX: 0,
       maxX: 11,
       minY: 0,
