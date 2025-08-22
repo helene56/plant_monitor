@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter_calendar_heatmap/flutter_calendar_heatmap.dart';
-import 'dart:math';
 
 class MyStats extends StatefulWidget {
   const MyStats({super.key});
@@ -11,62 +9,57 @@ class MyStats extends StatefulWidget {
 }
 
 class _MyStatsState extends State<MyStats> {
-  Map<DateTime, int> _data = {};
-  DateTime? _selectedDate; // store picked date
+  final List<String> _dropdownItems = ['choice 1', 'choice 2'];
+  String? _selectedDropdownValue;
+  _SelectedButton _selectedButton = _SelectedButton.water;
 
   @override
   void initState() {
-    _initExampleData();
     super.initState();
+    _selectedDropdownValue = _dropdownItems.first;
   }
-
-  void _initExampleData() {
-    var rng = Random();
-    var now = DateTime.now();
-    var today = DateTime(now.year, now.month, now.day);
-    for (int i = 0; i < 200; i++) {
-      DateTime date = today.subtract(Duration(days: i));
-      _data[date] = rng.nextInt(6); // Random number between 0 and 5
-    }
-  }
-
-  // Future<void> _pickDate() async {
-  //   DateTime now = DateTime.now();
-  //   final picked = await showDatePicker(
-  //     context: context,
-  //     initialDate: now,
-  //     firstDate: now.subtract(const Duration(days: 365)),
-  //     lastDate: now,
-  //   );
-
-  //   if (picked != null) {
-  //     setState(() {
-  //       _selectedDate = DateTime(picked.year, picked.month, picked.day);
-  //     });
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
-    // final selectedValue = _selectedDate != null ? _data[_selectedDate] ?? 0 : 0;
-
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             const SizedBox(height: 20),
-            // ElevatedButton(
-            //   onPressed: _pickDate,
-            //   child: const Text("Pick a Date"),
-            // ),
-            // if (_selectedDate != null) ...[
-            //   const SizedBox(height: 10),
-            //   Text(
-            //     "Selected: ${_selectedDate!.toLocal()} → Value: $selectedValue",
-            //     style: const TextStyle(fontSize: 16),
-            //   ),
-            // ],
+            DropdownButton<String>(
+              value: _selectedDropdownValue,
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedDropdownValue = newValue;
+                });
+              },
+              items: _dropdownItems.map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back_ios),
+                  onPressed: () {
+                    // TODO: Implement logic to switch to previous data set
+                  },
+                ),
+                const Text('Daily Progress', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: const Icon(Icons.arrow_forward_ios),
+                  onPressed: () {
+                    // TODO: Implement logic to switch to next data set
+                  },
+                ),
+              ],
+            ),
             const SizedBox(height: 40),
             SizedBox(
               height: 200,
@@ -90,7 +83,6 @@ class _MyStatsState extends State<MyStats> {
                         getTitlesWidget: (value, meta) {
                           const style = TextStyle(
                             color: Colors.black,
-                            // fontWeight: FontWeight.bold,
                             fontSize: 14,
                           );
                           switch (value.toInt()) {
@@ -178,42 +170,52 @@ class _MyStatsState extends State<MyStats> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
 
-            // // Line Chart (just for demo, show progression of last 7 days)
-            // SizedBox(
-            //   height: 200,
-            //   child: LineChart(
-            //     LineChartData(
-            //       lineBarsData: [
-            //         LineChartBarData(
-            //           spots: List.generate(
-            //             7,
-            //             (i) {
-            //               final day = DateTime.now().subtract(Duration(days: i));
-            //               final value = _data[DateTime(day.year, day.month, day.day)] ?? 0;
-            //               return FlSpot(i.toDouble(), value.toDouble());
-            //             },
-            //           ).reversed.toList(),
-            //           isCurved: true,
-            //           color: Colors.blue,
-            //           barWidth: 4,
-            //         ),
-            //       ],
-            //     ),
-            //   ),
-            // ),
-            const SizedBox(height: 30),
-
-            // Heatmap showing all days
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SizedBox(width: 1200,child: HeatMap(aspectRatio: 2.3, data: _data, itemSize: 30)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Material(
+                  color: _selectedButton == _SelectedButton.water ? Colors.lightBlue[100] : Colors.transparent,
+                  // Removed elevation
+                  borderRadius: BorderRadius.circular(24),
+                  child: IconButton(
+                    icon: const Icon(Icons.water_drop),
+                    // Set highlight and splash colors to transparent to remove the on-press effect
+                    highlightColor: Colors.transparent,
+                    splashColor: Colors.transparent,
+                    onPressed: () {
+                      setState(() {
+                        _selectedButton = _SelectedButton.water;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Material(
+                  color: _selectedButton == _SelectedButton.temperature ? Colors.lightBlue[100] : Colors.transparent,
+                  // Removed elevation
+                  borderRadius: BorderRadius.circular(24),
+                  child: IconButton(
+                    icon: const Icon(Icons.thermostat),
+                    // Set highlight and splash colors to transparent to remove the on-press effect
+                    highlightColor: Colors.transparent,
+                    splashColor: Colors.transparent,
+                    onPressed: () {
+                      setState(() {
+                        _selectedButton = _SelectedButton.temperature;
+                      });
+                    },
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 30),
           ],
         ),
       ),
     );
   }
 }
+
+enum _SelectedButton { water, temperature }
