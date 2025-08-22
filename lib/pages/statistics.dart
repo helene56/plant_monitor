@@ -21,111 +21,156 @@ class _MyStatsState extends State<MyStats> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      child: OrientationBuilder(
+        builder: (context, orientation) {
+          final bool isLandscape = orientation == Orientation.landscape;
+
+          if (isLandscape) {
+            return _buildLandscapeLayout();
+          } else {
+            return _buildPortraitLayout();
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildPortraitLayout() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const SizedBox(height: 40),
+          const Text(
+            'Status',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          _buildDateRow(),
+          const SizedBox(height: 40),
+          _buildChartCard(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLandscapeLayout() {
+    return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              flex: 1,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Status',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildDateRow(),
+                ],
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(flex: 3, child: _buildChartCard()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            // TODO: Implement logic to switch to previous data set
+          },
+        ),
+        const Text(
+          'Uge 1',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        IconButton(
+          icon: const Icon(Icons.arrow_forward_ios),
+          onPressed: () {
+            // TODO: Implement logic to switch to next data set
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChartCard() {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      color: const Color.fromARGB(255, 255, 245, 235),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const SizedBox(height: 40),
-            const Text(
-              'Status',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // Use Expanded instead of AspectRatio to make the chart flexible
+            SizedBox(
+              height: 250, // You can adjust this height as needed
+              child:
+                  _selectedButton == _SelectedButton.water
+                      ? const _DailyBarChart()
+                      : _MonthlyLineChart(showAvg: _showAvg),
             ),
             const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios),
-                  onPressed: () {
-                    // TODO: Implement logic to switch to previous data set
-                  },
-                ),
-                const Text(
-                  'Uge 1',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.arrow_forward_ios),
-                  onPressed: () {
-                    // TODO: Implement logic to switch to next data set
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 40),
-            Card(
-              elevation: 4,
-              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              color: const Color.fromARGB(255, 255, 245, 235),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    AspectRatio(
-                      aspectRatio: 1.70,
-                      child:
-                          _selectedButton == _SelectedButton.water
-                              ? const _DailyBarChart()
-                              : _MonthlyLineChart(showAvg: _showAvg),
-                    ),
-                    const SizedBox(height: 20),
-                    // Use a Stack to independently position the buttons
-                    SizedBox(
-                      height: 48, // Give the Stack a fixed height
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // This Row holds the two main icon buttons and remains centered
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _SelectableIconButton(
-                                isSelected:
-                                    _selectedButton == _SelectedButton.water,
-                                icon: Icons.water_drop,
-                                onPressed: () {
-                                  setState(() {
-                                    _selectedButton = _SelectedButton.water;
-                                  });
-                                },
-                              ),
-                              const SizedBox(width: 20),
-                              _SelectableIconButton(
-                                isSelected:
-                                    _selectedButton ==
-                                    _SelectedButton.temperature,
-                                icon: Icons.thermostat,
-                                onPressed: () {
-                                  setState(() {
-                                    _selectedButton =
-                                        _SelectedButton.temperature;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                          // The Opacity and AverageButton are now positioned on the left
-                          Positioned(
-                            left: 0,
-                            child: Opacity(
-                              opacity:
-                                  _selectedButton == _SelectedButton.temperature
-                                      ? 1.0
-                                      : 0.0,
-                              child: _AverageButton(
-                                showAvg: _showAvg,
-                                onPressed: _toggleAvg,
-                              ),
-                            ),
-                          ),
-                        ],
+            SizedBox(
+              height: 48,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _SelectableIconButton(
+                        isSelected: _selectedButton == _SelectedButton.water,
+                        icon: Icons.water_drop,
+                        onPressed: () {
+                          setState(() {
+                            _selectedButton = _SelectedButton.water;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 20),
+                      _SelectableIconButton(
+                        isSelected:
+                            _selectedButton == _SelectedButton.temperature,
+                        icon: Icons.thermostat,
+                        onPressed: () {
+                          setState(() {
+                            _selectedButton = _SelectedButton.temperature;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    left: 0,
+                    child: Opacity(
+                      opacity:
+                          _selectedButton == _SelectedButton.temperature
+                              ? 1.0
+                              : 0.0,
+                      child: _AverageButton(
+                        showAvg: _showAvg,
+                        onPressed: _toggleAvg,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -134,6 +179,10 @@ class _MyStatsState extends State<MyStats> {
     );
   }
 }
+
+// All other classes (_SelectedButton, _SelectableIconButton, _AverageButton,
+// _DailyBarChart, _MonthlyLineChart) remain unchanged.
+// Paste them below this code block to complete the file.
 
 enum _SelectedButton { water, temperature }
 
@@ -402,10 +451,47 @@ class _MonthlyLineChart extends StatelessWidget {
     ];
 
     return LineChartData(
-      lineTouchData: const LineTouchData(enabled: false),
+      // Enable line touch data
+      lineTouchData: LineTouchData(
+        enabled: true,
+        touchTooltipData: LineTouchTooltipData(
+          // tooltipBgColor: Colors.blueAccent,
+          getTooltipItems: (List<LineBarSpot> touchedSpots) {
+            return touchedSpots.map((LineBarSpot touchedSpot) {
+              final String value = touchedSpot.y.toStringAsFixed(2);
+              return LineTooltipItem(
+                value,
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              );
+            }).toList();
+          },
+        ),
+        getTouchedSpotIndicator: (
+          LineChartBarData barData,
+          List<int> spotIndexes,
+        ) {
+          return spotIndexes.map((spotIndex) {
+            return TouchedSpotIndicatorData(
+              FlLine(color: Color(0xFF66CC88), strokeWidth: 2),
+              FlDotData(
+                show: true,
+                getDotPainter:
+                    (spot, percent, barData, index) => FlDotCirclePainter(
+                      radius: 8,
+                      color: Color(0xFF66CC88),
+                      strokeWidth: 2,
+                      strokeColor: Colors.white,
+                    ),
+              ),
+            );
+          }).toList();
+        },
+      ),
       gridData: FlGridData(
         show: true,
-        // drawVerticalLine: false,
         getDrawingHorizontalLine: (value) {
           return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
         },
@@ -413,9 +499,7 @@ class _MonthlyLineChart extends StatelessWidget {
           if (value % 2 == 0) {
             return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
           }
-          return FlLine(
-            color: Colors.transparent,
-          ); // <-- Hide lines for even values
+          return FlLine(color: Colors.transparent);
         },
       ),
       titlesData: FlTitlesData(
@@ -482,10 +566,47 @@ class _MonthlyLineChart extends StatelessWidget {
     ];
 
     return LineChartData(
-      lineTouchData: const LineTouchData(enabled: false),
+      // Enable line touch data
+      lineTouchData: LineTouchData(
+        enabled: true,
+        touchTooltipData: LineTouchTooltipData(
+          // tooltipBgColor: Colors.blueAccent,
+          getTooltipItems: (List<LineBarSpot> touchedSpots) {
+            return touchedSpots.map((LineBarSpot touchedSpot) {
+              final String value = touchedSpot.y.toStringAsFixed(2);
+              return LineTooltipItem(
+                value,
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              );
+            }).toList();
+          },
+        ),
+        getTouchedSpotIndicator: (
+          LineChartBarData barData,
+          List<int> spotIndexes,
+        ) {
+          return spotIndexes.map((spotIndex) {
+            return TouchedSpotIndicatorData(
+              FlLine(color: Color(0xFF66CC88), strokeWidth: 2),
+              FlDotData(
+                show: true,
+                getDotPainter:
+                    (spot, percent, barData, index) => FlDotCirclePainter(
+                      radius: 8,
+                      color: Color(0xFF66CC88),
+                      strokeWidth: 2,
+                      strokeColor: Colors.white,
+                    ),
+              ),
+            );
+          }).toList();
+        },
+      ),
       gridData: FlGridData(
         show: true,
-        // drawVerticalLine: false,
         verticalInterval: 1.0,
         getDrawingHorizontalLine: (value) {
           return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
@@ -494,9 +615,7 @@ class _MonthlyLineChart extends StatelessWidget {
           if (value % 2 == 0) {
             return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
           }
-          return FlLine(
-            color: Colors.transparent,
-          ); // <-- Hide lines for even values
+          return FlLine(color: Colors.transparent);
         },
       ),
       titlesData: FlTitlesData(
