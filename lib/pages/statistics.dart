@@ -66,11 +66,10 @@ class _MyStatsState extends State<MyStats> {
                   children: [
                     AspectRatio(
                       aspectRatio: 1.70,
-                      child: _selectedButton == _SelectedButton.water
-                          ? const _DailyBarChart()
-                          : _MonthlyLineChart(
-                              showAvg: _showAvg,
-                            ),
+                      child:
+                          _selectedButton == _SelectedButton.water
+                              ? const _DailyBarChart()
+                              : _MonthlyLineChart(showAvg: _showAvg),
                     ),
                     const SizedBox(height: 20),
                     // Use a Stack to independently position the buttons
@@ -84,7 +83,8 @@ class _MyStatsState extends State<MyStats> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               _SelectableIconButton(
-                                isSelected: _selectedButton == _SelectedButton.water,
+                                isSelected:
+                                    _selectedButton == _SelectedButton.water,
                                 icon: Icons.water_drop,
                                 onPressed: () {
                                   setState(() {
@@ -94,11 +94,14 @@ class _MyStatsState extends State<MyStats> {
                               ),
                               const SizedBox(width: 20),
                               _SelectableIconButton(
-                                isSelected: _selectedButton == _SelectedButton.temperature,
+                                isSelected:
+                                    _selectedButton ==
+                                    _SelectedButton.temperature,
                                 icon: Icons.thermostat,
                                 onPressed: () {
                                   setState(() {
-                                    _selectedButton = _SelectedButton.temperature;
+                                    _selectedButton =
+                                        _SelectedButton.temperature;
                                   });
                                 },
                               ),
@@ -108,7 +111,10 @@ class _MyStatsState extends State<MyStats> {
                           Positioned(
                             left: 0,
                             child: Opacity(
-                              opacity: _selectedButton == _SelectedButton.temperature ? 1.0 : 0.0,
+                              opacity:
+                                  _selectedButton == _SelectedButton.temperature
+                                      ? 1.0
+                                      : 0.0,
                               child: _AverageButton(
                                 showAvg: _showAvg,
                                 onPressed: _toggleAvg,
@@ -342,6 +348,13 @@ class _MonthlyLineChart extends StatelessWidget {
   const _MonthlyLineChart({required this.showAvg});
 
   final bool showAvg;
+  static const int mondayLimit = 1;
+  static const int tuesdayLimit = 3;
+  static const int wednesdayLimit = 5;
+  static const int thursdayLimit = 7;
+  static const int fridayLimit = 9;
+  static const int saturdayLimit = 11;
+  static const int sundayLimit = 13;
 
   @override
   Widget build(BuildContext context) {
@@ -351,12 +364,20 @@ class _MonthlyLineChart extends StatelessWidget {
   Widget _bottomTitleWidgets(double value, TitleMeta meta) {
     const style = TextStyle(fontSize: 12);
     switch (value.toInt()) {
-      case 2:
-        return const Text('MAR', style: style);
-      case 5:
-        return const Text('JUN', style: style);
-      case 8:
-        return const Text('SEP', style: style);
+      case mondayLimit:
+        return const Text('M', style: style);
+      case tuesdayLimit:
+        return const Text('T', style: style);
+      case wednesdayLimit:
+        return const Text('O', style: style);
+      case thursdayLimit:
+        return const Text('T', style: style);
+      case fridayLimit:
+        return const Text('F', style: style);
+      case saturdayLimit:
+        return const Text('L', style: style);
+      case sundayLimit:
+        return const Text('S', style: style);
       default:
         return const SizedBox.shrink();
     }
@@ -384,9 +405,17 @@ class _MonthlyLineChart extends StatelessWidget {
       lineTouchData: const LineTouchData(enabled: false),
       gridData: FlGridData(
         show: true,
-        drawVerticalLine: false,
+        // drawVerticalLine: false,
         getDrawingHorizontalLine: (value) {
           return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
+        },
+        getDrawingVerticalLine: (value) {
+          if (value % 2 == 0) {
+            return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
+          }
+          return FlLine(
+            color: Colors.transparent,
+          ); // <-- Hide lines for even values
         },
       ),
       titlesData: FlTitlesData(
@@ -414,19 +443,20 @@ class _MonthlyLineChart extends StatelessWidget {
       ),
       borderData: FlBorderData(show: false),
       minX: 0,
-      maxX: 11,
+      maxX: 14,
       minY: 0,
       maxY: 6,
       lineBarsData: [
         LineChartBarData(
           spots: const [
             FlSpot(0, 3),
+            FlSpot(1, 2),
             FlSpot(2.6, 2),
             FlSpot(4.9, 5),
             FlSpot(6.8, 3.1),
-            FlSpot(8, 4),
+            FlSpot(8, 6),
             FlSpot(9.5, 3),
-            FlSpot(11, 4),
+            FlSpot(14, 4),
           ],
           isCurved: true,
           gradient: LinearGradient(colors: gradientColors),
@@ -455,9 +485,18 @@ class _MonthlyLineChart extends StatelessWidget {
       lineTouchData: const LineTouchData(enabled: false),
       gridData: FlGridData(
         show: true,
-        drawVerticalLine: false,
+        // drawVerticalLine: false,
+        verticalInterval: 1.0,
         getDrawingHorizontalLine: (value) {
           return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
+        },
+        getDrawingVerticalLine: (value) {
+          if (value % 2 == 0) {
+            return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
+          }
+          return FlLine(
+            color: Colors.transparent,
+          ); // <-- Hide lines for even values
         },
       ),
       titlesData: FlTitlesData(
@@ -485,7 +524,7 @@ class _MonthlyLineChart extends StatelessWidget {
       ),
       borderData: FlBorderData(show: false),
       minX: 0,
-      maxX: 11,
+      maxX: 14,
       minY: 0,
       maxY: 6,
       lineBarsData: [
@@ -497,7 +536,7 @@ class _MonthlyLineChart extends StatelessWidget {
             FlSpot(6.8, 3.44),
             FlSpot(8, 3.44),
             FlSpot(9.5, 3.44),
-            FlSpot(11, 3.44),
+            FlSpot(14, 3.44),
           ],
           isCurved: true,
           gradient: LinearGradient(
