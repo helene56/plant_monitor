@@ -9,15 +9,7 @@ class MyStats extends StatefulWidget {
 }
 
 class _MyStatsState extends State<MyStats> {
-  final List<String> _dropdownItems = ['choice 1', 'choice 2'];
-  String? _selectedDropdownValue;
   _SelectedButton _selectedButton = _SelectedButton.water;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedDropdownValue = _dropdownItems.first;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,20 +23,6 @@ class _MyStatsState extends State<MyStats> {
               'Status',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            // DropdownButton<String>(
-            //   value: _selectedDropdownValue,
-            //   onChanged: (String? newValue) {
-            //     setState(() {
-            //       _selectedDropdownValue = newValue;
-            //     });
-            //   },
-            //   items: _dropdownItems.map<DropdownMenuItem<String>>((String value) {
-            //     return DropdownMenuItem<String>(
-            //       value: value,
-            //       child: Text(value),
-            //     );
-            //   }).toList(),
-            // ),
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -68,34 +46,52 @@ class _MyStatsState extends State<MyStats> {
               ],
             ),
             const SizedBox(height: 40),
-            const SizedBox(height: 200, child: _DailyBarChart()),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _SelectableIconButton(
-                  isSelected: _selectedButton == _SelectedButton.water,
-                  icon: Icons.water_drop,
-                  onPressed: () {
-                    setState(() {
-                      _selectedButton = _SelectedButton.water;
-                    });
-                  },
+            Card(
+              elevation: 4,
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              color: const Color.fromARGB(255, 255, 245, 235),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    AspectRatio(
+                      aspectRatio: 1.70,
+                      child: _selectedButton == _SelectedButton.water
+                          ? _DailyBarChart()
+                          : _MonthlyLineChart(),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _SelectableIconButton(
+                          isSelected: _selectedButton == _SelectedButton.water,
+                          icon: Icons.water_drop,
+                          onPressed: () {
+                            setState(() {
+                              _selectedButton = _SelectedButton.water;
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 20),
+                        _SelectableIconButton(
+                          isSelected: _selectedButton == _SelectedButton.temperature,
+                          icon: Icons.thermostat,
+                          onPressed: () {
+                            setState(() {
+                              _selectedButton = _SelectedButton.temperature;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 20),
-                _SelectableIconButton(
-                  isSelected: _selectedButton == _SelectedButton.temperature,
-                  icon: Icons.thermostat,
-                  onPressed: () {
-                    setState(() {
-                      _selectedButton = _SelectedButton.temperature;
-                    });
-                  },
-                ),
-              ],
+              ),
             ),
-            const SizedBox(height: 30),
-            _MonthlyLineChart(),
           ],
         ),
       ),
@@ -122,18 +118,17 @@ class _SelectableIconButton extends StatelessWidget {
       duration: const Duration(milliseconds: 1),
       curve: Curves.easeInOut,
       decoration: BoxDecoration(
-        color: isSelected ? Colors.lightBlue[100] : Colors.transparent,
+        color: isSelected ? const Color(0xFF66CC88).withAlpha(77) : Colors.transparent,
         borderRadius: BorderRadius.circular(24),
-        boxShadow:
-            isSelected
-                ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 4.0,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-                : [],
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: Colors.black.withAlpha(51),
+                  blurRadius: 4.0,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : [],
       ),
       child: IconButton(
         icon: Icon(icon),
@@ -153,10 +148,29 @@ class _DailyBarChart extends StatelessWidget {
     return BarChart(
       BarChartData(
         borderData: FlBorderData(show: false),
-        gridData: const FlGridData(show: false),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) {
+            return FlLine(
+              color: Colors.grey.withAlpha(77),
+              strokeWidth: 1,
+            );
+          },
+        ),
         titlesData: FlTitlesData(
-          leftTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 32,
+              getTitlesWidget: (value, meta) {
+                const style = TextStyle(color: Colors.black, fontSize: 12);
+                if (value % 2 == 0) {
+                  return Text(value.toStringAsFixed(0), style: style);
+                }
+                return const Text('');
+              },
+            ),
           ),
           topTitles: const AxisTitles(
             sideTitles: SideTitles(showTitles: false),
@@ -175,13 +189,13 @@ class _DailyBarChart extends StatelessWidget {
                   case 1:
                     return const Text('T', style: style);
                   case 2:
-                    return const Text('W', style: style);
+                    return const Text('O', style: style);
                   case 3:
                     return const Text('T', style: style);
                   case 4:
                     return const Text('F', style: style);
                   case 5:
-                    return const Text('S', style: style);
+                    return const Text('L', style: style);
                   case 6:
                     return const Text('S', style: style);
                   default:
@@ -194,40 +208,39 @@ class _DailyBarChart extends StatelessWidget {
         barGroups: [
           BarChartGroupData(
             x: 0,
-            barRods: [BarChartRodData(toY: 5, color: Colors.blue, width: 18)],
+            barRods: [BarChartRodData(toY: 5, color: const Color(0xFF66CC88), width: 18)],
           ),
           BarChartGroupData(
             x: 1,
-            barRods: [BarChartRodData(toY: 6.5, color: Colors.blue, width: 18)],
+            barRods: [BarChartRodData(toY: 6.5, color: const Color(0xFF66CC88), width: 18)],
           ),
           BarChartGroupData(
             x: 2,
-            barRods: [BarChartRodData(toY: 5, color: Colors.blue, width: 18)],
+            barRods: [BarChartRodData(toY: 5, color: const Color(0xFF66CC88), width: 18)],
           ),
           BarChartGroupData(
             x: 3,
-            barRods: [BarChartRodData(toY: 7.5, color: Colors.blue, width: 18)],
+            barRods: [BarChartRodData(toY: 7.5, color: const Color(0xFF66CC88), width: 18)],
           ),
           BarChartGroupData(
             x: 4,
-            barRods: [BarChartRodData(toY: 9, color: Colors.blue, width: 18)],
+            barRods: [BarChartRodData(toY: 9, color: const Color(0xFF66CC88), width: 18)],
           ),
           BarChartGroupData(
             x: 5,
             barRods: [
-              BarChartRodData(toY: 11.5, color: Colors.blue, width: 18),
+              BarChartRodData(toY: 11.5, color: const Color(0xFF66CC88), width: 18),
             ],
           ),
           BarChartGroupData(
             x: 6,
-            barRods: [BarChartRodData(toY: 6.5, color: Colors.blue, width: 18)],
+            barRods: [BarChartRodData(toY: 6.5, color: const Color(0xFF66CC88), width: 18)],
           ),
         ],
       ),
     );
   }
 }
-
 
 class _MonthlyLineChart extends StatefulWidget {
   const _MonthlyLineChart();
@@ -240,27 +253,22 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
   bool showAvg = false;
 
   final List<Color> gradientColors = [
-    const Color(0xFF00C7FF),
-    Colors.blue,
+    const Color(0xFF66CC88),
+    const Color(0xFF66CC88).withAlpha(127)
   ];
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        AspectRatio(
-          aspectRatio: 1.70,
-          child: Padding(
-            padding: const EdgeInsets.only(
-              right: 18,
-              left: 12,
-              top: 24,
-              bottom: 12,
-            ),
-            child: LineChart(
-              showAvg ? _avgData() : _mainData(),
-            ),
+        Padding(
+          padding: const EdgeInsets.only(
+            right: 18,
+            left: 12,
+            top: 24,
+            bottom: 12,
           ),
+          child: LineChart(showAvg ? _avgData() : _mainData()),
         ),
         SizedBox(
           width: 60,
@@ -275,7 +283,9 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
               'avg',
               style: TextStyle(
                 fontSize: 12,
-                color: showAvg ? Colors.black.withValues(alpha: 0.5) : Colors.black,
+                color: showAvg
+                    ? Colors.black.withAlpha(127)
+                    : Colors.black,
               ),
             ),
           ),
@@ -285,10 +295,7 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
   }
 
   Widget _bottomTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(
-      fontWeight: FontWeight.bold,
-      fontSize: 12,
-    );
+    const style = TextStyle(fontWeight: FontWeight.bold, fontSize: 12);
     switch (value.toInt()) {
       case 2:
         return const Text('MAR', style: style);
@@ -302,10 +309,7 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
   }
 
   Widget _leftTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(
-      fontWeight: FontWeight.bold,
-      fontSize: 12,
-    );
+    const style = TextStyle(fontWeight: FontWeight.bold, fontSize: 12);
     String text;
     switch (value.toInt()) {
       case 1:
@@ -333,20 +337,19 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
         verticalInterval: 1,
         getDrawingHorizontalLine: (value) {
           return FlLine(
-            color: Colors.grey.withValues(alpha: 0.3),
+            color: Colors.grey.withAlpha(77),
             strokeWidth: 1,
           );
         },
         getDrawingVerticalLine: (value) {
-          return const FlLine(
-            color: Colors.transparent,
-            strokeWidth: 1,
-          );
+          return const FlLine(color: Colors.transparent, strokeWidth: 1);
         },
       ),
       titlesData: FlTitlesData(
         show: true,
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
@@ -367,7 +370,7 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
       ),
       borderData: FlBorderData(
         show: true,
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.5), width: 1),
+        border: Border.all(color: Colors.grey.withAlpha(127), width: 1),
       ),
       minX: 0,
       maxX: 11,
@@ -392,7 +395,9 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
           belowBarData: BarAreaData(
             show: true,
             gradient: LinearGradient(
-              colors: gradientColors.map((color) => color.withValues(alpha: 0.3)).toList(),
+              colors: gradientColors
+                  .map((color) => color.withAlpha(77))
+                  .toList(),
             ),
           ),
         ),
@@ -409,14 +414,11 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
         verticalInterval: 1,
         horizontalInterval: 1,
         getDrawingVerticalLine: (value) {
-          return const FlLine(
-            color: Colors.transparent,
-            strokeWidth: 1,
-          );
+          return const FlLine(color: Colors.transparent, strokeWidth: 1);
         },
         getDrawingHorizontalLine: (value) {
           return FlLine(
-            color: Colors.grey.withValues(alpha: 0.3),
+            color: Colors.grey.withAlpha(77),
             strokeWidth: 1,
           );
         },
@@ -439,16 +441,14 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
             interval: 1,
           ),
         ),
-        topTitles: const AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         rightTitles: const AxisTitles(
           sideTitles: SideTitles(showTitles: false),
         ),
       ),
       borderData: FlBorderData(
         show: true,
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.5), width: 1),
+        border: Border.all(color: Colors.grey.withAlpha(127), width: 1),
       ),
       minX: 0,
       maxX: 11,
@@ -468,8 +468,14 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
           isCurved: true,
           gradient: LinearGradient(
             colors: [
-              ColorTween(begin: gradientColors[0], end: gradientColors[1]).lerp(0.2)!,
-              ColorTween(begin: gradientColors[0], end: gradientColors[1]).lerp(0.2)!,
+              ColorTween(
+                begin: gradientColors[0],
+                end: gradientColors[1],
+              ).lerp(0.2)!,
+              ColorTween(
+                begin: gradientColors[0],
+                end: gradientColors[1],
+              ).lerp(0.2)!,
             ],
           ),
           barWidth: 5,
@@ -479,12 +485,14 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
             show: true,
             gradient: LinearGradient(
               colors: [
-                ColorTween(begin: gradientColors[0], end: gradientColors[1])
-                    .lerp(0.2)!
-                    .withValues(alpha: 0.1),
-                ColorTween(begin: gradientColors[0], end: gradientColors[1])
-                    .lerp(0.2)!
-                    .withValues(alpha: 0.1),
+                ColorTween(
+                  begin: gradientColors[0],
+                  end: gradientColors[1],
+                ).lerp(0.2)!.withAlpha(25),
+                ColorTween(
+                  begin: gradientColors[0],
+                  end: gradientColors[1],
+                ).lerp(0.2)!.withAlpha(25),
               ],
             ),
           ),
