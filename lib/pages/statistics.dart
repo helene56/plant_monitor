@@ -60,8 +60,8 @@ class _MyStatsState extends State<MyStats> {
                     AspectRatio(
                       aspectRatio: 1.70,
                       child: _selectedButton == _SelectedButton.water
-                          ? _DailyBarChart()
-                          : _MonthlyLineChart(),
+                          ? const _DailyBarChart()
+                          : const _MonthlyLineChart(),
                     ),
                     const SizedBox(height: 20),
                     Row(
@@ -118,7 +118,7 @@ class _SelectableIconButton extends StatelessWidget {
       duration: const Duration(milliseconds: 1),
       curve: Curves.easeInOut,
       decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF66CC88).withAlpha(77) : Colors.transparent,
+        color: isSelected ? const Color(0xFF66CC88) : Colors.transparent,
         borderRadius: BorderRadius.circular(24),
         boxShadow: isSelected
             ? [
@@ -131,7 +131,10 @@ class _SelectableIconButton extends StatelessWidget {
             : [],
       ),
       child: IconButton(
-        icon: Icon(icon),
+        icon: Icon(
+          icon,
+          color: isSelected ? Colors.white : const Color(0xFFB0B0B0),
+        ),
         highlightColor: Colors.transparent,
         splashColor: Colors.transparent,
         onPressed: onPressed,
@@ -242,6 +245,7 @@ class _DailyBarChart extends StatelessWidget {
   }
 }
 
+
 class _MonthlyLineChart extends StatefulWidget {
   const _MonthlyLineChart();
 
@@ -261,15 +265,7 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.only(
-            right: 18,
-            left: 12,
-            top: 24,
-            bottom: 12,
-          ),
-          child: LineChart(showAvg ? _avgData() : _mainData()),
-        ),
+        LineChart(showAvg ? _avgData() : _mainData()),
         SizedBox(
           width: 60,
           height: 34,
@@ -310,21 +306,10 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
 
   Widget _leftTitleWidgets(double value, TitleMeta meta) {
     const style = TextStyle(fontWeight: FontWeight.bold, fontSize: 12);
-    String text;
-    switch (value.toInt()) {
-      case 1:
-        text = '10K';
-        break;
-      case 3:
-        text = '30k';
-        break;
-      case 5:
-        text = '50k';
-        break;
-      default:
-        return const SizedBox.shrink();
+    if (value % 2 == 0) {
+      return Text(value.toStringAsFixed(0), style: style, textAlign: TextAlign.left);
     }
-    return Text(text, style: style, textAlign: TextAlign.left);
+    return const SizedBox.shrink();
   }
 
   LineChartData _mainData() {
@@ -332,17 +317,12 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
       lineTouchData: const LineTouchData(enabled: false),
       gridData: FlGridData(
         show: true,
-        drawVerticalLine: true,
-        horizontalInterval: 1,
-        verticalInterval: 1,
+        drawVerticalLine: false,
         getDrawingHorizontalLine: (value) {
           return FlLine(
             color: Colors.grey.withAlpha(77),
             strokeWidth: 1,
           );
-        },
-        getDrawingVerticalLine: (value) {
-          return const FlLine(color: Colors.transparent, strokeWidth: 1);
         },
       ),
       titlesData: FlTitlesData(
@@ -369,8 +349,7 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
         ),
       ),
       borderData: FlBorderData(
-        show: true,
-        border: Border.all(color: Colors.grey.withAlpha(127), width: 1),
+        show: false, // The border is now hidden
       ),
       minX: 0,
       maxX: 11,
@@ -410,12 +389,7 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
       lineTouchData: const LineTouchData(enabled: false),
       gridData: FlGridData(
         show: true,
-        drawHorizontalLine: true,
-        verticalInterval: 1,
-        horizontalInterval: 1,
-        getDrawingVerticalLine: (value) {
-          return const FlLine(color: Colors.transparent, strokeWidth: 1);
-        },
+        drawVerticalLine: false,
         getDrawingHorizontalLine: (value) {
           return FlLine(
             color: Colors.grey.withAlpha(77),
@@ -447,8 +421,7 @@ class _MonthlyLineChartState extends State<_MonthlyLineChart> {
         ),
       ),
       borderData: FlBorderData(
-        show: true,
-        border: Border.all(color: Colors.grey.withAlpha(127), width: 1),
+        show: false, // The border is now hidden
       ),
       minX: 0,
       maxX: 11,
