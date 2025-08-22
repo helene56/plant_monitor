@@ -51,7 +51,10 @@ class _MyStatsState extends State<MyStats> {
                     // TODO: Implement logic to switch to previous data set
                   },
                 ),
-                const Text('Daily Progress', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Daily Progress',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 IconButton(
                   icon: const Icon(Icons.arrow_forward_ios),
                   onPressed: () {
@@ -171,42 +174,27 @@ class _MyStatsState extends State<MyStats> {
               ),
             ),
             const SizedBox(height: 20),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Material(
-                  color: _selectedButton == _SelectedButton.water ? Colors.lightBlue[100] : Colors.transparent,
-                  // Removed elevation
-                  borderRadius: BorderRadius.circular(24),
-                  child: IconButton(
-                    icon: const Icon(Icons.water_drop),
-                    // Set highlight and splash colors to transparent to remove the on-press effect
-                    highlightColor: Colors.transparent,
-                    splashColor: Colors.transparent,
-                    onPressed: () {
-                      setState(() {
-                        _selectedButton = _SelectedButton.water;
-                      });
-                    },
-                  ),
+                _SelectableIconButton(
+                  isSelected: _selectedButton == _SelectedButton.water,
+                  icon: Icons.water_drop,
+                  onPressed: () {
+                    setState(() {
+                      _selectedButton = _SelectedButton.water;
+                    });
+                  },
                 ),
                 const SizedBox(width: 20),
-                Material(
-                  color: _selectedButton == _SelectedButton.temperature ? Colors.lightBlue[100] : Colors.transparent,
-                  // Removed elevation
-                  borderRadius: BorderRadius.circular(24),
-                  child: IconButton(
-                    icon: const Icon(Icons.thermostat),
-                    // Set highlight and splash colors to transparent to remove the on-press effect
-                    highlightColor: Colors.transparent,
-                    splashColor: Colors.transparent,
-                    onPressed: () {
-                      setState(() {
-                        _selectedButton = _SelectedButton.temperature;
-                      });
-                    },
-                  ),
+                _SelectableIconButton(
+                  isSelected: _selectedButton == _SelectedButton.temperature,
+                  icon: Icons.thermostat,
+                  onPressed: () {
+                    setState(() {
+                      _selectedButton = _SelectedButton.temperature;
+                    });
+                  },
                 ),
               ],
             ),
@@ -219,3 +207,42 @@ class _MyStatsState extends State<MyStats> {
 }
 
 enum _SelectedButton { water, temperature }
+
+class _SelectableIconButton extends StatelessWidget {
+  const _SelectableIconButton({
+    required this.isSelected,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final bool isSelected;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 1),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.lightBlue[100] : Colors.transparent,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 4.0,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : [],
+      ),
+      child: IconButton(
+        icon: Icon(icon),
+        highlightColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        onPressed: onPressed,
+      ),
+    );
+  }
+}
