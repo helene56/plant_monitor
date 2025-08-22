@@ -11,12 +11,20 @@ class MyStats extends StatefulWidget {
 class _MyStatsState extends State<MyStats> {
   _SelectedButton _selectedButton = _SelectedButton.water;
   bool _showAvg = false;
-
+  int dataIdx = 0;
   void _toggleAvg() {
     setState(() {
       _showAvg = !_showAvg;
     });
   }
+
+  final Map<String, List<double>> data = {
+    'Uge 1': [200, 150.5, 30, 500, 90.9, 301.2, 411],
+    'Uge 2': [222, 120.2, 33, 400, 89, 231.2, 399],
+    'Uge 3': [22, 120.2, 33, 332, 65, 56.2, 231.2],
+  };
+
+  late final List<String> keys = data.keys.toList();
 
   @override
   Widget build(BuildContext context) {
@@ -92,16 +100,23 @@ class _MyStatsState extends State<MyStats> {
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () {
             // TODO: Implement logic to switch to previous data set
+            setState(() {
+              if (dataIdx > 0) {
+                dataIdx--;
+              }
+            });
           },
         ),
-        const Text(
-          'Uge 1',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+        Text(keys[dataIdx], style: TextStyle(fontSize: 18)),
         IconButton(
           icon: const Icon(Icons.arrow_forward_ios),
           onPressed: () {
             // TODO: Implement logic to switch to next data set
+            setState(() {
+              if (dataIdx < data.length - 1) {
+                dataIdx++;
+              }
+            });
           },
         ),
       ],
@@ -123,7 +138,7 @@ class _MyStatsState extends State<MyStats> {
               height: 250, // You can adjust this height as needed
               child:
                   _selectedButton == _SelectedButton.water
-                      ? const _DailyBarChart()
+                      ? _DailyBarChart(testData: data[keys[dataIdx]]!)
                       : _MonthlyLineChart(showAvg: _showAvg),
             ),
             const SizedBox(height: 20),
@@ -255,14 +270,15 @@ class _AverageButton extends StatelessWidget {
 }
 
 class _DailyBarChart extends StatelessWidget {
-  const _DailyBarChart();
+  final List<double> testData;
+
+  const _DailyBarChart({required this.testData});
 
   // how many times watered or how much water used?
   // decide to show how much water was used in ml
 
   @override
   Widget build(BuildContext context) {
-    List<double> testData = [200, 150.5, 30, 500, 90.9, 301.2, 411];
     List<BarChartGroupData> myBarData = [];
     double maxVal = 0;
     for (int i = 0; i < testData.length; i++) {
@@ -343,9 +359,7 @@ class _DailyBarChart extends StatelessWidget {
             ),
           ),
         ),
-        barGroups: [
-          ...myBarData
-        ],
+        barGroups: [...myBarData],
       ),
     );
   }
