@@ -8,42 +8,67 @@ class MyStats extends StatefulWidget {
   State<MyStats> createState() => _MyStatsState();
 }
 
+enum _SelectedButton { water, temperature }
+
 class _MyStatsState extends State<MyStats> {
+  String _selectedPlantKey = 'plante1';
   _SelectedButton _selectedButton = _SelectedButton.water;
   bool _showAvg = false;
   int dataIdx = 0;
+
+  void _onPlantSelected(String plantKey) {
+    setState(() {
+      _selectedPlantKey = plantKey;
+    });
+  }
+
   void _toggleAvg() {
     setState(() {
       _showAvg = !_showAvg;
     });
   }
 
-  final Map<String, List<double>> data = {
-    'Uge 1': [200, 150.5, 30, 500, 90.9, 301.2, 411],
-    'Uge 2': [222, 120.2, 33, 400, 89, 231.2, 399],
-    'Uge 3': [22, 120.2, 33, 332, 65, 56.2, 231.2],
+  final Map<String, Map<String, List<double>>> data = {
+    '04/08 - 10/08': {
+      'plante1': [200, 150.5, 30, 500, 90.9, 301.2, 411],
+      'plante2': [43, 176.4, 24, 300, 84.9, 321.2, 141],
+      'plante3': [22, 150.5, 30, 500, 90.9, 301.2, 411],
+    },
+    '11/08 - 27/08': {
+      'plante1': [200, 150.5, 30, 500, 90.9, 301.2, 411],
+      'plante2': [74, 176.4, 24, 300, 84.9, 321.2, 141],
+      'plante3': [22, 50.5, 30, 500, 40.9, 221.2, 411],
+    },
+    '18/08 - 24/08': {
+      'plante1': [432, 123.5, 60.3, 120, 82.9, 301.2, 411],
+      'plante2': [321, 16.4, 24, 330, 84.9, 321.2, 381],
+      'plante3': [22, 150.5, 30, 400, 50.9, 342, 451],
+    },
   };
-
-  late final List<String> keys = data.keys.toList();
 
   @override
   Widget build(BuildContext context) {
+    // These variables are now declared in the build method
+    final List<String> keysWeek = data.keys.toList();
+    final String currentWeekKey = keysWeek[dataIdx];
+    final Map<String, List<double>> currentPlantData = data[currentWeekKey]!;
+
     return SingleChildScrollView(
       child: OrientationBuilder(
         builder: (context, orientation) {
           final bool isLandscape = orientation == Orientation.landscape;
 
           if (isLandscape) {
-            return _buildLandscapeLayout();
+            return _buildLandscapeLayout(currentPlantData);
           } else {
-            return _buildPortraitLayout();
+            return _buildPortraitLayout(currentPlantData);
           }
         },
       ),
     );
   }
 
-  Widget _buildPortraitLayout() {
+  Widget _buildPortraitLayout(Map<String, List<double>> currentPlantData) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -56,13 +81,19 @@ class _MyStatsState extends State<MyStats> {
           const SizedBox(height: 20),
           _buildDateRow(),
           const SizedBox(height: 40),
-          _buildChartCard(),
+          _buildChartCard(currentPlantData),
+          const SizedBox(height: 20),
+          _PlantCard(
+            plantData: currentPlantData,
+            onPlantSelected: _onPlantSelected,
+            selectedPlantKey: _selectedPlantKey,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildLandscapeLayout() {
+  Widget _buildLandscapeLayout(Map<String, List<double>> currentPlantData) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -85,7 +116,7 @@ class _MyStatsState extends State<MyStats> {
               ),
             ),
             const SizedBox(width: 20),
-            Expanded(flex: 3, child: _buildChartCard()),
+            Expanded(flex: 3, child: _buildChartCard(currentPlantData)),
           ],
         ),
       ),
@@ -93,13 +124,13 @@ class _MyStatsState extends State<MyStats> {
   }
 
   Widget _buildDateRow() {
+    final List<String> keysWeek = data.keys.toList();
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () {
-            // TODO: Implement logic to switch to previous data set
             setState(() {
               if (dataIdx > 0) {
                 dataIdx--;
@@ -107,13 +138,12 @@ class _MyStatsState extends State<MyStats> {
             });
           },
         ),
-        Text(keys[dataIdx], style: TextStyle(fontSize: 18)),
+        Text(keysWeek[dataIdx], style: const TextStyle(fontSize: 18)),
         IconButton(
           icon: const Icon(Icons.arrow_forward_ios),
           onPressed: () {
-            // TODO: Implement logic to switch to next data set
             setState(() {
-              if (dataIdx < data.length - 1) {
+              if (dataIdx < keysWeek.length - 1) {
                 dataIdx++;
               }
             });
@@ -123,7 +153,7 @@ class _MyStatsState extends State<MyStats> {
     );
   }
 
-  Widget _buildChartCard() {
+  Widget _buildChartCard(Map<String, List<double>> currentPlantData) {
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -133,12 +163,13 @@ class _MyStatsState extends State<MyStats> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Use Expanded instead of AspectRatio to make the chart flexible
             SizedBox(
-              height: 250, // You can adjust this height as needed
+              height: 250,
               child:
                   _selectedButton == _SelectedButton.water
-                      ? _DailyBarChart(testData: data[keys[dataIdx]]!)
+                      ? _DailyBarChart(
+                        testData: currentPlantData[_selectedPlantKey]!,
+                      )
                       : _MonthlyLineChart(showAvg: _showAvg),
             ),
             const SizedBox(height: 20),
@@ -199,7 +230,7 @@ class _MyStatsState extends State<MyStats> {
 // _DailyBarChart, _MonthlyLineChart) remain unchanged.
 // Paste them below this code block to complete the file.
 
-enum _SelectedButton { water, temperature }
+// enum _SelectedButton { water, temperature }
 
 class _SelectableIconButton extends StatelessWidget {
   const _SelectableIconButton({
@@ -659,6 +690,112 @@ class _MonthlyLineChart extends StatelessWidget {
                 ).lerp(0.2)!.withAlpha(25),
               ],
             ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// The enum to represent the selected icon
+// enum _SelectedPlantButton { water, fertilize, sunlight }
+
+class _PlantCard extends StatefulWidget {
+  final Map<String, List<double>> plantData;
+  final Function(String) onPlantSelected;
+  final String selectedPlantKey;
+
+  const _PlantCard({
+    required this.plantData,
+    required this.onPlantSelected,
+    required this.selectedPlantKey,
+    super.key,
+  });
+
+  @override
+  State<_PlantCard> createState() => _PlantCardState();
+}
+
+class _PlantCardState extends State<_PlantCard> {
+  late final List<String> plantNames = widget.plantData.keys.toList();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      color: const Color.fromARGB(255, 235, 255, 245),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const Text(
+              'Planter',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildPlantIconButton(
+                  icon: Icons.grass,
+                  label: plantNames[0],
+                  isSelected: widget.selectedPlantKey == plantNames[0],
+                  onPressed: () => widget.onPlantSelected(plantNames[0]),
+                ),
+                _buildPlantIconButton(
+                  icon: Icons.local_florist,
+                  label: plantNames[1],
+                  isSelected: widget.selectedPlantKey == plantNames[1],
+                  onPressed: () => widget.onPlantSelected(plantNames[1]),
+                ),
+                _buildPlantIconButton(
+                  icon: Icons.sunny,
+                  label: plantNames[2],
+                  isSelected: widget.selectedPlantKey == plantNames[2],
+                  onPressed: () => widget.onPlantSelected(plantNames[2]),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Data for ${widget.selectedPlantKey} is shown.',
+              style: const TextStyle(fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlantIconButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+    required bool isSelected,
+  }) {
+    return Column(
+      children: [
+        IconButton(
+          icon: Icon(
+            icon,
+            color:
+                isSelected
+                    ? Colors.green
+                    : Colors.black26, // Green for selected, gray for unselected
+          ),
+          onPressed: onPressed,
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color:
+                isSelected
+                    ? Colors.green
+                    : Colors.black54, // Green for selected, gray for unselected
           ),
         ),
       ],
