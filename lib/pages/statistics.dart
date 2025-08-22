@@ -64,114 +64,9 @@ class _MyStatsState extends State<MyStats> {
               ],
             ),
             const SizedBox(height: 40),
-            SizedBox(
+            const SizedBox(
               height: 200,
-              child: BarChart(
-                BarChartData(
-                  borderData: FlBorderData(show: false),
-                  gridData: const FlGridData(show: false),
-                  titlesData: FlTitlesData(
-                    leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          const style = TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                          );
-                          switch (value.toInt()) {
-                            case 0:
-                              return Text('M', style: style);
-                            case 1:
-                              return Text('T', style: style);
-                            case 2:
-                              return Text('W', style: style);
-                            case 3:
-                              return Text('T', style: style);
-                            case 4:
-                              return Text('F', style: style);
-                            case 5:
-                              return Text('S', style: style);
-                            case 6:
-                              return Text('S', style: style);
-                            default:
-                              return const SizedBox.shrink();
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                  barGroups: [
-                    BarChartGroupData(
-                      x: 0,
-                      barRods: [
-                        BarChartRodData(toY: 5, color: Colors.blue, width: 18),
-                      ],
-                    ),
-                    BarChartGroupData(
-                      x: 1,
-                      barRods: [
-                        BarChartRodData(
-                          toY: 6.5,
-                          color: Colors.blue,
-                          width: 18,
-                        ),
-                      ],
-                    ),
-                    BarChartGroupData(
-                      x: 2,
-                      barRods: [
-                        BarChartRodData(toY: 5, color: Colors.blue, width: 18),
-                      ],
-                    ),
-                    BarChartGroupData(
-                      x: 3,
-                      barRods: [
-                        BarChartRodData(
-                          toY: 7.5,
-                          color: Colors.blue,
-                          width: 18,
-                        ),
-                      ],
-                    ),
-                    BarChartGroupData(
-                      x: 4,
-                      barRods: [
-                        BarChartRodData(toY: 9, color: Colors.blue, width: 18),
-                      ],
-                    ),
-                    BarChartGroupData(
-                      x: 5,
-                      barRods: [
-                        BarChartRodData(
-                          toY: 11.5,
-                          color: Colors.blue,
-                          width: 18,
-                        ),
-                      ],
-                    ),
-                    BarChartGroupData(
-                      x: 6,
-                      barRods: [
-                        BarChartRodData(
-                          toY: 6.5,
-                          color: Colors.blue,
-                          width: 18,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+              child: _DailyBarChart(),
             ),
             const SizedBox(height: 20),
             Row(
@@ -242,6 +137,120 @@ class _SelectableIconButton extends StatelessWidget {
         highlightColor: Colors.transparent,
         splashColor: Colors.transparent,
         onPressed: onPressed,
+      ),
+    );
+  }
+}
+
+class _DailyBarChart extends StatelessWidget {
+  const _DailyBarChart();
+
+  @override
+  Widget build(BuildContext context) {
+    return BarChart(
+      BarChartData(
+        borderData: FlBorderData(show: false),
+        gridData: const FlGridData(show: false),
+        titlesData: FlTitlesData(
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                const style = TextStyle(
+                  color: Colors.black,
+                  fontSize: 14,
+                );
+                switch (value.toInt()) {
+                  case 0:
+                    return const Text('M', style: style);
+                  case 1:
+                    return const Text('T', style: style);
+                  case 2:
+                    return const Text('W', style: style);
+                  case 3:
+                    return const Text('T', style: style);
+                  case 4:
+                    return const Text('F', style: style);
+                  case 5:
+                    return const Text('S', style: style);
+                  case 6:
+                    return const Text('S', style: style);
+                  default:
+                    return const SizedBox.shrink();
+                }
+              },
+            ),
+          ),
+        ),
+        barGroups: [
+          BarChartGroupData(
+            x: 0,
+            barRods: [
+              BarChartRodData(toY: 5, color: Colors.blue, width: 18),
+            ],
+          ),
+          BarChartGroupData(
+            x: 1,
+            barRods: [
+              BarChartRodData(
+                toY: 6.5,
+                color: Colors.blue,
+                width: 18,
+              ),
+            ],
+          ),
+          BarChartGroupData(
+            x: 2,
+            barRods: [
+              BarChartRodData(toY: 5, color: Colors.blue, width: 18),
+            ],
+          ),
+          BarChartGroupData(
+            x: 3,
+            barRods: [
+              BarChartRodData(
+                toY: 7.5,
+                color: Colors.blue,
+                width: 18,
+              ),
+            ],
+          ),
+          BarChartGroupData(
+            x: 4,
+            barRods: [
+              BarChartRodData(toY: 9, color: Colors.blue, width: 18),
+            ],
+          ),
+          BarChartGroupData(
+            x: 5,
+            barRods: [
+              BarChartRodData(
+                toY: 11.5,
+                color: Colors.blue,
+                width: 18,
+              ),
+            ],
+          ),
+          BarChartGroupData(
+            x: 6,
+            barRods: [
+              BarChartRodData(
+                toY: 6.5,
+                color: Colors.blue,
+                width: 18,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
