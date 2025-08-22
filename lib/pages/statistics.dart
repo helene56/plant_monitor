@@ -262,8 +262,30 @@ class _DailyBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<double> testData = [200, 150.5, 30, 500, 90.9, 301.2, 411];
+    List<BarChartGroupData> myBarData = [];
+    double maxVal = 0;
+    for (int i = 0; i < testData.length; i++) {
+      maxVal = testData[i] > maxVal ? testData[i] : maxVal;
+
+      myBarData.add(
+        BarChartGroupData(
+          x: i,
+          barRods: [
+            BarChartRodData(
+              toY: testData[i],
+              color: const Color(0xFF66CC88),
+              width: 18,
+            ),
+          ],
+        ),
+      );
+    }
+    double interval = 50;
+    double maxY = (maxVal / interval).ceil() * interval;
     return BarChart(
       BarChartData(
+        maxY: maxY,
         borderData: FlBorderData(show: false),
         gridData: FlGridData(
           show: true,
@@ -322,77 +344,7 @@ class _DailyBarChart extends StatelessWidget {
           ),
         ),
         barGroups: [
-          BarChartGroupData(
-            x: 0,
-            barRods: [
-              BarChartRodData(
-                toY: 5,
-                color: const Color(0xFF66CC88),
-                width: 18,
-              ),
-            ],
-          ),
-          BarChartGroupData(
-            x: 1,
-            barRods: [
-              BarChartRodData(
-                toY: 6.5,
-                color: const Color(0xFF66CC88),
-                width: 18,
-              ),
-            ],
-          ),
-          BarChartGroupData(
-            x: 2,
-            barRods: [
-              BarChartRodData(
-                toY: 5,
-                color: const Color(0xFF66CC88),
-                width: 18,
-              ),
-            ],
-          ),
-          BarChartGroupData(
-            x: 3,
-            barRods: [
-              BarChartRodData(
-                toY: 7.5,
-                color: const Color(0xFF66CC88),
-                width: 18,
-              ),
-            ],
-          ),
-          BarChartGroupData(
-            x: 4,
-            barRods: [
-              BarChartRodData(
-                toY: 9,
-                color: const Color(0xFF66CC88),
-                width: 18,
-              ),
-            ],
-          ),
-
-          BarChartGroupData(
-            x: 5,
-            barRods: [
-              BarChartRodData(
-                toY: 11.5,
-                color: const Color(0xFF66CC88),
-                width: 18,
-              ),
-            ],
-          ),
-          BarChartGroupData(
-            x: 6,
-            barRods: [
-              BarChartRodData(
-                toY: 6.5,
-                color: const Color(0xFF66CC88),
-                width: 18,
-              ),
-            ],
-          ),
+          ...myBarData
         ],
       ),
     );
