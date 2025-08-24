@@ -736,6 +736,9 @@ class _PlantCardState extends State<_PlantCard> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 Visibility(
+                  maintainSize: true,
+                  maintainState: true,
+                  maintainAnimation: true,
                   visible: _displayStartIndex > 0,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back_ios),
@@ -755,6 +758,9 @@ class _PlantCardState extends State<_PlantCard> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Visibility(
+                  maintainSize: true,
+                  maintainState: true,
+                  maintainAnimation: true,
                   visible: _displayStartIndex + 3 < plantNames.length,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_forward_ios),
