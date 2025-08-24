@@ -1,11 +1,11 @@
 class PlantHistory {
-  final String plantName;
+  final int plantId;
   final String date;
   final double waterMl;
   final double temperature;
 
   PlantHistory({
-    required this.plantName,
+    required this.plantId,
     required this.date,
     required this.waterMl,
     required this.temperature,
@@ -13,7 +13,7 @@ class PlantHistory {
 
   Map<String, Object?> toMap() {
     return {
-      'plantName': plantName,
+      'plantId': plantId,
       'date': date,
       'waterMl': waterMl,
       'temperature': temperature,
