@@ -374,7 +374,18 @@ Future<Database> initializeDatabase() async {
         'ON DELETE CASCADE'
         ')',
       );
+
+      // logging table
+      db.execute('CREATE TABLE plant_history('
+      'id INTEGER PRIMARY KEY,'
+      'plantId INTEGER,'
+      'FOREIGN KEY (plantId) REFERENCES plants(id) '
+      'ON DELETE CASCADE,'
+      'date TEXT,'
+      'waterMl REAL,'
+      'temperature REAL');
     },
+
 
     onOpen: (db) async {
       await db.execute('PRAGMA foreign_keys = ON');
