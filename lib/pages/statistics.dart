@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'dart:math';
 
 class MyStats extends StatefulWidget {
   const MyStats({super.key});
@@ -716,13 +715,17 @@ class _PlantCard extends StatefulWidget {
 class _PlantCardState extends State<_PlantCard> {
   late final List<String> plantNames = widget.plantData.keys.toList();
   int _displayStartIndex = 0;
+  final int _plantIconsPerRow = 3;
   @override
   Widget build(BuildContext context) {
     final int end =
-        (_displayStartIndex + 3 > plantNames.length)
+        (_displayStartIndex + _plantIconsPerRow > plantNames.length)
             ? plantNames.length
-            : _displayStartIndex + 3;
-    final List<String> plantsToShow= plantNames.sublist(_displayStartIndex, end);
+            : _displayStartIndex + _plantIconsPerRow;
+    final List<String> plantsToShow = plantNames.sublist(
+      _displayStartIndex,
+      end,
+    );
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -761,19 +764,18 @@ class _PlantCardState extends State<_PlantCard> {
                   maintainSize: true,
                   maintainState: true,
                   maintainAnimation: true,
-                  visible: _displayStartIndex + 3 < plantNames.length,
+                  visible: _displayStartIndex + _plantIconsPerRow < plantNames.length,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_forward_ios),
                     iconSize: 14,
                     onPressed: () {
                       setState(() {
-                        _displayStartIndex += 3;
-                      if (_displayStartIndex >= plantNames.length) {
-                        _displayStartIndex =
-                            plantNames.length - (plantNames.length % 3);
-                      }
+                        _displayStartIndex += _plantIconsPerRow;
+                        if (_displayStartIndex >= plantNames.length) {
+                          _displayStartIndex =
+                              plantNames.length - (plantNames.length % _plantIconsPerRow);
+                        }
                       });
-                      
                     },
                   ),
                 ),
@@ -783,31 +785,24 @@ class _PlantCardState extends State<_PlantCard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                for (String plantName in plantsToShow)
-                  _buildPlantIconButton(
-                    icon: Icons.grass,
-                    label: plantName,
-                    isSelected: widget.selectedPlantKey == plantName,
-                    onPressed: () => widget.onPlantSelected(plantName),
+                for (int i = 0; i < _plantIconsPerRow; i++)
+                  Expanded(
+                    child:
+                        (i < plantsToShow.length)
+                            ? Align(
+                              alignment: Alignment.center,
+                              child: _buildPlantIconButton(
+                                icon: Icons.grass,
+                                label: plantsToShow[i],
+                                isSelected:
+                                    widget.selectedPlantKey == plantsToShow[i],
+                                onPressed:
+                                    () =>
+                                        widget.onPlantSelected(plantsToShow[i]),
+                              ),
+                            )
+                            : const SizedBox(), // empty slot keeps spacing
                   ),
-                // _buildPlantIconButton(
-                //   icon: Icons.grass,
-                //   label: plantNames[0],
-                //   isSelected: widget.selectedPlantKey == plantNames[0],
-                //   onPressed: () => widget.onPlantSelected(plantNames[0]),
-                // ),
-                // _buildPlantIconButton(
-                //   icon: Icons.local_florist,
-                //   label: plantNames[1],
-                //   isSelected: widget.selectedPlantKey == plantNames[1],
-                //   onPressed: () => widget.onPlantSelected(plantNames[1]),
-                // ),
-                // _buildPlantIconButton(
-                //   icon: Icons.sunny,
-                //   label: plantNames[2],
-                //   isSelected: widget.selectedPlantKey == plantNames[2],
-                //   onPressed: () => widget.onPlantSelected(plantNames[2]),
-                // ),
               ],
             ),
             const SizedBox(height: 10),
