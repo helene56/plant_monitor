@@ -11,6 +11,13 @@ import 'package:plant_monitor/data/plant_type.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../data/water_data_provider.dart';
 
+Future<void> getSensorReadings(Database db, int plantId) async
+{
+  // read from sensor the saved values for how much water and temperate
+  // insert into plant_history table
+
+}
+
 
 final appDatabase = Provider<Database>((ref) {
   throw UnimplementedError('Database provider was not initialized');
