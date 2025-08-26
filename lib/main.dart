@@ -10,14 +10,10 @@ import 'data/plant.dart';
 import 'package:plant_monitor/data/plant_type.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../data/water_data_provider.dart';
-
-Future<void> getSensorReadings(Database db, int plantId) async
-{
-  // read from sensor the saved values for how much water and temperate
-  // insert into plant_history table
-
-}
-
+import 'bluetooth_helpers.dart';
+import 'package:flutter/foundation.dart';
+import 'bluetooth/bt_uuid.dart';
+import '/bluetooth/device_manager.dart';
 
 final appDatabase = Provider<Database>((ref) {
   throw UnimplementedError('Database provider was not initialized');
@@ -28,12 +24,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // initialize database
   final db = await initializeDatabase();
- 
+
   runApp(
     ProviderScope(
-      overrides: [
-      appDatabase.overrideWithValue(db),
-    ],
+      overrides: [appDatabase.overrideWithValue(db)],
       child: MaterialApp(home: MyApp(), debugShowCheckedModeBanner: false),
     ),
   );
@@ -50,6 +44,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   int currentPageindex = 1;
   List<Plant> plantsCards = [];
   List<PlantType> plantingTypes = [];
+  bool loadedLogs = false;
 
   @override
   void initState() {
@@ -71,10 +66,8 @@ class _MyAppState extends ConsumerState<MyApp> {
     final result = await showDialog(
       context: context,
       builder:
-          (context) => AddPlant(
-            onAddPlant: _addPlant,
-            plantingTypes: plantingTypes,
-          ),
+          (context) =>
+              AddPlant(onAddPlant: _addPlant, plantingTypes: plantingTypes),
     );
     // if dialog was dismissed by tapping outside
     if (result == null) {
@@ -82,7 +75,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     }
     // Always refresh after dialog closes
     await ref.read(waterDataProvider.notifier).loadAll();
-    
   }
 
   // add a new plant card
@@ -97,6 +89,20 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    if (!loadedLogs) {
+      final allDevices = ref.watch(
+        deviceManagerProvider.select((state) => state.allDevices),
+      );
+      for (var device in allDevices) {
+        getSensorReadings(
+          ref.read(appDatabase),
+          0,
+          BluetoothDevice.fromId(device.deviceId),
+        );
+      }
+
+      // loadedLogs = true;
+    }
 
     final List<Widget> widgetOptions = [
       MyWater(),
@@ -109,7 +115,8 @@ class _MyAppState extends ConsumerState<MyApp> {
 
         return Scaffold(
           floatingActionButton: Visibility(
-            visible: !isLandscape, // The button is visible only in portrait mode
+            visible:
+                !isLandscape, // The button is visible only in portrait mode
             child: FloatingActionButton.small(
               onPressed: () {
                 _openDialog();
@@ -119,10 +126,12 @@ class _MyAppState extends ConsumerState<MyApp> {
               child: const Icon(Icons.add),
             ),
           ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
 
           bottomNavigationBar: Visibility(
-            visible: !isLandscape, // The navigation bar is visible only in portrait mode
+            visible:
+                !isLandscape, // The navigation bar is visible only in portrait mode
             child: Padding(
               padding: const EdgeInsets.only(bottom: 8, left: 10, right: 10),
               child: ClipRRect(
@@ -136,7 +145,10 @@ class _MyAppState extends ConsumerState<MyApp> {
                   indicatorColor: const Color.fromARGB(255, 250, 229, 212),
                   destinations: const <Widget>[
                     NavigationDestination(
-                      selectedIcon: Icon(Icons.local_drink, color: Colors.blueAccent),
+                      selectedIcon: Icon(
+                        Icons.local_drink,
+                        color: Colors.blueAccent,
+                      ),
                       icon: Icon(Icons.local_drink_outlined),
                       label: 'Vand beholder',
                     ),
@@ -146,7 +158,10 @@ class _MyAppState extends ConsumerState<MyApp> {
                       label: 'Planter',
                     ),
                     NavigationDestination(
-                      selectedIcon: Icon(Icons.straighten, color: Colors.redAccent),
+                      selectedIcon: Icon(
+                        Icons.straighten,
+                        color: Colors.redAccent,
+                      ),
                       icon: Icon(Icons.straighten),
                       label: 'Statistik',
                     ),
@@ -165,5 +180,65 @@ class _MyAppState extends ConsumerState<MyApp> {
         );
       },
     );
+  }
+}
+
+Future<void> getSensorReadings(
+  Database db,
+  int plantId,
+  BluetoothDevice device,
+) async {
+  // TODO: add data related to plant
+  // Ensure device is connected
+  if (device.isDisconnected) {
+    await autoConnectDevice(db); // make sure this awaits the connection
+  }
+
+  // Wait until device reports it is connected
+  await device.connectionState.firstWhere(
+    (state) => state == BluetoothConnectionState.connected,
+  );
+
+  // Now we are sure device is connected
+  if (kDebugMode) {
+    debugPrint('Device is connected');
+  }
+
+  try {
+    final services = await device.discoverServices();
+
+    final targetService = services.firstWhere(
+      (s) => s.serviceUuid.toString() == BtUuid.serviceId,
+      orElse: () => throw Exception("Service not found"),
+    );
+
+    final targetChar = targetService.characteristics.firstWhere(
+      (c) => c.uuid.toString() == BtUuid.sensorLogCharId,
+      orElse: () => throw Exception("Characteristic not found"),
+    );
+
+    final value = await targetChar.read();
+
+    if (kDebugMode) {
+      debugPrint("Received log values: $value");
+      final buffer = value;
+
+      final year = buffer[0] | (buffer[1] << 8);
+      final month = buffer[2];
+      final day = buffer[3];
+      final val1 = buffer[4];
+      final val2 = buffer[5];
+
+      debugPrint("Date: ${year}/${month}/${day}");
+      debugPrint("random val 1: ${val1}");
+      debugPrint("random val 2: ${val2}");
+      // here i should set it not to read anymore?
+
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint("Error: $e");
+    }
+    return; // return error code
   }
 }
