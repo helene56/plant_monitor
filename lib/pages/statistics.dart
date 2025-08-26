@@ -29,8 +29,8 @@ class _MyStatsState extends State<MyStats> {
   }
 
   final Map<String, Map<String, List<double>>> data = {
-    '04/08 - 10/08': {
-      'plante1': [200, 150.5, 30, 500, 90.9, 301.2, 411],
+    '1': {
+      'plante1': [200, 150.5, 70, 500, 90.9, 301.2, 411],
       'plante2': [43, 176.4, 24, 300, 84.9, 321.2, 141],
       'plante3': [22, 150.5, 30, 500, 90.9, 301.2, 411],
       'plante4': [100, 23.5, 21, 328, 88.4, 112, 32],
@@ -694,9 +694,6 @@ class _MonthlyLineChart extends StatelessWidget {
   }
 }
 
-// The enum to represent the selected icon
-// enum _SelectedPlantButton { water, fertilize, sunlight }
-
 class _PlantCard extends StatefulWidget {
   final Map<String, List<double>> plantData;
   final Function(String) onPlantSelected;
@@ -764,7 +761,9 @@ class _PlantCardState extends State<_PlantCard> {
                   maintainSize: true,
                   maintainState: true,
                   maintainAnimation: true,
-                  visible: _displayStartIndex + _plantIconsPerRow < plantNames.length,
+                  visible:
+                      _displayStartIndex + _plantIconsPerRow <
+                      plantNames.length,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_forward_ios),
                     iconSize: 14,
@@ -773,7 +772,8 @@ class _PlantCardState extends State<_PlantCard> {
                         _displayStartIndex += _plantIconsPerRow;
                         if (_displayStartIndex >= plantNames.length) {
                           _displayStartIndex =
-                              plantNames.length - (plantNames.length % _plantIconsPerRow);
+                              plantNames.length -
+                              (plantNames.length % _plantIconsPerRow);
                         }
                       });
                     },
