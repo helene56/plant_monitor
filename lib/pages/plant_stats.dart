@@ -53,7 +53,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     setState(() {
       plantSensor = data;
     });
-    _device = BluetoothDevice.fromId(plantSensor!.sensorId);
+    _device = BluetoothDevice.fromId(plantSensor!.remoteId);
     toggleSensorTemperature(_device); // activate sensor reading
     subscribeToDevice(_device); // subscribe to get sensor readings
   }
@@ -206,7 +206,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     }
     List<PlantSensorData> sensors = await getAllSensors(ref.read(appDatabase));
     for (var sensor in sensors) {
-      var device = BluetoothDevice.fromId(sensor.sensorId);
+      var device = BluetoothDevice.fromId(sensor.remoteId);
       await device.connect(autoConnect: true, mtu: null).then((_) {});
 
       await device.connectionState.firstWhere(

@@ -89,13 +89,13 @@ class WaterDataNotifier extends StateNotifier<WaterDataState> {
     // If you want to update waterLevel based on sensors, do it here and call state = state.copyWith(waterLevel: ...)
     List<double> newWaterLevel = [];
     final db = ref.read(appDatabase);
-
+  
     List<PlantSensorData> allSensors = await getAllSensors(db);
     List<String> selectSensors = await getSelectedSensors(db, allSensors);
 
-    for (var sensorId in selectSensors) {
+    for (var remoteId in selectSensors) {
       final double? waterOutput = await subscibeGetPumpWater(
-        BluetoothDevice.fromId(sensorId),
+        BluetoothDevice.fromId(remoteId),
         db,
       );
       if (waterOutput == -1) {

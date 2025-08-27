@@ -13,7 +13,7 @@ Future<void> autoConnectDevice(Database db) async {
   }
   List<PlantSensorData> sensors = await getAllSensors(db);
   for (var sensor in sensors) {
-    var device = BluetoothDevice.fromId(sensor.sensorId);
+    var device = BluetoothDevice.fromId(sensor.remoteId);
     await device.connect(autoConnect: true, mtu: null).then((_) {});
 
     await device.connectionState.firstWhere(

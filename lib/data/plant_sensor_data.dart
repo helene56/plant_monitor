@@ -2,8 +2,9 @@
 // holds info about the actual sensor values
 
 class PlantSensorData {
-  final int id; // should be initialized with id from Plant
-  final String sensorId;
+  // final int id; // should be initialized with id from Plant
+  final int plantId;
+  final String remoteId;
   final String sensorName;
   double water;
   double sunLux;
@@ -12,8 +13,8 @@ class PlantSensorData {
   double humidity;
 
   PlantSensorData({
-    required this.id,
-    required this.sensorId,
+    required this.plantId,
+    required this.remoteId,
     required this.sensorName,
     required this.water,
     required this.sunLux,
@@ -24,8 +25,8 @@ class PlantSensorData {
 
   Map<String, Object?> toMap() {
     return {
-      'id': id,
-      "sensorId": sensorId,
+      'plantId': plantId,
+      'remoteId': remoteId,
       'sensorName': sensorName,
       'water': water,
       'sunLux': sunLux,
@@ -41,18 +42,19 @@ class PlantSensorData {
     double? sunLux,
     double? earthTemp,
     double? humidity,
-    String? sensorId,
+    String? remoteId,
     String? sensorName,
-    int? id,
+    int? plantId,
   }) {
     return PlantSensorData(
-      id: this.id,
+      // id: this.id,
+      plantId: this.plantId,
       airTemp: airTemp ?? this.airTemp,
       water: water ?? this.water,
       sunLux: sunLux ?? this.sunLux,
       earthTemp: earthTemp ?? this.earthTemp,
       humidity: humidity ?? this.humidity,
-      sensorId: sensorId ?? this.sensorId,
+      remoteId: remoteId ?? this.remoteId,
       sensorName: sensorName ?? this.sensorName,
     );
   }

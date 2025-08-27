@@ -120,9 +120,10 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
 
     List<PlantSensorData> sensors = await getAllSensors(db);
     // check if any sensors where found
+    
     if (sensors.isNotEmpty) {
       for (var sensor in sensors) {
-        var device = BluetoothDevice.fromId(sensor.sensorId);
+        var device = BluetoothDevice.fromId(sensor.remoteId);
         await device.connect(autoConnect: true, mtu: null).then((_) {});
 
         await device.connectionState.firstWhere(
@@ -130,11 +131,11 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
         );
         // TODO: if add page is already open and trying to connect, error will occur
         // add already connected sensor to device list
-        if (!hasDeviceWithId(sensor.sensorId)) {
+        if (!hasDeviceWithId(sensor.remoteId)) {
           state = state.copyWith(
             devices: [
               ...state.persistentDevices,
-              Device(deviceId: sensor.sensorId, deviceName: sensor.sensorName),
+              Device(deviceId: sensor.remoteId, deviceName: sensor.sensorName),
             ],
           );
         }
@@ -271,8 +272,8 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
       SensorReadings initialSensorValues = await getServices(device);
 
       var sensor = PlantSensorData(
-        id: newPlantId,
-        sensorId: selectedDevice.deviceId,
+        plantId: newPlantId,
+        remoteId: selectedDevice.deviceId,
         sensorName: selectedDevice.deviceName,
         water: 0,
         sunLux: 0,
