@@ -34,9 +34,9 @@ class _MyHomeState extends ConsumerState<MyHome> {
     });
     // remove plant from database
     deleteRecord(ref.read(appDatabase), 'plants', plantId);
-
+    // TODO: sql should remove this automatically...
     // remove any container which does not show up in plant_containers
-    deleteContainer(ref.read(appDatabase));
+    // deleteContainer(ref.read(appDatabase));
   }
 
   void _showOverlay(
