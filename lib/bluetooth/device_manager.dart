@@ -7,7 +7,7 @@ import 'package:plant_monitor/main.dart';
 
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-
+// TODO: consider renaming because it might be confused with bluetooth device or simply convert to bluetoothdevice?
 class Device {
   final String deviceId;
   final String deviceName;
