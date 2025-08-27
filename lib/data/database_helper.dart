@@ -62,20 +62,20 @@ Future<List<PlantType>> plantTypes(Database database) async {
 Future<PlantSensorData> getSensor(Database database, int id) async {
   // Get a reference to the database.
   final db = database;
-
+  
   // Query plant sensor from the database.
   final List<Map<String, Object?>> plantSensorMap = await db.query(
     'plant_sensor',
     // Use a `where` clause to get a specific dog.
-    where: 'id = ?',
+    where: 'plantId = ?',
     // Pass the plant sensor's id as a whereArg to prevent SQL injection.
     whereArgs: [id],
   );
 
   return [
     for (var {
-          'id': id as int,
-          'sensorId': sensorId as String,
+          'plantId': plantId as int,
+          'remoteId': remoteId as String,
           'sensorName': sensorName as String,
           'water': water as double,
           'sunLux': sunLux as double,
@@ -85,8 +85,8 @@ Future<PlantSensorData> getSensor(Database database, int id) async {
         }
         in plantSensorMap)
       PlantSensorData(
-        id: id,
-        sensorId: sensorId,
+        plantId: plantId,
+        remoteId: remoteId,
         sensorName: sensorName,
         water: water,
         sunLux: sunLux,
@@ -110,7 +110,7 @@ Future<List<String>> getSelectedSensors(
       'plant_containers',
       where: 'plantId = ?',
       // Pass the plant sensor's id as a whereArg to prevent SQL injection.
-      whereArgs: [sensor.id],
+      whereArgs: [sensor.plantId],
     );
 
     var plantContainers = [
@@ -123,7 +123,7 @@ Future<List<String>> getSelectedSensors(
     for (var plantContainer in plantContainers) {
       if (!waterContainerId.contains(plantContainer.containerId)) {
         waterContainerId.add(plantContainer.containerId);
-        selectedSensorsId.add(sensor.sensorId);
+        selectedSensorsId.add(sensor.remoteId);
       }
     }
   }
@@ -142,10 +142,7 @@ Future<List<WaterContainer>> getAllWaterContainers(Database database) async {
   return [
     for (var {'id': id as int, 'currentWaterLevel': currentWaterLevel}
         in waterContainerMap)
-      WaterContainer(
-        id: id,
-        currentWaterLevel: (currentWaterLevel as double),
-      ),
+      WaterContainer(id: id, currentWaterLevel: (currentWaterLevel as double)),
   ];
 }
 
@@ -167,7 +164,6 @@ Future<List<PlantContainer>> getAllPlantContainers(Database database) async {
 Future<List<PlantSensorData>> getAllSensors(Database database) async {
   // Get a reference to the database.
   final db = database;
-
   // Query plant sensor from the database.
   final List<Map<String, Object?>> plantSensorMap = await db.query(
     'plant_sensor',
@@ -175,8 +171,8 @@ Future<List<PlantSensorData>> getAllSensors(Database database) async {
 
   return [
     for (var {
-          'id': id as int,
-          'sensorId': sensorId as String,
+          'plantId': plantId as int,
+          'remoteId': remoteId as String,
           'sensorName': sensorName as String,
           'water': water as double,
           'sunLux': sunLux as double,
@@ -186,8 +182,8 @@ Future<List<PlantSensorData>> getAllSensors(Database database) async {
         }
         in plantSensorMap)
       PlantSensorData(
-        id: id,
-        sensorId: sensorId,
+        plantId: plantId,
+        remoteId: remoteId,
         sensorName: sensorName,
         water: water,
         sunLux: sunLux,
@@ -262,7 +258,7 @@ Future<void> updateRecord(
   // Get a reference to the database.
   final db = database;
   // Update the given Dog.
-  await db.update(table, record, where: 'id = ?', whereArgs: [record['id']]);
+  await db.update(table, record, where: 'plantId = ?', whereArgs: [record['plantId']]);
 }
 
 Future<void> deleteRecord(Database database, String table, int id) async {
@@ -344,13 +340,16 @@ Future<Database> initializeDatabase() async {
       db.execute(
         'CREATE TABLE plant_sensor('
         'id INTEGER PRIMARY KEY,'
-        'sensorId TEXT, '
+        'plantId INTEGER, '
+        'remoteId TEXT,'
         'sensorName TEXT, '
         'water REAL, '
         'sunLux REAL, '
         'airTemp REAL, '
         'earthTemp REAL, '
-        'humidity REAL '
+        'humidity REAL, '
+        'FOREIGN KEY (plantId) REFERENCES plants(id) '
+        'ON DELETE CASCADE'
         ')',
       );
 
@@ -376,16 +375,17 @@ Future<Database> initializeDatabase() async {
       );
 
       // logging table
-      db.execute('CREATE TABLE plant_history('
-      'id INTEGER PRIMARY KEY,'
-      'plantId INTEGER,'
-      'FOREIGN KEY (plantId) REFERENCES plants(id) '
-      'ON DELETE CASCADE,'
-      'date TEXT,'
-      'waterMl REAL,'
-      'temperature REAL');
+      db.execute(
+        'CREATE TABLE plant_history('
+        'id INTEGER PRIMARY KEY,'
+        'plantId INTEGER,'
+        'date TEXT,'
+        'waterMl REAL,'
+        'temperature REAL,'
+        'FOREIGN KEY (plantId) REFERENCES plants(id) ON DELETE CASCADE'
+        ')',
+      );
     },
-
 
     onOpen: (db) async {
       await db.execute('PRAGMA foreign_keys = ON');
