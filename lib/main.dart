@@ -47,7 +47,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   bool _loadedLogs = false;
 
   Future<void> _loadDataFromDevices(List<Device> devices) async {
-    final db = ref.read(appDatabase); // get your Database instance
+    final db = ref.read(appDatabase);
 
     for (var device in devices) {
       for (var plant in plantsCards) {
