@@ -44,7 +44,27 @@ class _MyAppState extends ConsumerState<MyApp> {
   int currentPageindex = 1;
   List<Plant> plantsCards = [];
   List<PlantType> plantingTypes = [];
-  bool loadedLogs = false;
+  bool _loadedLogs = false;
+
+  Future<void> _loadDataFromDevices(List<Device> devices) async {
+    final db = ref.read(appDatabase); // get your Database instance
+
+    for (var device in devices) {
+      for (var plant in plantsCards) {
+        try {
+          await getSensorReadings(
+            db,
+            plant.id,
+            BluetoothDevice.fromId(device.deviceId),
+          );
+        } catch (e) {
+          print("Error reading ${device.deviceId} for plant ${plant.id}: $e");
+        }
+      }
+    }
+
+    print("All sensor data loaded!");
+  }
 
   @override
   void initState() {
@@ -89,20 +109,18 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    if (!loadedLogs) {
-      final allDevices = ref.watch(
-        deviceManagerProvider.select((state) => state.allDevices),
-      );
-      for (var device in allDevices) {
-        getSensorReadings(
-          ref.read(appDatabase),
-          0,
-          BluetoothDevice.fromId(device.deviceId),
-        );
-      }
+    // Listen to the devices provider
+    ref.listen<List<Device>>(
+      deviceManagerProvider.select((s) => s.allDevices),
+      (previous, next) {
+        if (!_loadedLogs && next.isNotEmpty) {
+          _loadedLogs = true;
 
-      // loadedLogs = true;
-    }
+          // call your async function for each device
+          _loadDataFromDevices(next);
+        }
+      },
+    );
 
     final List<Widget> widgetOptions = [
       MyWater(),
@@ -221,19 +239,36 @@ Future<void> getSensorReadings(
 
     if (kDebugMode) {
       debugPrint("Received log values: $value");
-      final buffer = value;
+      // final buffer = value;
+      ByteData buffer = ByteData.sublistView(Uint8List.fromList(value));
+      // Read 32-bit integer (little-endian)
+      int unixTimestamp = buffer.getUint32(0, Endian.little);
 
-      final year = buffer[0] | (buffer[1] << 8);
-      final month = buffer[2];
-      final day = buffer[3];
-      final val1 = buffer[4];
-      final val2 = buffer[5];
+      // Convert to DateTime
+      DateTime dt = DateTime.fromMillisecondsSinceEpoch(
+        unixTimestamp * 1000,
+        isUtc: true,
+      );
 
-      debugPrint("Date: ${year}/${month}/${day}");
-      debugPrint("random val 1: ${val1}");
-      debugPrint("random val 2: ${val2}");
+      print("Unix timestamp: $unixTimestamp");
+      print(
+        "Date/Time: ${dt.year}/${dt.month}/${dt.day} ${dt.hour}:${dt.minute}",
+      );
+
+      // get log values
+      int logValues = buffer.getUint32(4, Endian.little);
+      int val1 = logValues & 0xFF;
+      int val2 = (logValues >> 16) & 0xFF;
+      // final year = buffer[0] | (buffer[1] << 8);
+      // final month = buffer[2];
+      // final day = buffer[3];
+      // final val1 = buffer[4];
+      // final val2 = buffer[5];
+
+      // debugPrint("Date: $year/$month/$day");
+      debugPrint("random val 1: $val1");
+      debugPrint("random val 2: $val2");
       // here i should set it not to read anymore?
-
     }
   } catch (e) {
     if (kDebugMode) {
