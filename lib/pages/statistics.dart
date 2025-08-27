@@ -1,20 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/database_helper.dart';
 
-class MyStats extends StatefulWidget {
+class MyStats extends ConsumerStatefulWidget {
   const MyStats({super.key});
 
   @override
-  State<MyStats> createState() => _MyStatsState();
+  ConsumerState<MyStats> createState() => _MyStatsState();
 }
 
 enum _SelectedButton { water, temperature }
 
-class _MyStatsState extends State<MyStats> {
+class _MyStatsState extends ConsumerState<MyStats> {
   String _selectedPlantKey = 'plante1';
   _SelectedButton _selectedButton = _SelectedButton.water;
   bool _showAvg = false;
   int dataIdx = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    
+  }
+
+  void _initializeData(){
+
+  }
 
   void _onPlantSelected(String plantKey) {
     setState(() {

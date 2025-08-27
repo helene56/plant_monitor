@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plant_monitor/data/plant_history.dart';
 import 'package:plant_monitor/pages/statistics.dart';
 import 'pages/home.dart';
 import 'pages/water.dart';
@@ -259,6 +260,9 @@ Future<void> getSensorReadings(
       int logValues = buffer.getUint32(4, Endian.little);
       int val1 = logValues & 0xFF;
       int val2 = (logValues >> 16) & 0xFF;
+
+      var plantLog = PlantHistory.initLogValues(plantId, value);
+      insertRecord(db, 'plant_history', plantLog.toMap());
       // final year = buffer[0] | (buffer[1] << 8);
       // final month = buffer[2];
       // final day = buffer[3];

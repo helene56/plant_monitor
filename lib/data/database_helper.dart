@@ -379,7 +379,7 @@ Future<Database> initializeDatabase() async {
         'CREATE TABLE plant_history('
         'id INTEGER PRIMARY KEY,'
         'plantId INTEGER,'
-        'date TEXT,'
+        'date INTEGER,'
         'waterMl REAL,'
         'temperature REAL,'
         'FOREIGN KEY (plantId) REFERENCES plants(id) ON DELETE CASCADE'
