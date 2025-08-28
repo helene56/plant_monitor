@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plant_monitor/main.dart';
 import '../data/database_helper.dart';
+import '../data/plant_history.dart';
 
 class MyStats extends ConsumerStatefulWidget {
   const MyStats({super.key});
@@ -13,19 +15,77 @@ class MyStats extends ConsumerStatefulWidget {
 enum _SelectedButton { water, temperature }
 
 class _MyStatsState extends ConsumerState<MyStats> {
-  String _selectedPlantKey = 'plante1';
+  late String _selectedPlantKey = '';
   _SelectedButton _selectedButton = _SelectedButton.water;
   bool _showAvg = false;
   int dataIdx = 0;
-
+  late final Map<String, Map<String, List<double>>> logData;
   @override
   void initState() {
     super.initState();
-    
+    logData = {};
+    _initializeData();
   }
 
-  void _initializeData(){
+  void _initializeData() async {
+    Map<int, String> plants = await getPlantSummaries(ref.read(appDatabase));
+    // get plants and their id
+    // get associated data from planthistory with plant id
+    List<PlantHistory> plantHistoryData = await getPlantHistory(
+      ref.read(appDatabase),
+    );
+    String plantName;
+    // get date from history, as first key
+    // then get plantname from plants, where both have same plantid, this is the next key
+    // then add a list with values from water to this last key
+    for (var log in plantHistoryData) {
+      // for (var id in plants.entries)
+      // {
+      //   if (id.key == log.plantId)
+      //   {
+      //       plantName = id.value;
+      //   }
+      // }
 
+      plantName = plants[log.plantId] ?? '';
+
+      // numbers[count] = log.waterMl;
+      // count++;
+      // convert date
+      DateTime dt = DateTime.fromMillisecondsSinceEpoch(
+        log.date * 1000,
+        isUtc: true,
+      );
+      String date = "${dt.year}/${dt.month}/${dt.day}";
+
+      logData.putIfAbsent(date, () => {plantName: []});
+      logData[date]!.putIfAbsent(plantName, () => []);
+      logData[date]![plantName]!.add(log.waterMl);
+      // logData.putIfAbsent(log.date.toString(), () => {plantName: [append log.waterMl]});
+    }
+
+   
+
+    int desiredLength = 7;
+
+    logData.forEach((date, plants) {
+      plants.forEach((plantName, values) {
+         // cap data to 7 entries first
+        if (values.length > desiredLength) {
+          logData[date]![plantName] = values.sublist(
+            values.length - desiredLength,
+          );
+        }
+         // fill with 0
+        else if (values.length < desiredLength) {
+          values.addAll(List.filled(desiredLength - values.length, 0.0));
+        }
+      });
+    });
+
+    setState(() {
+      _selectedPlantKey = plants.isNotEmpty ? plants.values.first : '';
+    });
   }
 
   void _onPlantSelected(String plantKey) {
@@ -40,33 +100,57 @@ class _MyStatsState extends ConsumerState<MyStats> {
     });
   }
 
-  final Map<String, Map<String, List<double>>> data = {
-    '1': {
-      'plante1': [200, 150.5, 70, 500, 90.9, 301.2, 411],
-      'plante2': [43, 176.4, 24, 300, 84.9, 321.2, 141],
-      'plante3': [22, 150.5, 30, 500, 90.9, 301.2, 411],
-      'plante4': [100, 23.5, 21, 328, 88.4, 112, 32],
-    },
-    '11/08 - 27/08': {
-      'plante1': [200, 150.5, 30, 500, 90.9, 301.2, 411],
-      'plante2': [74, 176.4, 24, 300, 84.9, 321.2, 141],
-      'plante3': [22, 50.5, 30, 500, 40.9, 221.2, 411],
-      'plante4': [22, 150.5, 30, 500, 90.9, 301.2, 411],
-    },
-    '18/08 - 24/08': {
-      'plante1': [432, 123.5, 60.3, 120, 82.9, 301.2, 411],
-      'plante2': [321, 16.4, 24, 330, 84.9, 321.2, 381],
-      'plante3': [22, 150.5, 30, 400, 50.9, 342, 451],
-      'plante4': [11, 321, 54, 430, 91.9, 301.2, 21],
-    },
-  };
+  // final Map<String, Map<String, List<double>>> data = {
+  //   '1': {
+  //     'plante1': [200, 150.5, 70, 500, 90.9, 301.2, 411],
+  //     'plante2': [43, 176.4, 24, 300, 84.9, 321.2, 141],
+  //     'plante3': [22, 150.5, 30, 500, 90.9, 301.2, 411],
+  //     'plante4': [100, 23.5, 21, 328, 88.4, 112, 32],
+  //   },
+  //   '11/08 - 27/08': {
+  //     'plante1': [200, 150.5, 30, 500, 90.9, 301.2, 411],
+  //     'plante2': [74, 176.4, 24, 300, 84.9, 321.2, 141],
+  //     'plante3': [22, 50.5, 30, 500, 40.9, 221.2, 411],
+  //     'plante4': [22, 150.5, 30, 500, 90.9, 301.2, 411],
+  //   },
+  //   '18/08 - 24/08': {
+  //     'plante1': [432, 123.5, 60.3, 120, 82.9, 301.2, 411],
+  //     'plante2': [321, 16.4, 24, 330, 84.9, 321.2, 381],
+  //     'plante3': [22, 150.5, 30, 400, 50.9, 342, 451],
+  //     'plante4': [11, 321, 54, 430, 91.9, 301.2, 21],
+  //   },
+  // };
 
   @override
   Widget build(BuildContext context) {
     // These variables are now declared in the build method
-    final List<String> keysWeek = data.keys.toList();
-    final String currentWeekKey = keysWeek[dataIdx];
-    final Map<String, List<double>> currentPlantData = data[currentWeekKey]!;
+    //   if (logData == null )
+    //   {
+    //     currentPlantData = [0];
+    //   }
+    //   else
+    // {
+    //   final List<String> keysWeek = logData.keys.toList();
+    //   final String currentWeekKey = keysWeek[dataIdx];
+    //   final Map<String, List<double>> currentPlantData = logData[currentWeekKey]!;
+    // }
+
+    Map<String, List<double>> currentPlantData;
+
+    if (logData.isEmpty) {
+      // fallback if logData is not loaded or empty
+      currentPlantData = {
+        '': [0],
+      };
+    } else {
+      final List<String> keysWeek = logData.keys.toList();
+      final String currentWeekKey = keysWeek[dataIdx];
+      currentPlantData =
+          logData[currentWeekKey] ??
+          {
+            '': [0],
+          };
+    }
 
     return SingleChildScrollView(
       child: OrientationBuilder(
@@ -139,7 +223,8 @@ class _MyStatsState extends ConsumerState<MyStats> {
   }
 
   Widget _buildDateRow() {
-    final List<String> keysWeek = data.keys.toList();
+    final List<String> keysWeek =
+        logData.isNotEmpty ? logData.keys.toList() : [''];
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -169,6 +254,10 @@ class _MyStatsState extends ConsumerState<MyStats> {
   }
 
   Widget _buildChartCard(Map<String, List<double>> currentPlantData) {
+    List<double> plantValues =
+        _selectedPlantKey.isNotEmpty
+            ? (currentPlantData[_selectedPlantKey] ?? [0])
+            : [0];
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -182,9 +271,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
               height: 250,
               child:
                   _selectedButton == _SelectedButton.water
-                      ? _DailyBarChart(
-                        testData: currentPlantData[_selectedPlantKey]!,
-                      )
+                      ? _DailyBarChart(testData: plantValues)
                       : _MonthlyLineChart(showAvg: _showAvg),
             ),
             const SizedBox(height: 20),
@@ -722,11 +809,12 @@ class _PlantCard extends StatefulWidget {
 }
 
 class _PlantCardState extends State<_PlantCard> {
-  late final List<String> plantNames = widget.plantData.keys.toList();
+  // late final List<String> plantNames = widget.plantData.keys.toList();
   int _displayStartIndex = 0;
   final int _plantIconsPerRow = 3;
   @override
   Widget build(BuildContext context) {
+    List<String> plantNames = widget.plantData.keys.toList();
     final int end =
         (_displayStartIndex + _plantIconsPerRow > plantNames.length)
             ? plantNames.length
