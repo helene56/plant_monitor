@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:path/path.dart';
 import 'package:plant_monitor/data/plant_container.dart';
+import 'package:plant_monitor/data/plant_history.dart';
 import 'package:plant_monitor/data/plant_sensor_data.dart';
 import 'package:plant_monitor/data/water_container.dart';
 import 'package:sqflite/sqflite.dart';
@@ -59,10 +60,12 @@ Future<List<PlantType>> plantTypes(Database database) async {
   ];
 }
 
+// TODO: it takes a bit time for it to initialize so maybe wait till it is done, before using this func?
+// otherwise error occurs
 Future<PlantSensorData> getSensor(Database database, int id) async {
   // Get a reference to the database.
   final db = database;
-  
+
   // Query plant sensor from the database.
   final List<Map<String, Object?>> plantSensorMap = await db.query(
     'plant_sensor',
@@ -194,6 +197,37 @@ Future<List<PlantSensorData>> getAllSensors(Database database) async {
   ];
 }
 
+Future<Map<int, String>> getPlantSummaries(Database db) async {
+  final result = await db.query('plants', columns: ['id', 'name']);
+  return {for (var row in result) row['id'] as int: row['name'] as String};
+}
+
+Future<List<PlantHistory>> getPlantHistory(Database database) async {
+  final db = database;
+
+  // Query the table for all the plant history
+  final List<Map<String, Object?>> plantHistoryMap = await db.query(
+    'plant_history',
+  );
+
+  // Convert each map into a planthistory
+  return [
+    for (final {
+          'plantId': id as int,
+          'date': date as int,
+          'waterMl': waterML as double,
+          'temperature': temperature as double,
+        }
+        in plantHistoryMap)
+      PlantHistory(
+        plantId: id,
+        date: date,
+        waterMl: waterML,
+        temperature: temperature,
+      ),
+  ];
+}
+
 // not sure yet I will need this..
 // A method that retrieves all the plants from the plants table.
 Future<List<Plant>> allPlants(Database database) async {
@@ -258,7 +292,12 @@ Future<void> updateRecord(
   // Get a reference to the database.
   final db = database;
   // Update the given Dog.
-  await db.update(table, record, where: 'plantId = ?', whereArgs: [record['plantId']]);
+  await db.update(
+    table,
+    record,
+    where: 'plantId = ?',
+    whereArgs: [record['plantId']],
+  );
 }
 
 Future<void> deleteRecord(Database database, String table, int id) async {
