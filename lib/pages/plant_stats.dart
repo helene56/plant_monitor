@@ -57,7 +57,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     toggleSensorTemperature(_device); // activate sensor reading
     subscribeToDevice(_device); // subscribe to get sensor readings
   }
-
+// TODO:  move into helper script
   Future<bool> _writeToSensor(
     BluetoothDevice device,
     int cmdId,
