@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plant_monitor/data/plant_history.dart';
+import 'package:plant_monitor/data/sensor_cmd_id.dart';
 import 'package:plant_monitor/pages/statistics.dart';
 import 'pages/home.dart';
 import 'pages/water.dart';
@@ -240,39 +241,40 @@ Future<void> getSensorReadings(
 
     if (kDebugMode) {
       debugPrint("Received log values: $value");
-      // final buffer = value;
-      ByteData buffer = ByteData.sublistView(Uint8List.fromList(value));
-      // Read 32-bit integer (little-endian)
-      int unixTimestamp = buffer.getUint32(0, Endian.little);
+      // if all values are 0, do not update
+      bool allZero = value.every((n) => n == 0);
+      if (!allZero) {
 
-      // Convert to DateTime
-      DateTime dt = DateTime.fromMillisecondsSinceEpoch(
-        unixTimestamp * 1000,
-        isUtc: true,
-      );
+        ByteData buffer = ByteData.sublistView(Uint8List.fromList(value));
+        // Read 32-bit integer (little-endian)
+        int unixTimestamp = buffer.getUint32(0, Endian.little);
 
-      print("Unix timestamp: $unixTimestamp");
-      print(
-        "Date/Time: ${dt.year}/${dt.month}/${dt.day} ${dt.hour}:${dt.minute}",
-      );
+        // Convert to DateTime
+        DateTime dt = DateTime.fromMillisecondsSinceEpoch(
+          unixTimestamp * 1000,
+          isUtc: true,
+        );
 
-      // get log values
-      int logValues = buffer.getUint32(4, Endian.little);
-      int val1 = logValues & 0xFF;
-      int val2 = (logValues >> 16) & 0xFF;
+        print("Unix timestamp: $unixTimestamp");
+        print(
+          "Date/Time: ${dt.year}/${dt.month}/${dt.day} ${dt.hour}:${dt.minute}",
+        );
 
-      var plantLog = PlantHistory.initLogValues(plantId, value);
-      insertRecord(db, 'plant_history', plantLog.toMap());
-      // final year = buffer[0] | (buffer[1] << 8);
-      // final month = buffer[2];
-      // final day = buffer[3];
-      // final val1 = buffer[4];
-      // final val2 = buffer[5];
+        // get log values
+        int logValues = buffer.getUint32(4, Endian.little);
+        int val1 = logValues & 0xFF;
+        int val2 = (logValues >> 16) & 0xFF;
 
-      // debugPrint("Date: $year/$month/$day");
-      debugPrint("random val 1: $val1");
-      debugPrint("random val 2: $val2");
-      // here i should set it not to read anymore?
+        var plantLog = PlantHistory.initLogValues(plantId, value);
+        insertRecord(db, 'plant_history', plantLog.toMap());
+
+        // write to sensor to 'erase' send log/ (meaning it recieved the data)
+        writeToSensor(db, device, SensorCmdId.clearLog, 1);
+
+        debugPrint("random val 1: $val1");
+        debugPrint("random val 2: $val2");
+
+      }
     }
   } catch (e) {
     if (kDebugMode) {
