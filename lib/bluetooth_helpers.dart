@@ -1,9 +1,11 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:plant_monitor/bluetooth/bt_uuid.dart';
 import 'package:plant_monitor/data/plant_sensor_data.dart';
 import 'package:sqflite/sqflite.dart';
 import 'data/database_helper.dart';
+import 'dart:async';
 
 Future<void> autoConnectDevice(Database db) async {
   // if getSensor is not empty
@@ -99,3 +101,60 @@ Future<double?> subscibeGetPumpWater(
   }
   return -1; // If not found
 }
+
+
+Future<bool> writeToSensor(
+    Database db,
+    BluetoothDevice device,
+    int cmdId,
+    int cmdVal,
+  ) async {
+    final completer = Completer<bool>();
+
+    if (device.isDisconnected) {
+      // Connect to the device
+      await autoConnectDevice(db);
+    }
+    late StreamSubscription sub;
+    sub = device.connectionState.listen((state) async {
+      if (state == BluetoothConnectionState.connected) {
+        try {
+          List<BluetoothService> services = await device.discoverServices();
+          for (var service in services) {
+            // do something with service
+            if (service.serviceUuid.toString() ==
+                BtUuid.serviceId) {
+              // Iterate through characteristics
+              for (var characteristic in service.characteristics) {
+                if (characteristic.characteristicUuid.toString() ==
+                    BtUuid.sensorCmdCharId) {
+                  int shiftedCmdVal = cmdVal << 7;
+                  int finalCmdByte = shiftedCmdVal | cmdId;
+                  // TODO: try catch before await here as well
+                  // Write to the characteristic
+                  await characteristic.write([finalCmdByte]);
+                  if (kDebugMode) {
+                    debugPrint("Succusesfully wrote to sensor");
+                  }
+                  if (!completer.isCompleted) completer.complete(true);
+                  await sub.cancel();
+                  return;
+                }
+              }
+            }
+          }
+          if (!completer.isCompleted) completer.complete(false);
+          await sub.cancel();
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('Error reading characteristic: $e');
+          }
+          if (!completer.isCompleted) completer.complete(false);
+          await sub.cancel();
+
+        }
+      }
+    });
+
+    return completer.future;
+  }
