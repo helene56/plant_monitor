@@ -244,7 +244,6 @@ Future<void> getSensorReadings(
       // if all values are 0, do not update
       bool allZero = value.every((n) => n == 0);
       if (!allZero) {
-
         ByteData buffer = ByteData.sublistView(Uint8List.fromList(value));
         // Read 32-bit integer (little-endian)
         int unixTimestamp = buffer.getUint32(0, Endian.little);
@@ -264,16 +263,28 @@ Future<void> getSensorReadings(
         int logValues = buffer.getUint32(4, Endian.little);
         int val1 = logValues & 0xFF;
         int val2 = (logValues >> 16) & 0xFF;
-
-        var plantLog = PlantHistory.initLogValues(plantId, value);
-        insertRecord(db, 'plant_history', plantLog.toMap());
+        // 4 values -> date, next 4 -> temp and water
+        int chunkSize = 4 * 2;
+        List<List<int>> chunks = [
+          for (int i = 0; i < value.length; i += chunkSize)
+            value.sublist(
+              i,
+              i + chunkSize > value.length ? value.length : i + chunkSize,
+            ),
+        ];
+        for (var chunk in chunks) {
+          bool allZeroChunk = chunk.every((n) => n == 0);
+          if (!allZeroChunk) {
+            var plantLog = PlantHistory.initLogValues(plantId, chunk);
+            insertRecord(db, 'plant_history', plantLog.toMap());
+          }
+        }
 
         // write to sensor to 'erase' send log/ (meaning it recieved the data)
         writeToSensor(db, device, SensorCmdId.clearLog, 1);
 
         debugPrint("random val 1: $val1");
         debugPrint("random val 2: $val2");
-
       }
     }
   } catch (e) {
