@@ -60,23 +60,45 @@ class _MyStatsState extends ConsumerState<MyStats> {
 
       _addLog(dt, plantName, log.temperature, log.waterMl);
     }
+    // for how much water used
+    // only interested in the total amount per day - monday/tuesday and so on -
+    // so for 26/08/2025 - 31/08/2025 split data into 7 datapoints
+    // if a date is missing it will get data point 0
+    // for temperature the same as how much water used, but the hour is interesting,
+    // so when was the temperature per day what temperature
 
+    // maybe the logData should be structued like this:
+    // // "plant1": {
+    //   "26/08/2025 - 31/08/2025": {
+    //     "temperature": [0.0, 18, 20, ],
+    //     "water": [0.0],
+    //   },
+    // },
     int desiredLength = 7;
 
-    logData.forEach((plants, date) {
-      date.forEach((plantName, properties) {
-        properties.forEach((key, list) {
-          // Cap data to 7 entries
-          if (list.length > desiredLength) {
-            properties[key] = list.sublist(list.length - desiredLength);
-          }
-          // Pad with 0.0 if fewer than 7
-          else if (list.length < desiredLength) {
-            list.addAll(List.filled(desiredLength - list.length, 0.0));
-          }
-        });
-      });
-    });
+    // logData.forEach((plants, dateMap)
+    // {
+    //   dateMap.forEach((date, stats){
+    //     int day = date.day;
+
+    //   });
+
+    // });
+
+    // logData.forEach((plants, date) {
+    //   date.forEach((plantName, properties) {
+    //     properties.forEach((key, list) {
+    //       // Cap data to 7 entries
+    //       if (list.length > desiredLength) {
+    //         properties[key] = list.sublist(list.length - desiredLength);
+    //       }
+    //       // Pad with 0.0 if fewer than 7
+    //       else if (list.length < desiredLength) {
+    //         list.addAll(List.filled(desiredLength - list.length, 0.0));
+    //       }
+    //     });
+    //   });
+    // });
 
     setState(() {
       _selectedPlantKey = plants.isNotEmpty ? plants.values.first : '';
@@ -203,15 +225,27 @@ class _MyStatsState extends ConsumerState<MyStats> {
     );
   }
 
+  List<String> _helpSetDateRow() {
+    List<DateTime> dateRow = logData[_selectedPlantKey]!.keys.toList();
+    List<String> sortedDateRow = [];
+    for (var date in dateRow) {
+      String dateString = "${date.day}/${date.month}/${date.year}";
+      if (!sortedDateRow.contains(dateString) && date != noDateSet) {
+        sortedDateRow.add(dateString);
+      }
+    }
+
+    return sortedDateRow;
+  }
+
   // todo here
   Widget _buildDateRow() {
-    final List<DateTime> keysWeek =
+    final List<String> selectedDateRow =
         logData.isNotEmpty
-            ? logData[_selectedPlantKey]!.keys.toList()
-            : [noDateSet];
+            ? _helpSetDateRow()
+            : ["${noDateSet.day}/${noDateSet.month}/${noDateSet.year}"];
 
-    final date =
-        "${keysWeek[dataIdx].day}/${keysWeek[dataIdx].month}/${keysWeek[dataIdx].year}";
+    final date =selectedDateRow[dataIdx];
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -231,7 +265,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
           icon: const Icon(Icons.arrow_forward_ios),
           onPressed: () {
             setState(() {
-              if (dataIdx < keysWeek.length - 1) {
+              if (dataIdx < selectedDateRow.length - 1) {
                 dataIdx++;
               }
             });
@@ -241,6 +275,43 @@ class _MyStatsState extends ConsumerState<MyStats> {
     );
   }
 
+  List<double> _sortWaterData(
+    Map<DateTime, Map<String, List<double>>> currentPlantData,
+  ) {
+    // for how much water used
+    // only interested in the total amount per day - monday/tuesday and so on -
+    // so for 26/08/2025 - 31/08/2025 split data into 7 datapoints
+    // if a date is missing it will get data point 0
+    int currentWeekDay = 1;
+    // should only hold 7 data points, for 7 days.
+    List<double> waterUsed = [];
+    for (var entry in currentPlantData.entries) {
+      DateTime date = entry.key;
+      var info = entry.value;
+
+      if (date == noDateSet) {
+        continue;
+      }
+      if (currentWeekDay == date.weekday) {
+        waterUsed.last += info['water']![0];
+        continue;
+      }
+      while (currentWeekDay != date.weekday && currentWeekDay < 7) {
+        waterUsed.add(0.0);
+
+        currentWeekDay++;
+      }
+      waterUsed.add(info['water']![0]);
+    }
+
+    if (waterUsed.length < 7) {
+      for (int i = waterUsed.length; i < 7; ++i) {
+        waterUsed.add(0.0);
+      }
+    }
+    return waterUsed;
+  }
+
   Widget _buildChartCard(
     Map<DateTime, Map<String, List<double>>> currentPlantData,
   ) {
@@ -248,12 +319,13 @@ class _MyStatsState extends ConsumerState<MyStats> {
     List<double> plantTempValues;
     DateTime selectedDate;
 
-    if (_selectedPlantKey.isNotEmpty) {
+    if (_selectedPlantKey.isNotEmpty && logData.isNotEmpty) {
+      plantwaterValues = _sortWaterData(currentPlantData);
       final List<DateTime> plantDates =
           logData[_selectedPlantKey]!.keys.toList();
       selectedDate = plantDates[dataIdx];
-      plantwaterValues =
-          currentPlantData[plantDates[dataIdx]]?['water'] ?? [0.0];
+      // plantwaterValues =
+      //     currentPlantData[plantDates[dataIdx]]?['water'] ?? [0.0];
       plantTempValues =
           currentPlantData[plantDates[dataIdx]]?['temperature'] ?? [0.0];
     } else {
