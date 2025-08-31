@@ -84,19 +84,20 @@ class _MyStatsState extends ConsumerState<MyStats> {
     });
   }
 
-  void _ensureList(String date, String plantName, String key) {
-    logData.putIfAbsent(date, () => {});
-    logData[date]!.putIfAbsent(plantName, () => {});
-    logData[date]![plantName]!.putIfAbsent(key, () => <double>[]);
+  void _ensureList(String plantName, String date, String key) {
+    logData.putIfAbsent(plantName, () => {});
+    logData[plantName]!.putIfAbsent(date, () => {});
+    logData[plantName]![date]!.putIfAbsent(key, () => <double>[]);
+
   }
 
   void _addLog(String date, String plantName, double tempVal, double watVal) {
-    _ensureList(date, plantName, 'temperature');
-    _ensureList(date, plantName, 'water');
+    _ensureList(plantName, date,'temperature');
+    _ensureList(plantName, date, 'water');
 
     // add values
-    logData[date]![plantName]!['water']!.add(watVal);
-    logData[date]![plantName]!['temperature']!.add(tempVal);
+    logData[plantName]![date]!['water']!.add(watVal);
+    logData[plantName]![date]!['temperature']!.add(tempVal);
   }
 
   // Map<String, Map<String, Map<String, List<double>>>> plantData = {
