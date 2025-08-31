@@ -19,11 +19,22 @@ class _MyStatsState extends ConsumerState<MyStats> {
   _SelectedButton _selectedButton = _SelectedButton.water;
   bool _showAvg = false;
   int dataIdx = 0;
-  late final Map<String, Map<String, Map<String, List<double>>>> logData;
+  late final Map<String, Map<DateTime, Map<String, List<double>>>> logData;
+  final DateTime noDateSet = DateTime.fromMillisecondsSinceEpoch(
+    0,
+    isUtc: true,
+  );
   @override
   void initState() {
     super.initState();
-    logData = {};
+    logData = {
+      // "emptyplant": {
+      //   "0000-00-00": {
+      //     "temperature": [0.0],
+      //     "water": [0.0],
+      //   },
+      // },
+    };
     _initializeData();
   }
 
@@ -45,15 +56,15 @@ class _MyStatsState extends ConsumerState<MyStats> {
         log.date * 1000,
         isUtc: true,
       );
-      String date = "${dt.day}/${dt.month}/${dt.year}";
+      // String date = "${dt.day}/${dt.month}/${dt.year}";
 
-      _addLog(date, plantName, log.temperature, log.waterMl);
+      _addLog(dt, plantName, log.temperature, log.waterMl);
     }
 
     int desiredLength = 7;
 
-    logData.forEach((date, plants) {
-      plants.forEach((plantName, properties) {
+    logData.forEach((plants, date) {
+      date.forEach((plantName, properties) {
         properties.forEach((key, list) {
           // Cap data to 7 entries
           if (list.length > desiredLength) {
@@ -84,15 +95,14 @@ class _MyStatsState extends ConsumerState<MyStats> {
     });
   }
 
-  void _ensureList(String plantName, String date, String key) {
+  void _ensureList(String plantName, DateTime date, String key) {
     logData.putIfAbsent(plantName, () => {});
     logData[plantName]!.putIfAbsent(date, () => {});
     logData[plantName]![date]!.putIfAbsent(key, () => <double>[]);
-
   }
 
-  void _addLog(String date, String plantName, double tempVal, double watVal) {
-    _ensureList(plantName, date,'temperature');
+  void _addLog(DateTime date, String plantName, double tempVal, double watVal) {
+    _ensureList(plantName, date, 'temperature');
     _ensureList(plantName, date, 'water');
 
     // add values
@@ -100,71 +110,22 @@ class _MyStatsState extends ConsumerState<MyStats> {
     logData[plantName]![date]!['temperature']!.add(tempVal);
   }
 
-  // Map<String, Map<String, Map<String, List<double>>>> plantData = {
-//   "Plant1": {
-//     "2025-08-31": {
-//       "temperature": [22.3, 23.1],
-//       "water": [0.5, 0.7],
-//     }
-//   },
-//   "Plant2": {
-//     "2025-08-31": {
-//       "temperature": [21.0, 21.4],
-//       "water": [0.3, 0.6],
-//     }
-//   },
-// "UnknownPlant": {
-//     "0000-00-00": {
-//       "temperature": [0.0],
-//       "water": [0.0],
-//     }
-//   }
-// };
-
-  // final Map<String, Map<String, List<double>>> data = {
-  //   '1': {
-  //     'plante1': {'water': [200, 150.5, 70, 500, 90.9, 301.2, 411], 'temp': [1,2,3]},
-  //     'plante2': [43, 176.4, 24, 300, 84.9, 321.2, 141],
-  //     'plante3': [22, 150.5, 30, 500, 90.9, 301.2, 411],
-  //     'plante4': [100, 23.5, 21, 328, 88.4, 112, 32],
-  //   },
-  //   '11/08 - 27/08': {
-  //     'plante1': [200, 150.5, 30, 500, 90.9, 301.2, 411],
-  //     'plante2': [74, 176.4, 24, 300, 84.9, 321.2, 141],
-  //     'plante3': [22, 50.5, 30, 500, 40.9, 221.2, 411],
-  //     'plante4': [22, 150.5, 30, 500, 90.9, 301.2, 411],
-  //   },
-  //   '18/08 - 24/08': {
-  //     'plante1': [432, 123.5, 60.3, 120, 82.9, 301.2, 411],
-  //     'plante2': [321, 16.4, 24, 330, 84.9, 321.2, 381],
-  //     'plante3': [22, 150.5, 30, 400, 50.9, 342, 451],
-  //     'plante4': [11, 321, 54, 430, 91.9, 301.2, 21],
-  //   },
-  // };
-
   @override
   Widget build(BuildContext context) {
-    Map<String, Map<String, List<double>>> currentPlantData;
+    Map<DateTime, Map<String, List<double>>> currentPlantData;
+    final List<String> plantKeys = logData.keys.toList();
 
     if (logData.isEmpty) {
       // fallback if logData is not loaded or empty
       currentPlantData = {
-        '': {
+        noDateSet: {
           'temperature': [0.0],
           'water': [0.0],
         },
       };
     } else {
-      final List<String> keysWeek = logData.keys.toList();
-      final String currentWeekKey = keysWeek[dataIdx];
-      currentPlantData =
-          logData[currentWeekKey] ??
-          {
-            '': {
-              'temperature': [0.0],
-              'water': [0.0],
-            },
-          };
+      final String selectedPlantLog = plantKeys[dataIdx];
+      currentPlantData = logData[selectedPlantLog]!;
     }
 
     return SingleChildScrollView(
@@ -175,14 +136,17 @@ class _MyStatsState extends ConsumerState<MyStats> {
           if (isLandscape) {
             return _buildLandscapeLayout(currentPlantData);
           } else {
-            return _buildPortraitLayout(currentPlantData);
+            return _buildPortraitLayout(currentPlantData, plantKeys);
           }
         },
       ),
     );
   }
 
-  Widget _buildPortraitLayout(Map<String, Map<String, List<double>>> currentPlantData) {
+  Widget _buildPortraitLayout(
+    Map<DateTime, Map<String, List<double>>> currentPlantData,
+    final List<String> plantKeys,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -198,7 +162,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
           _buildChartCard(currentPlantData),
           const SizedBox(height: 20),
           _PlantCard(
-            plantData: currentPlantData,
+            plantKeys: plantKeys,
             onPlantSelected: _onPlantSelected,
             selectedPlantKey: _selectedPlantKey,
           ),
@@ -207,7 +171,9 @@ class _MyStatsState extends ConsumerState<MyStats> {
     );
   }
 
-  Widget _buildLandscapeLayout(Map<String, Map<String, List<double>>> currentPlantData) {
+  Widget _buildLandscapeLayout(
+    Map<DateTime, Map<String, List<double>>> currentPlantData,
+  ) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -237,9 +203,16 @@ class _MyStatsState extends ConsumerState<MyStats> {
     );
   }
 
+  // todo here
   Widget _buildDateRow() {
-    final List<String> keysWeek =
-        logData.isNotEmpty ? logData.keys.toList() : [''];
+    final List<DateTime> keysWeek =
+        logData.isNotEmpty
+            ? logData[_selectedPlantKey]!.keys.toList()
+            : [noDateSet];
+
+    final date =
+        "${keysWeek[dataIdx].day}/${keysWeek[dataIdx].month}/${keysWeek[dataIdx].year}";
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -253,7 +226,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
             });
           },
         ),
-        Text(keysWeek[dataIdx], style: const TextStyle(fontSize: 18)),
+        Text(date, style: const TextStyle(fontSize: 18)),
         IconButton(
           icon: const Icon(Icons.arrow_forward_ios),
           onPressed: () {
@@ -268,11 +241,27 @@ class _MyStatsState extends ConsumerState<MyStats> {
     );
   }
 
-  Widget _buildChartCard(Map<String, List<double>> currentPlantData) {
-    List<double> plantValues =
-        _selectedPlantKey.isNotEmpty
-            ? (currentPlantData[_selectedPlantKey] ?? [0])
-            : [0];
+  Widget _buildChartCard(
+    Map<DateTime, Map<String, List<double>>> currentPlantData,
+  ) {
+    List<double> plantwaterValues;
+    List<double> plantTempValues;
+    DateTime selectedDate;
+
+    if (_selectedPlantKey.isNotEmpty) {
+      final List<DateTime> plantDates =
+          logData[_selectedPlantKey]!.keys.toList();
+      selectedDate = plantDates[dataIdx];
+      plantwaterValues =
+          currentPlantData[plantDates[dataIdx]]?['water'] ?? [0.0];
+      plantTempValues =
+          currentPlantData[plantDates[dataIdx]]?['temperature'] ?? [0.0];
+    } else {
+      plantwaterValues = [0.0];
+      plantTempValues = [0.0];
+      selectedDate = noDateSet;
+    }
+
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -286,8 +275,12 @@ class _MyStatsState extends ConsumerState<MyStats> {
               height: 250,
               child:
                   _selectedButton == _SelectedButton.water
-                      ? _DailyBarChart(testData: plantValues)
-                      : _MonthlyLineChart(showAvg: _showAvg),
+                      ? _DailyBarChart(testData: plantwaterValues)
+                      : _MonthlyLineChart(
+                        date: selectedDate,
+                        testData: plantTempValues,
+                        showAvg: _showAvg,
+                      ),
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -503,12 +496,19 @@ class _DailyBarChart extends StatelessWidget {
         ),
         barGroups: [...myBarData],
       ),
+      duration: Duration.zero, // disables the animation
     );
   }
 }
 
 class _MonthlyLineChart extends StatelessWidget {
-  const _MonthlyLineChart({required this.showAvg});
+  final DateTime date;
+  final List<double> testData;
+  _MonthlyLineChart({
+    required this.date,
+    required this.testData,
+    required this.showAvg,
+  });
 
   final bool showAvg;
   static const int mondayLimit = 1;
@@ -518,10 +518,42 @@ class _MonthlyLineChart extends StatelessWidget {
   static const int fridayLimit = 9;
   static const int saturdayLimit = 11;
   static const int sundayLimit = 13;
+  late final List<FlSpot> lineSpots = [];
 
   @override
   Widget build(BuildContext context) {
-    return LineChart(showAvg ? _avgData() : _mainData());
+    // insert measured data for temperature
+    // hour range
+    double minVal1 = 1;
+    double maxVal1 = 24;
+    // desired day range
+    double minVal2 = 0;
+    double maxVal2 = 2;
+    // find max y value
+    double maxValY = 0;
+
+    for (int i = 0; i < testData.length; ++i) {
+      // get max val
+      maxValY = testData[i] > maxValY ? testData[i] : maxValY;
+      if (testData[i] != 0.0) {
+        // insert a start value to continue the line in the chart
+        if (i == 0) {
+          lineSpots.add(FlSpot(0.0, testData[i]));
+        }
+        double dateHour = date.hour.toDouble();
+        double x =
+            (minVal2 + (i * 2)) +
+            (dateHour - minVal1) *
+                ((maxVal2 + (i * 2)) - (minVal2 + (i * 2))) /
+                (maxVal1 - minVal1);
+
+        double y = testData[i];
+
+        lineSpots.add(FlSpot(x, y));
+      }
+    }
+
+    return LineChart(showAvg ? _avgData() : _mainData(maxValY));
   }
 
   Widget _bottomTitleWidgets(double value, TitleMeta meta) {
@@ -558,7 +590,7 @@ class _MonthlyLineChart extends StatelessWidget {
     return const SizedBox.shrink();
   }
 
-  LineChartData _mainData() {
+  LineChartData _mainData(double maxValY) {
     final List<Color> gradientColors = [
       const Color(0xFF66CC88),
       const Color(0xFF66CC88).withAlpha(127),
@@ -569,17 +601,19 @@ class _MonthlyLineChart extends StatelessWidget {
       lineTouchData: LineTouchData(
         enabled: true,
         touchTooltipData: LineTouchTooltipData(
-          // tooltipBgColor: Colors.blueAccent,
           getTooltipItems: (List<LineBarSpot> touchedSpots) {
             return touchedSpots.map((LineBarSpot touchedSpot) {
-              final String value = touchedSpot.y.toStringAsFixed(2);
-              return LineTooltipItem(
-                value,
-                const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              );
+              // dont show first start value
+              if (touchedSpot.x != 0.0) {
+                final String value = touchedSpot.y.toStringAsFixed(2);
+                return LineTooltipItem(
+                  value,
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              }
             }).toList();
           },
         ),
@@ -588,19 +622,22 @@ class _MonthlyLineChart extends StatelessWidget {
           List<int> spotIndexes,
         ) {
           return spotIndexes.map((spotIndex) {
-            return TouchedSpotIndicatorData(
-              FlLine(color: Color(0xFF66CC88), strokeWidth: 2),
-              FlDotData(
-                show: true,
-                getDotPainter:
-                    (spot, percent, barData, index) => FlDotCirclePainter(
-                      radius: 8,
-                      color: Color(0xFF66CC88),
-                      strokeWidth: 2,
-                      strokeColor: Colors.white,
-                    ),
-              ),
-            );
+            // dont show first start value
+            if (spotIndex != 0) {
+              return TouchedSpotIndicatorData(
+                FlLine(color: Color(0xFF66CC88), strokeWidth: 2),
+                FlDotData(
+                  show: true,
+                  getDotPainter:
+                      (spot, percent, barData, index) => FlDotCirclePainter(
+                        radius: 8,
+                        color: Color(0xFF66CC88),
+                        strokeWidth: 2,
+                        strokeColor: Colors.white,
+                      ),
+                ),
+              );
+            }
           }).toList();
         },
       ),
@@ -633,7 +670,7 @@ class _MonthlyLineChart extends StatelessWidget {
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            interval: 1,
+            interval: 5,
             getTitlesWidget: _leftTitleWidgets,
             reservedSize: 42,
           ),
@@ -643,20 +680,10 @@ class _MonthlyLineChart extends StatelessWidget {
       minX: 0,
       maxX: 14,
       minY: 0,
-      maxY: 6,
+      maxY: maxValY + 10,
       lineBarsData: [
         LineChartBarData(
-          spots: const [
-            FlSpot(0, 3),
-            FlSpot(1, 2),
-            FlSpot(2, 2.1),
-            FlSpot(2.6, 2),
-            FlSpot(4.9, 5),
-            FlSpot(6.8, 3.1),
-            FlSpot(8, 6),
-            FlSpot(9.5, 3),
-            FlSpot(14, 4),
-          ],
+          spots: lineSpots,
           isCurved: true,
           gradient: LinearGradient(colors: gradientColors),
           barWidth: 5,
@@ -810,12 +837,12 @@ class _MonthlyLineChart extends StatelessWidget {
 }
 
 class _PlantCard extends StatefulWidget {
-  final Map<String, List<double>> plantData;
+  final List<String> plantKeys;
   final Function(String) onPlantSelected;
   final String selectedPlantKey;
 
   const _PlantCard({
-    required this.plantData,
+    required this.plantKeys,
     required this.onPlantSelected,
     required this.selectedPlantKey,
   });
@@ -825,12 +852,12 @@ class _PlantCard extends StatefulWidget {
 }
 
 class _PlantCardState extends State<_PlantCard> {
-
   int _displayStartIndex = 0;
   final int _plantIconsPerRow = 3;
   @override
   Widget build(BuildContext context) {
-    List<String> plantNames = widget.plantData.keys.toList();
+    List<String> plantNames = widget.plantKeys;
+
     final int end =
         (_displayStartIndex + _plantIconsPerRow > plantNames.length)
             ? plantNames.length
