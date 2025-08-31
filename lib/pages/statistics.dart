@@ -312,11 +312,38 @@ class _MyStatsState extends ConsumerState<MyStats> {
     return waterUsed;
   }
 
+  Map<String, Map<String, List<double>>> _sortTemperatureData(Map<DateTime, Map<String, List<double>>> currentPlantData,) {
+
+    Map<String, Map<String, List<double>>> sortedTemperatureData = {};
+    // first key: the date so day, month, year or just the first that appears full date: value: {'hours': [1,2,3], 'temperature': [1,2,23,]}
+
+    for (var entry in currentPlantData.entries) {
+      DateTime date = entry.key;
+      var info = entry.value;
+      if (date == noDateSet)
+      {
+        continue;
+      }
+      String dateKey = "${date.day}/${date.month}/${date.year}";
+      if (!sortedTemperatureData.containsKey(dateKey))
+      {
+        sortedTemperatureData[dateKey] = {'hours': [], 'temperature': []};
+      }
+      sortedTemperatureData[dateKey]!['hours']!.add(date.hour.toDouble());
+      sortedTemperatureData[dateKey]!['temperature']!.add(info['temperature']![0]);
+
+    }
+
+
+    return sortedTemperatureData;
+  }
+
   Widget _buildChartCard(
     Map<DateTime, Map<String, List<double>>> currentPlantData,
   ) {
     List<double> plantwaterValues;
     List<double> plantTempValues;
+    List<double> plantTempHourValues;
     DateTime selectedDate;
 
     if (_selectedPlantKey.isNotEmpty && logData.isNotEmpty) {
@@ -324,13 +351,18 @@ class _MyStatsState extends ConsumerState<MyStats> {
       final List<DateTime> plantDates =
           logData[_selectedPlantKey]!.keys.toList();
       selectedDate = plantDates[dataIdx];
+      Map<String, Map<String, List<double>>> plantSortedTempValues = _sortTemperatureData(currentPlantData);
+      String dateKey = "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
+      plantTempValues = plantSortedTempValues[dateKey]!['temperature']!;
+      plantTempHourValues = plantSortedTempValues[dateKey]!['hours']!;
       // plantwaterValues =
       //     currentPlantData[plantDates[dataIdx]]?['water'] ?? [0.0];
-      plantTempValues =
-          currentPlantData[plantDates[dataIdx]]?['temperature'] ?? [0.0];
+      // plantTempValues =
+      //     currentPlantData[plantDates[dataIdx]]?['temperature'] ?? [0.0];
     } else {
       plantwaterValues = [0.0];
       plantTempValues = [0.0];
+      plantTempHourValues = [0.0];
       selectedDate = noDateSet;
     }
 
@@ -349,7 +381,8 @@ class _MyStatsState extends ConsumerState<MyStats> {
                   _selectedButton == _SelectedButton.water
                       ? _DailyBarChart(testData: plantwaterValues)
                       : _MonthlyLineChart(
-                        date: selectedDate,
+                        dayOfWeek: selectedDate.weekday,
+                        datesHour: plantTempHourValues,
                         testData: plantTempValues,
                         showAvg: _showAvg,
                       ),
@@ -574,10 +607,12 @@ class _DailyBarChart extends StatelessWidget {
 }
 
 class _MonthlyLineChart extends StatelessWidget {
-  final DateTime date;
+  final int dayOfWeek;
+  final List<double> datesHour;
   final List<double> testData;
   _MonthlyLineChart({
-    required this.date,
+    required this.dayOfWeek,
+    required this.datesHour,
     required this.testData,
     required this.showAvg,
   });
@@ -594,13 +629,14 @@ class _MonthlyLineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TODO: right now it only maps a single day... it should map a hole week..
     // insert measured data for temperature
     // hour range
     double minVal1 = 1;
     double maxVal1 = 24;
     // desired day range
-    double minVal2 = 0;
-    double maxVal2 = 2;
+    double minVal2 = (dayOfWeek - 1) * 2;
+    double maxVal2 = 2 + (dayOfWeek - 1) * 2;
     // find max y value
     double maxValY = 0;
 
@@ -612,12 +648,15 @@ class _MonthlyLineChart extends StatelessWidget {
         if (i == 0) {
           lineSpots.add(FlSpot(0.0, testData[i]));
         }
-        double dateHour = date.hour.toDouble();
-        double x =
-            (minVal2 + (i * 2)) +
-            (dateHour - minVal1) *
-                ((maxVal2 + (i * 2)) - (minVal2 + (i * 2))) /
-                (maxVal1 - minVal1);
+        double dateHour = datesHour[i];
+        // double x =
+        //     (minVal2 + (i * 2)) +
+        //     (dateHour - minVal1) *
+        //         ((maxVal2 + (i * 2)) - (minVal2 + (i * 2))) /
+        //         (maxVal1 - minVal1);
+
+        double x = minVal2 + (dateHour - minVal1) * (maxVal2 - minVal2) / (maxVal1 - minVal1);
+
 
         double y = testData[i];
 
