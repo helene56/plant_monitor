@@ -19,7 +19,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
   _SelectedButton _selectedButton = _SelectedButton.water;
   bool _showAvg = false;
   int dataIdx = 0;
-  late final Map<String, Map<String, List<double>>> logData;
+  late final Map<String, Map<String, Map<String, List<double>>>> logData;
   @override
   void initState() {
     super.initState();
@@ -39,47 +39,31 @@ class _MyStatsState extends ConsumerState<MyStats> {
     // then get plantname from plants, where both have same plantid, this is the next key
     // then add a list with values from water to this last key
     for (var log in plantHistoryData) {
-      // for (var id in plants.entries)
-      // {
-      //   if (id.key == log.plantId)
-      //   {
-      //       plantName = id.value;
-      //   }
-      // }
-
       plantName = plants[log.plantId] ?? '';
 
-      // numbers[count] = log.waterMl;
-      // count++;
-      // convert date
       DateTime dt = DateTime.fromMillisecondsSinceEpoch(
         log.date * 1000,
         isUtc: true,
       );
-      String date = "${dt.year}/${dt.month}/${dt.day}";
+      String date = "${dt.day}/${dt.month}/${dt.year}";
 
-      logData.putIfAbsent(date, () => {plantName: []});
-      logData[date]!.putIfAbsent(plantName, () => []);
-      logData[date]![plantName]!.add(log.waterMl);
-      // logData.putIfAbsent(log.date.toString(), () => {plantName: [append log.waterMl]});
+      _addLog(date, plantName, log.temperature, log.waterMl);
     }
-
-   
 
     int desiredLength = 7;
 
     logData.forEach((date, plants) {
-      plants.forEach((plantName, values) {
-         // cap data to 7 entries first
-        if (values.length > desiredLength) {
-          logData[date]![plantName] = values.sublist(
-            values.length - desiredLength,
-          );
-        }
-         // fill with 0
-        else if (values.length < desiredLength) {
-          values.addAll(List.filled(desiredLength - values.length, 0.0));
-        }
+      plants.forEach((plantName, properties) {
+        properties.forEach((key, list) {
+          // Cap data to 7 entries
+          if (list.length > desiredLength) {
+            properties[key] = list.sublist(list.length - desiredLength);
+          }
+          // Pad with 0.0 if fewer than 7
+          else if (list.length < desiredLength) {
+            list.addAll(List.filled(desiredLength - list.length, 0.0));
+          }
+        });
       });
     });
 
@@ -100,9 +84,45 @@ class _MyStatsState extends ConsumerState<MyStats> {
     });
   }
 
+  void _ensureList(String date, String plantName, String key) {
+    logData.putIfAbsent(date, () => {});
+    logData[date]!.putIfAbsent(plantName, () => {});
+    logData[date]![plantName]!.putIfAbsent(key, () => <double>[]);
+  }
+
+  void _addLog(String date, String plantName, double tempVal, double watVal) {
+    _ensureList(date, plantName, 'temperature');
+    _ensureList(date, plantName, 'water');
+
+    // add values
+    logData[date]![plantName]!['water']!.add(watVal);
+    logData[date]![plantName]!['temperature']!.add(tempVal);
+  }
+
+  // Map<String, Map<String, Map<String, List<double>>>> plantData = {
+//   "Plant1": {
+//     "2025-08-31": {
+//       "temperature": [22.3, 23.1],
+//       "water": [0.5, 0.7],
+//     }
+//   },
+//   "Plant2": {
+//     "2025-08-31": {
+//       "temperature": [21.0, 21.4],
+//       "water": [0.3, 0.6],
+//     }
+//   },
+// "UnknownPlant": {
+//     "0000-00-00": {
+//       "temperature": [0.0],
+//       "water": [0.0],
+//     }
+//   }
+// };
+
   // final Map<String, Map<String, List<double>>> data = {
   //   '1': {
-  //     'plante1': [200, 150.5, 70, 500, 90.9, 301.2, 411],
+  //     'plante1': {'water': [200, 150.5, 70, 500, 90.9, 301.2, 411], 'temp': [1,2,3]},
   //     'plante2': [43, 176.4, 24, 300, 84.9, 321.2, 141],
   //     'plante3': [22, 150.5, 30, 500, 90.9, 301.2, 411],
   //     'plante4': [100, 23.5, 21, 328, 88.4, 112, 32],
@@ -123,24 +143,15 @@ class _MyStatsState extends ConsumerState<MyStats> {
 
   @override
   Widget build(BuildContext context) {
-    // These variables are now declared in the build method
-    //   if (logData == null )
-    //   {
-    //     currentPlantData = [0];
-    //   }
-    //   else
-    // {
-    //   final List<String> keysWeek = logData.keys.toList();
-    //   final String currentWeekKey = keysWeek[dataIdx];
-    //   final Map<String, List<double>> currentPlantData = logData[currentWeekKey]!;
-    // }
-
-    Map<String, List<double>> currentPlantData;
+    Map<String, Map<String, List<double>>> currentPlantData;
 
     if (logData.isEmpty) {
       // fallback if logData is not loaded or empty
       currentPlantData = {
-        '': [0],
+        '': {
+          'temperature': [0.0],
+          'water': [0.0],
+        },
       };
     } else {
       final List<String> keysWeek = logData.keys.toList();
@@ -148,7 +159,10 @@ class _MyStatsState extends ConsumerState<MyStats> {
       currentPlantData =
           logData[currentWeekKey] ??
           {
-            '': [0],
+            '': {
+              'temperature': [0.0],
+              'water': [0.0],
+            },
           };
     }
 
@@ -167,7 +181,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
     );
   }
 
-  Widget _buildPortraitLayout(Map<String, List<double>> currentPlantData) {
+  Widget _buildPortraitLayout(Map<String, Map<String, List<double>>> currentPlantData) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -192,7 +206,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
     );
   }
 
-  Widget _buildLandscapeLayout(Map<String, List<double>> currentPlantData) {
+  Widget _buildLandscapeLayout(Map<String, Map<String, List<double>>> currentPlantData) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -634,6 +648,7 @@ class _MonthlyLineChart extends StatelessWidget {
           spots: const [
             FlSpot(0, 3),
             FlSpot(1, 2),
+            FlSpot(2, 2.1),
             FlSpot(2.6, 2),
             FlSpot(4.9, 5),
             FlSpot(6.8, 3.1),
@@ -809,7 +824,7 @@ class _PlantCard extends StatefulWidget {
 }
 
 class _PlantCardState extends State<_PlantCard> {
-  // late final List<String> plantNames = widget.plantData.keys.toList();
+
   int _displayStartIndex = 0;
   final int _plantIconsPerRow = 3;
   @override
