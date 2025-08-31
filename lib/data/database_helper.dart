@@ -19,7 +19,7 @@ Future<void> insertRecord(
   Map<String, Object?> record,
 ) async {
   final db = database;
-  await db.insert(table, record, conflictAlgorithm: ConflictAlgorithm.replace);
+  await db.insert(table, record, conflictAlgorithm: ConflictAlgorithm.ignore);
 }
 
 Future<List<PlantType>> plantTypes(Database database) async {
@@ -418,7 +418,7 @@ Future<Database> initializeDatabase() async {
         'CREATE TABLE plant_history('
         'id INTEGER PRIMARY KEY,'
         'plantId INTEGER,'
-        'date INTEGER,'
+        'date INTEGER UNIQUE,'
         'waterMl REAL,'
         'temperature REAL,'
         'FOREIGN KEY (plantId) REFERENCES plants(id) ON DELETE CASCADE'
