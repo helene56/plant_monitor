@@ -241,9 +241,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
   // todo here
   Widget _buildDateRow() {
     final List<String> selectedDateRow =
-        logData.isNotEmpty
-            ? _helpSetDateRow()
-            : ["${noDateSet.day}/${noDateSet.month}/${noDateSet.year}"];
+        logData.isNotEmpty ? _helpSetDateRow() : [""];
 
     final date = selectedDateRow[dataIdx];
 
@@ -339,35 +337,19 @@ class _MyStatsState extends ConsumerState<MyStats> {
     Map<DateTime, Map<String, List<double>>> currentPlantData,
   ) {
     List<double> plantwaterValues;
-    List<double> plantTempValues;
-    // List<double> plantTempHourValues;
     Map<DateTime, Map<String, List<double>>> plantSortedTempValues;
-    DateTime selectedDate;
 
     if (_selectedPlantKey.isNotEmpty && logData.isNotEmpty) {
       plantwaterValues = _sortWaterData(currentPlantData);
-      final List<DateTime> plantDates =
-          logData[_selectedPlantKey]!.keys.toList();
-      selectedDate = plantDates[dataIdx];
       plantSortedTempValues = _sortTemperatureData(currentPlantData);
-      // String dateKey = "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
-      plantTempValues = plantSortedTempValues[selectedDate]!['temperature']!;
-      // plantTempHourValues = plantSortedTempValues[selectedDate]!['dates']!;
-      // plantwaterValues =
-      //     currentPlantData[plantDates[dataIdx]]?['water'] ?? [0.0];
-      // plantTempValues =
-      //     currentPlantData[plantDates[dataIdx]]?['temperature'] ?? [0.0];
     } else {
       plantwaterValues = [0.0];
-      plantTempValues = [0.0];
       plantSortedTempValues = {
         noDateSet: {
           'dates': [0.0],
           'temperature': [0.0],
         },
       };
-      // plantTempHourValues = [0.0];
-      selectedDate = noDateSet;
     }
 
     return Card(
@@ -386,7 +368,6 @@ class _MyStatsState extends ConsumerState<MyStats> {
                       ? _DailyBarChart(testData: plantwaterValues)
                       : _MonthlyLineChart(
                         dataMap: plantSortedTempValues,
-                        testData: plantTempValues,
                         showAvg: _showAvg,
                       ),
             ),
@@ -611,12 +592,7 @@ class _DailyBarChart extends StatelessWidget {
 
 class _MonthlyLineChart extends StatelessWidget {
   final Map<DateTime, Map<String, List<double>>> dataMap;
-  final List<double> testData;
-  _MonthlyLineChart({
-    required this.dataMap,
-    required this.testData,
-    required this.showAvg,
-  });
+  _MonthlyLineChart({required this.dataMap, required this.showAvg});
 
   final bool showAvg;
   static const int mondayLimit = 1;
@@ -692,11 +668,18 @@ class _MonthlyLineChart extends StatelessWidget {
       lineSpots.add(FlSpot(x, y));
     }
 
-    return LineChart(showAvg ? _avgData() : _mainData(maxValY));
+    final avgY =
+        lineSpots.map((s) => s.y).reduce((a, b) => a + b) / lineSpots.length;
+
+    final avgSpots = lineSpots.map((s) => FlSpot(s.x, avgY)).toList();
+
+    return LineChart(
+      showAvg ? _avgData(avgSpots, maxValY) : _mainData(maxValY),
+    );
   }
 
   Widget _bottomTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(fontSize: 12);
+    const style = TextStyle(color: Colors.black, fontSize: 14);
     switch (value.toInt()) {
       case mondayLimit:
         return const Text('M', style: style);
@@ -718,7 +701,12 @@ class _MonthlyLineChart extends StatelessWidget {
   }
 
   Widget _leftTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(fontSize: 12);
+    const style = TextStyle(color: Colors.black, fontSize: 12);
+    const unitStyle = TextStyle(color: Colors.black, fontSize: 12);
+
+    if (value == meta.max) {
+      return Text('°C', style: unitStyle);
+    }
     if (value % 2 == 0) {
       return Text(
         value.toStringAsFixed(0),
@@ -801,7 +789,7 @@ class _MonthlyLineChart extends StatelessWidget {
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 30,
+            reservedSize: 32,
             interval: 1,
             getTitlesWidget: _bottomTitleWidgets,
           ),
@@ -809,9 +797,9 @@ class _MonthlyLineChart extends StatelessWidget {
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            interval: 5,
+            // interval: 5,
             getTitlesWidget: _leftTitleWidgets,
-            reservedSize: 42,
+            reservedSize: 32,
           ),
         ),
       ),
@@ -836,7 +824,7 @@ class _MonthlyLineChart extends StatelessWidget {
             ),
           ),
         ),
-        ...lineNoData,
+        // ...lineNoData,
         // LineChartBarData(
         //   spots: [FlSpot(0, 18), FlSpot(2, 18)],
         //   isCurved: true,
@@ -858,7 +846,7 @@ class _MonthlyLineChart extends StatelessWidget {
     );
   }
 
-  LineChartData _avgData() {
+  LineChartData _avgData(List<FlSpot> lineSpots, double maxValY) {
     final List<Color> gradientColors = [
       const Color(0xFF66CC88),
       const Color(0xFF66CC88).withAlpha(127),
@@ -922,7 +910,7 @@ class _MonthlyLineChart extends StatelessWidget {
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 30,
+            reservedSize: 32,
             getTitlesWidget: _bottomTitleWidgets,
             interval: 1,
           ),
@@ -932,7 +920,7 @@ class _MonthlyLineChart extends StatelessWidget {
             showTitles: true,
             getTitlesWidget: _leftTitleWidgets,
             reservedSize: 42,
-            interval: 1,
+            interval: 5,
           ),
         ),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -944,18 +932,10 @@ class _MonthlyLineChart extends StatelessWidget {
       minX: 0,
       maxX: 14,
       minY: 0,
-      maxY: 6,
+      maxY: maxValY + 10,
       lineBarsData: [
         LineChartBarData(
-          spots: const [
-            FlSpot(0, 3.44),
-            FlSpot(2.6, 3.44),
-            FlSpot(4.9, 3.44),
-            FlSpot(6.8, 3.44),
-            FlSpot(8, 3.44),
-            FlSpot(9.5, 3.44),
-            FlSpot(14, 3.44),
-          ],
+          spots: lineSpots,
           isCurved: true,
           gradient: LinearGradient(
             colors: [
