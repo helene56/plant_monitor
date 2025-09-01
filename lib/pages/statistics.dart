@@ -245,7 +245,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
             ? _helpSetDateRow()
             : ["${noDateSet.day}/${noDateSet.month}/${noDateSet.year}"];
 
-    final date =selectedDateRow[dataIdx];
+    final date = selectedDateRow[dataIdx];
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -312,28 +312,25 @@ class _MyStatsState extends ConsumerState<MyStats> {
     return waterUsed;
   }
 
-  Map<String, Map<String, List<double>>> _sortTemperatureData(Map<DateTime, Map<String, List<double>>> currentPlantData,) {
-
-    Map<String, Map<String, List<double>>> sortedTemperatureData = {};
+  Map<DateTime, Map<String, List<double>>> _sortTemperatureData(
+    Map<DateTime, Map<String, List<double>>> currentPlantData,
+  ) {
+    Map<DateTime, Map<String, List<double>>> sortedTemperatureData = {};
     // first key: the date so day, month, year or just the first that appears full date: value: {'hours': [1,2,3], 'temperature': [1,2,23,]}
 
     for (var entry in currentPlantData.entries) {
       DateTime date = entry.key;
       var info = entry.value;
-      if (date == noDateSet)
-      {
+      if (date == noDateSet) {
         continue;
       }
-      String dateKey = "${date.day}/${date.month}/${date.year}";
-      if (!sortedTemperatureData.containsKey(dateKey))
-      {
-        sortedTemperatureData[dateKey] = {'hours': [], 'temperature': []};
+      // String dateKey = "${date.day}/${date.month}/${date.year}";
+      if (!sortedTemperatureData.containsKey(date)) {
+        sortedTemperatureData[date] = {'dates': [], 'temperature': []};
       }
-      sortedTemperatureData[dateKey]!['hours']!.add(date.hour.toDouble());
-      sortedTemperatureData[dateKey]!['temperature']!.add(info['temperature']![0]);
-
+      sortedTemperatureData[date]!['dates']!.add(date.hour.toDouble());
+      sortedTemperatureData[date]!['temperature']!.add(info['temperature']![0]);
     }
-
 
     return sortedTemperatureData;
   }
@@ -343,7 +340,8 @@ class _MyStatsState extends ConsumerState<MyStats> {
   ) {
     List<double> plantwaterValues;
     List<double> plantTempValues;
-    List<double> plantTempHourValues;
+    // List<double> plantTempHourValues;
+    Map<DateTime, Map<String, List<double>>> plantSortedTempValues;
     DateTime selectedDate;
 
     if (_selectedPlantKey.isNotEmpty && logData.isNotEmpty) {
@@ -351,10 +349,10 @@ class _MyStatsState extends ConsumerState<MyStats> {
       final List<DateTime> plantDates =
           logData[_selectedPlantKey]!.keys.toList();
       selectedDate = plantDates[dataIdx];
-      Map<String, Map<String, List<double>>> plantSortedTempValues = _sortTemperatureData(currentPlantData);
-      String dateKey = "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
-      plantTempValues = plantSortedTempValues[dateKey]!['temperature']!;
-      plantTempHourValues = plantSortedTempValues[dateKey]!['hours']!;
+      plantSortedTempValues = _sortTemperatureData(currentPlantData);
+      // String dateKey = "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
+      plantTempValues = plantSortedTempValues[selectedDate]!['temperature']!;
+      // plantTempHourValues = plantSortedTempValues[selectedDate]!['dates']!;
       // plantwaterValues =
       //     currentPlantData[plantDates[dataIdx]]?['water'] ?? [0.0];
       // plantTempValues =
@@ -362,7 +360,13 @@ class _MyStatsState extends ConsumerState<MyStats> {
     } else {
       plantwaterValues = [0.0];
       plantTempValues = [0.0];
-      plantTempHourValues = [0.0];
+      plantSortedTempValues = {
+        noDateSet: {
+          'dates': [0.0],
+          'temperature': [0.0],
+        },
+      };
+      // plantTempHourValues = [0.0];
       selectedDate = noDateSet;
     }
 
@@ -381,8 +385,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
                   _selectedButton == _SelectedButton.water
                       ? _DailyBarChart(testData: plantwaterValues)
                       : _MonthlyLineChart(
-                        dayOfWeek: selectedDate.weekday,
-                        datesHour: plantTempHourValues,
+                        dataMap: plantSortedTempValues,
                         testData: plantTempValues,
                         showAvg: _showAvg,
                       ),
@@ -607,12 +610,10 @@ class _DailyBarChart extends StatelessWidget {
 }
 
 class _MonthlyLineChart extends StatelessWidget {
-  final int dayOfWeek;
-  final List<double> datesHour;
+  final Map<DateTime, Map<String, List<double>>> dataMap;
   final List<double> testData;
   _MonthlyLineChart({
-    required this.dayOfWeek,
-    required this.datesHour,
+    required this.dataMap,
     required this.testData,
     required this.showAvg,
   });
@@ -626,42 +627,69 @@ class _MonthlyLineChart extends StatelessWidget {
   static const int saturdayLimit = 11;
   static const int sundayLimit = 13;
   late final List<FlSpot> lineSpots = [];
+  late final List<LineChartBarData> lineNoData = [];
+  final List<Color> gradientColorsGrey = [
+    const Color(0xFF999999), // lighter warm grey
+    const Color(0xFF999999).withAlpha(50), // very subtle (~20%)
+  ];
+  final List<Color> gradientColors = [
+    const Color(0xFF66CC88),
+    const Color(0xFF66CC88).withAlpha(127),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    // TODO: right now it only maps a single day... it should map a hole week..
-    // insert measured data for temperature
-    // hour range
     double minVal1 = 1;
     double maxVal1 = 24;
-    // desired day range
-    double minVal2 = (dayOfWeek - 1) * 2;
-    double maxVal2 = 2 + (dayOfWeek - 1) * 2;
     // find max y value
     double maxValY = 0;
 
-    for (int i = 0; i < testData.length; ++i) {
+    final entries = dataMap.entries.toList();
+    for (int i = 0; i < entries.length; i++) {
+      final dateKey = entries[i].key;
+      final value = entries[i].value['temperature']![0];
+
+      double minVal2 = (dateKey.weekday - 1) * 2;
+      double maxVal2 = 2 + (dateKey.weekday - 1) * 2;
+
       // get max val
-      maxValY = testData[i] > maxValY ? testData[i] : maxValY;
-      if (testData[i] != 0.0) {
-        // insert a start value to continue the line in the chart
-        if (i == 0) {
-          lineSpots.add(FlSpot(0.0, testData[i]));
-        }
-        double dateHour = datesHour[i];
-        // double x =
-        //     (minVal2 + (i * 2)) +
-        //     (dateHour - minVal1) *
-        //         ((maxVal2 + (i * 2)) - (minVal2 + (i * 2))) /
-        //         (maxVal1 - minVal1);
+      maxValY = value > maxValY ? value : maxValY;
+      // insert a start value to continue the line in the chart
+      // if (i == 0) {
+      //   lineSpots.add(FlSpot(0, value));
+      // }
 
-        double x = minVal2 + (dateHour - minVal1) * (maxVal2 - minVal2) / (maxVal1 - minVal1);
+      double dateHour = dateKey.hour.toDouble();
 
+      double x =
+          minVal2 +
+          (dateHour - minVal1) * (maxVal2 - minVal2) / (maxVal1 - minVal1);
 
-        double y = testData[i];
+      double y = value;
 
-        lineSpots.add(FlSpot(x, y));
-      }
+      // if (dateKey.weekday != 1 && i == 0)
+      // {
+      //   lineNoData.add(LineChartBarData(
+      //     spots: [FlSpot(0, value), FlSpot(x, value)],
+      //     isCurved: true,
+      //     gradient: LinearGradient(colors: gradientColors),
+      //     barWidth: 5,
+      //     isStrokeCapRound: true,
+      //     dotData: const FlDotData(show: false),
+      //     belowBarData: BarAreaData(
+      //       show: true,
+      //       gradient: LinearGradient(
+      //         colors:
+      //             gradientColorsGrey
+      //                 .map((color) => color.withAlpha(77))
+      //                 .toList(),
+      //       ),
+      //     ),
+      //   ));
+
+      // }
+
+      lineSpots.add(FlSpot(x, y));
     }
 
     return LineChart(showAvg ? _avgData() : _mainData(maxValY));
@@ -702,10 +730,10 @@ class _MonthlyLineChart extends StatelessWidget {
   }
 
   LineChartData _mainData(double maxValY) {
-    final List<Color> gradientColors = [
-      const Color(0xFF66CC88),
-      const Color(0xFF66CC88).withAlpha(127),
-    ];
+    // final List<Color> gradientColors = [
+    //   const Color(0xFF66CC88),
+    //   const Color(0xFF66CC88).withAlpha(127),
+    // ];
 
     return LineChartData(
       // Enable line touch data
@@ -808,6 +836,24 @@ class _MonthlyLineChart extends StatelessWidget {
             ),
           ),
         ),
+        ...lineNoData,
+        // LineChartBarData(
+        //   spots: [FlSpot(0, 18), FlSpot(2, 18)],
+        //   isCurved: true,
+        //   gradient: LinearGradient(colors: gradientColors),
+        //   barWidth: 5,
+        //   isStrokeCapRound: true,
+        //   dotData: const FlDotData(show: false),
+        //   belowBarData: BarAreaData(
+        //     show: true,
+        //     gradient: LinearGradient(
+        //       colors:
+        //           gradientColorsGrey
+        //               .map((color) => color.withAlpha(77))
+        //               .toList(),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }
