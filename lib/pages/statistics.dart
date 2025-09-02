@@ -770,14 +770,12 @@ class _MonthlyLineChart extends StatelessWidget {
       ),
       gridData: FlGridData(
         show: true,
+        verticalInterval: 2.0,
         getDrawingHorizontalLine: (value) {
           return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
         },
         getDrawingVerticalLine: (value) {
-          if (value % 2 == 0) {
-            return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
-          }
-          return FlLine(color: Colors.transparent);
+          return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
         },
       ),
       titlesData: FlTitlesData(
@@ -797,7 +795,6 @@ class _MonthlyLineChart extends StatelessWidget {
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            // interval: 5,
             getTitlesWidget: _leftTitleWidgets,
             reservedSize: 32,
           ),
@@ -894,15 +891,12 @@ class _MonthlyLineChart extends StatelessWidget {
       ),
       gridData: FlGridData(
         show: true,
-        verticalInterval: 1.0,
+        verticalInterval: 2.0,
         getDrawingHorizontalLine: (value) {
           return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
         },
         getDrawingVerticalLine: (value) {
-          if (value % 2 == 0) {
-            return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
-          }
-          return FlLine(color: Colors.transparent);
+          return FlLine(color: Colors.grey.withAlpha(77), strokeWidth: 1);
         },
       ),
       titlesData: FlTitlesData(
@@ -919,8 +913,7 @@ class _MonthlyLineChart extends StatelessWidget {
           sideTitles: SideTitles(
             showTitles: true,
             getTitlesWidget: _leftTitleWidgets,
-            reservedSize: 42,
-            interval: 5,
+            reservedSize: 32,
           ),
         ),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
