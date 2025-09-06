@@ -7,6 +7,8 @@ class StatisticsLoggingData {
   final List<PlantHistory> plantHistoryData;
   // Map<int, WeekData> weeklyData = {};
   Map<int, PlantLoggingData> loggedPlants = {}; // access plant by their plantId
+  // use weeknumber as key to get the date shown in the widget - should be used in _buildDateRow
+  Map<int, String> dateRow = {};
 
   StatisticsLoggingData({
     required this.plantsIdentity,
@@ -65,7 +67,6 @@ class WeekData {
   WeekData({required this.water, required this.temp});
 }
 
-// TODO: might be a good idea to use this object but i am not sure in which order the rows are initialized from db
 class PlantLoggingData {
   final String name;
   final Map<int, WeekData> loggingData;
