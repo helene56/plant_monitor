@@ -18,11 +18,15 @@ enum _SelectedButton { water, temperature }
 
 class _MyStatsState extends ConsumerState<MyStats> {
   late String _selectedPlantKey = '';
+  int currentPlantId = 0;
   late Map<int, List<DateTime>> sortedWeeks;
   _SelectedButton _selectedButton = _SelectedButton.water;
   bool _showAvg = false;
   int dataIdx = 0;
-  late final Map<String, Map<DateTime, Map<String, List<double>>>> logData;
+  List<int> plantIds = [0];
+  List<int> weekKeys = [0];
+  Map<int, String> plantNameMap = {};
+
   StatisticsLoggingData? sortedData;
   bool _dataIsLoaded = false;
   final DateTime noDateSet = DateTime.fromMillisecondsSinceEpoch(
@@ -32,70 +36,60 @@ class _MyStatsState extends ConsumerState<MyStats> {
   @override
   void initState() {
     super.initState();
-    logData = {
-      // "emptyplant": {
-      //   "0000-00-00": {
-      //     "temperature": [0.0],
-      //     "water": [0.0],
-      //   },
-      // },
-    };
+
     sortedWeeks = {};
+    // temporary placeholder until real data loads
+    sortedData = emptyStatisticsLoggingData();
     _initializeData();
   }
 
   void _initializeData() async {
     // use plantId to look up plantName
     Map<int, String> plants = await getPlantSummaries(ref.read(appDatabase));
+    plantNameMap = plants;
+    // initialize availible ids
+    // plantIds = plants.keys.toList();
+
     // get plants and their id
     // get associated data from planthistory with plant id
     List<PlantHistory> plantHistoryData = await getPlantHistory(
       ref.read(appDatabase),
     );
-    String plantName;
+
     // get date from history, as first key
     // then get plantname from plants, where both have same plantid, this is the next key
     // then add a list with values from water to this last key
 
-    sortedData = StatisticsLoggingData(plantsIdentity: plants, plantHistoryData: plantHistoryData);
-
-    for (var log in plantHistoryData) {
-      plantName = plants[log.plantId] ?? '';
-
-      DateTime dt = DateTime.fromMillisecondsSinceEpoch(
-        log.date * 1000,
-        isUtc: true,
-      );
-      // String date = "${dt.day}/${dt.month}/${dt.year}";
-
-      _addLog(dt, plantName, log.temperature, log.waterMl);
-    }
-
+    sortedData = StatisticsLoggingData(
+      plantsIdentity: plants,
+      plantHistoryData: plantHistoryData,
+    );
+    weekKeys = sortedData!.dateRow.keys.toList();
 
     setState(() {
-      _selectedPlantKey = plants.isNotEmpty ? plants.values.first : '';
-      // update weeks
-      if (_selectedPlantKey.isNotEmpty) {
-        List<DateTime> dates = logData[_selectedPlantKey]!.keys.toList();
-        sortedWeeks = getLoggingWeeks(dates);
-      }
-      if (sortedData != null)
-      {
+      if (sortedData != null) {
         _dataIsLoaded = true;
-      }
-      else {
+        _selectedPlantKey = plantNameMap.values.first;
+        currentPlantId = plantNameMap.keys.first;
+      } else {
         _dataIsLoaded = false;
       }
-      
     });
   }
 
-  void _onPlantSelected(String plantKey) {
+  List<MapEntry<int, String>> getPlantNamesWithId(
+    Map<int, PlantLoggingData> loggedPlants,
+  ) {
+    return loggedPlants.entries
+        .map((e) => MapEntry(e.key, e.value.name))
+        .toList();
+  }
+
+  void _onPlantSelected(int plantId) {
     setState(() {
-      _selectedPlantKey = plantKey;
-      // to update the sorted weeks
-      List<DateTime> dates = logData[_selectedPlantKey]!.keys.toList();
-      sortedWeeks = getLoggingWeeks(dates);
+      // _selectedPlantKey = plantKey;
+      _selectedPlantKey = plantNameMap[plantId]!;
+      currentPlantId = plantId;
     });
   }
 
@@ -103,12 +97,6 @@ class _MyStatsState extends ConsumerState<MyStats> {
     setState(() {
       _showAvg = !_showAvg;
     });
-  }
-
-  void _ensureList(String plantName, DateTime date, String key) {
-    logData.putIfAbsent(plantName, () => {});
-    logData[plantName]!.putIfAbsent(date, () => {});
-    logData[plantName]![date]!.putIfAbsent(key, () => <double>[]);
   }
 
   Map<int, List<DateTime>> getLoggingWeeks(List<DateTime> dates) {
@@ -128,32 +116,14 @@ class _MyStatsState extends ConsumerState<MyStats> {
     return sortedWeeks;
   }
 
-  void _addLog(DateTime date, String plantName, double tempVal, double watVal) {
-    _ensureList(plantName, date, 'temperature');
-    _ensureList(plantName, date, 'water');
-
-    // add values
-    logData[plantName]![date]!['water']!.add(watVal);
-    logData[plantName]![date]!['temperature']!.add(tempVal);
-  }
-
   @override
   Widget build(BuildContext context) {
-    Map<DateTime, Map<String, List<double>>> currentPlantData;
-    final List<String> plantKeys = logData.keys.toList();
+    final List<String> plantKeys;
 
-    if (logData.isEmpty) {
-      // fallback if logData is not loaded or empty
-      currentPlantData = {
-        noDateSet: {
-          'temperature': [0.0],
-          'water': [0.0],
-        },
-      };
-    } else {
-
-      currentPlantData = logData[_selectedPlantKey]!;
-    }
+    plantKeys =
+        sortedData!.loggedPlants.values
+            .map((plantData) => plantData.name)
+            .toList();
 
     return SingleChildScrollView(
       child: OrientationBuilder(
@@ -161,9 +131,9 @@ class _MyStatsState extends ConsumerState<MyStats> {
           final bool isLandscape = orientation == Orientation.landscape;
 
           if (isLandscape) {
-            return _buildLandscapeLayout(currentPlantData);
+            return _buildLandscapeLayout(sortedData);
           } else {
-            return _buildPortraitLayout(currentPlantData, plantKeys);
+            return _buildPortraitLayout(sortedData, plantKeys);
           }
         },
       ),
@@ -171,7 +141,8 @@ class _MyStatsState extends ConsumerState<MyStats> {
   }
 
   Widget _buildPortraitLayout(
-    Map<DateTime, Map<String, List<double>>> currentPlantData,
+    // Map<DateTime, Map<String, List<double>>> currentPlantData,
+    StatisticsLoggingData? plantDataSorted,
     final List<String> plantKeys,
   ) {
     return Padding(
@@ -186,10 +157,11 @@ class _MyStatsState extends ConsumerState<MyStats> {
           const SizedBox(height: 20),
           _buildDateRow(),
           const SizedBox(height: 40),
-          _buildChartCard(currentPlantData),
+          _buildChartCard(plantDataSorted),
           const SizedBox(height: 20),
           _PlantCard(
-            plantKeys: plantKeys,
+            // plantKeys: plantKeys,
+            plantMapping: plantNameMap,
             onPlantSelected: _onPlantSelected,
             selectedPlantKey: _selectedPlantKey,
           ),
@@ -199,7 +171,8 @@ class _MyStatsState extends ConsumerState<MyStats> {
   }
 
   Widget _buildLandscapeLayout(
-    Map<DateTime, Map<String, List<double>>> currentPlantData,
+    // Map<DateTime, Map<String, List<double>>> currentPlantData,
+    StatisticsLoggingData? plantDataSorted,
   ) {
     return Center(
       child: Padding(
@@ -223,13 +196,12 @@ class _MyStatsState extends ConsumerState<MyStats> {
               ),
             ),
             const SizedBox(width: 20),
-            Expanded(flex: 3, child: _buildChartCard(currentPlantData)),
+            Expanded(flex: 3, child: _buildChartCard(sortedData)),
           ],
         ),
       ),
     );
   }
-
 
   bool isSameWeek(DateTime a, DateTime b) {
     return a.year == b.year && weekNumber(a) == weekNumber(b);
@@ -239,37 +211,18 @@ class _MyStatsState extends ConsumerState<MyStats> {
     return "${date.day}/${date.month}/${date.year}";
   }
 
-
   Widget _buildDateRow() {
     final String dateDisplayed;
-    final List<int> weekKeys;
-    if (_dataIsLoaded)
-    {
-      weekKeys = sortedData!.dateRow.keys.toList();
+
+    if (_dataIsLoaded) {
       int dateKey = weekKeys[dataIdx];
       String startDate = toDate(sortedData!.dateRow[dateKey]!.startDate);
       String endDate = toDate(sortedData!.dateRow[dateKey]!.endDate);
       dateDisplayed = "$startDate - $endDate";
-    }
-    else
-    {
+    } else {
       dateDisplayed = "";
       weekKeys = [0];
     }
-
-
-    // final String dateDisplayed;
-    // final List<int> weekKeys;
-    // if (logData.isNotEmpty) {
-    //   weekKeys = sortedWeeks.keys.toList(); // get keys as a list
-    //   final int key = weekKeys[dataIdx]; // pick key by index
-    //   String startDate = "${sortedWeeks[key]![0].day}/${sortedWeeks[key]![0].month}/${sortedWeeks[key]![0].year}";
-    //   String endDate = "${sortedWeeks[key]!.last.day}/${sortedWeeks[key]!.last.month}/${sortedWeeks[key]!.last.year}";
-    //   dateDisplayed = "$startDate - $endDate";
-    // } else {
-    //   dateDisplayed = "";
-    //   weekKeys = [0];
-    // }
 
     // here should set a date displayed item
     return Row(
@@ -309,95 +262,12 @@ class _MyStatsState extends ConsumerState<MyStats> {
     return ((days + firstDay.weekday) / 7).ceil();
   }
 
-// TODO: here i should also only pass in the selected days instead of sorting again
-  Map<int, List<double>> _sortWaterData(
-    Map<DateTime, Map<String, List<double>>> currentPlantData,
-  ) {
-    // for how much water used
-    // only interested in the total amount per day - monday/tuesday and so on -
-    // so for 26/08/2025 - 31/08/2025 split data into 7 datapoints
-    // if a date is missing it will get data point 0
-
-    // should only hold 7 data points, for 7 days.
-    Map<int, List<double>> waterUsed = {};
-    for (var entry in currentPlantData.entries) {
-      DateTime date = entry.key;
-      final week = weekNumber(date);
-      final weekDay = date.weekday;
-      var info = entry.value;
-
-      if (date == noDateSet) {
-        continue;
-      } else {
-        waterUsed.update(
-          week,
-          (list) {
-            // update existing list
-            list[weekDay - 1] += info['water']![0];
-            return list;
-          },
-          ifAbsent: () {
-            // create new list with 7 zeros
-            final list = List.filled(7, 0.0);
-            list[weekDay - 1] = info['water']![0];
-            return list;
-          },
-        );
-      }
-    }
-
-    return waterUsed;
-  }
-
-  Map<DateTime, Map<String, List<double>>> _sortTemperatureData(
-    Map<DateTime, Map<String, List<double>>> currentPlantData,
-  ) {
-    Map<DateTime, Map<String, List<double>>> sortedTemperatureData = {};
-    // first key: the date so day, month, year or just the first that appears full date: value: {'hours': [1,2,3], 'temperature': [1,2,23,]}
-
-    for (var entry in currentPlantData.entries) {
-      DateTime date = entry.key;
-      var info = entry.value;
-      if (date == noDateSet) {
-        continue;
-      }
-      // String dateKey = "${date.day}/${date.month}/${date.year}";
-      if (!sortedTemperatureData.containsKey(date)) {
-        sortedTemperatureData[date] = {'dates': [], 'temperature': []};
-      }
-      sortedTemperatureData[date]!['dates']!.add(date.hour.toDouble());
-      sortedTemperatureData[date]!['temperature']!.add(info['temperature']![0]);
-    }
-
-    return sortedTemperatureData;
-  }
-
-  Widget _buildChartCard(
-    Map<DateTime, Map<String, List<double>>> currentPlantData,
-  ) {
-    List<double> plantwaterValues;
-    Map<DateTime, Map<String, List<double>>> subsetTempValues;
-
-    if (_selectedPlantKey.isNotEmpty && logData.isNotEmpty) {
-      int selectedWeek = sortedWeeks.keys.toList()[dataIdx];
-      List<DateTime> weekDates = sortedWeeks[selectedWeek]!;
-      plantwaterValues = _sortWaterData(currentPlantData)[selectedWeek]!;
-      Map<DateTime, Map<String, List<double>>> plantSortedTempValues =
-          _sortTemperatureData(currentPlantData);
-      subsetTempValues = Map.fromEntries(
-        plantSortedTempValues.entries.where(
-          (entry) => weekDates.contains(entry.key),
-        ),
-      );
-    } else {
-      plantwaterValues = [0.0];
-      subsetTempValues = {
-        noDateSet: {
-          'dates': [0.0],
-          'temperature': [0.0],
-        },
-      };
-    }
+  Widget _buildChartCard(StatisticsLoggingData? plantDataSorted) {
+    var currentPlantData = plantDataSorted!.loggedPlants[currentPlantId];
+    List<double> waterVals =
+        currentPlantData!.loggingData[weekKeys[dataIdx]]!.water;
+    Map<DateTime, double> tempVals =
+        currentPlantData.loggingData[weekKeys[dataIdx]]!.temp;
 
     return Card(
       elevation: 4,
@@ -412,11 +282,8 @@ class _MyStatsState extends ConsumerState<MyStats> {
               height: 250,
               child:
                   _selectedButton == _SelectedButton.water
-                      ? _DailyBarChart(testData: plantwaterValues)
-                      : _MonthlyLineChart(
-                        dataMap: subsetTempValues,
-                        showAvg: _showAvg,
-                      ),
+                      ? _DailyBarChart(testData: waterVals)
+                      : _MonthlyLineChart(dataMap: tempVals, showAvg: _showAvg),
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -638,7 +505,8 @@ class _DailyBarChart extends StatelessWidget {
 }
 
 class _MonthlyLineChart extends StatelessWidget {
-  final Map<DateTime, Map<String, List<double>>> dataMap;
+  // final Map<DateTime, Map<String, List<double>>> dataMap;
+  final Map<DateTime, double> dataMap;
   _MonthlyLineChart({required this.dataMap, required this.showAvg});
 
   final bool showAvg;
@@ -666,53 +534,28 @@ class _MonthlyLineChart extends StatelessWidget {
     double maxVal1 = 24;
     // find max y value
     double maxValY = 0;
+    if (dataMap.isNotEmpty) {
+      final entries = dataMap.entries.toList();
+      for (int i = 0; i < entries.length; i++) {
+        final dateKey = entries[i].key;
+        // final value = entries[i].value['temperature']![0];
+        final value = entries[i].value;
+        double minVal2 = (dateKey.weekday - 1) * 2;
+        double maxVal2 = 2 + (dateKey.weekday - 1) * 2;
 
-    final entries = dataMap.entries.toList();
-    for (int i = 0; i < entries.length; i++) {
-      final dateKey = entries[i].key;
-      final value = entries[i].value['temperature']![0];
+        // get max val
+        maxValY = value > maxValY ? value : maxValY;
 
-      double minVal2 = (dateKey.weekday - 1) * 2;
-      double maxVal2 = 2 + (dateKey.weekday - 1) * 2;
+        double dateHour = dateKey.hour.toDouble();
 
-      // get max val
-      maxValY = value > maxValY ? value : maxValY;
-      // insert a start value to continue the line in the chart
-      // if (i == 0) {
-      //   lineSpots.add(FlSpot(0, value));
-      // }
+        double x =
+            minVal2 +
+            (dateHour - minVal1) * (maxVal2 - minVal2) / (maxVal1 - minVal1);
 
-      double dateHour = dateKey.hour.toDouble();
+        double y = value;
 
-      double x =
-          minVal2 +
-          (dateHour - minVal1) * (maxVal2 - minVal2) / (maxVal1 - minVal1);
-
-      double y = value;
-
-      // if (dateKey.weekday != 1 && i == 0)
-      // {
-      //   lineNoData.add(LineChartBarData(
-      //     spots: [FlSpot(0, value), FlSpot(x, value)],
-      //     isCurved: true,
-      //     gradient: LinearGradient(colors: gradientColors),
-      //     barWidth: 5,
-      //     isStrokeCapRound: true,
-      //     dotData: const FlDotData(show: false),
-      //     belowBarData: BarAreaData(
-      //       show: true,
-      //       gradient: LinearGradient(
-      //         colors:
-      //             gradientColorsGrey
-      //                 .map((color) => color.withAlpha(77))
-      //                 .toList(),
-      //       ),
-      //     ),
-      //   ));
-
-      // }
-
-      lineSpots.add(FlSpot(x, y));
+        lineSpots.add(FlSpot(x, y));
+      }
     }
 
     final avgY =
@@ -765,11 +608,6 @@ class _MonthlyLineChart extends StatelessWidget {
   }
 
   LineChartData _mainData(double maxValY) {
-    // final List<Color> gradientColors = [
-    //   const Color(0xFF66CC88),
-    //   const Color(0xFF66CC88).withAlpha(127),
-    // ];
-
     return LineChartData(
       // Enable line touch data
       lineTouchData: LineTouchData(
@@ -868,24 +706,6 @@ class _MonthlyLineChart extends StatelessWidget {
             ),
           ),
         ),
-        // ...lineNoData,
-        // LineChartBarData(
-        //   spots: [FlSpot(0, 18), FlSpot(2, 18)],
-        //   isCurved: true,
-        //   gradient: LinearGradient(colors: gradientColors),
-        //   barWidth: 5,
-        //   isStrokeCapRound: true,
-        //   dotData: const FlDotData(show: false),
-        //   belowBarData: BarAreaData(
-        //     show: true,
-        //     gradient: LinearGradient(
-        //       colors:
-        //           gradientColorsGrey
-        //               .map((color) => color.withAlpha(77))
-        //               .toList(),
-        //     ),
-        //   ),
-        // ),
       ],
     );
   }
@@ -1014,12 +834,12 @@ class _MonthlyLineChart extends StatelessWidget {
 }
 
 class _PlantCard extends StatefulWidget {
-  final List<String> plantKeys;
-  final Function(String) onPlantSelected;
+  final Map<int, String> plantMapping;
+  final Function(int) onPlantSelected;
   final String selectedPlantKey;
 
   const _PlantCard({
-    required this.plantKeys,
+    required this.plantMapping,
     required this.onPlantSelected,
     required this.selectedPlantKey,
   });
@@ -1033,7 +853,8 @@ class _PlantCardState extends State<_PlantCard> {
   final int _plantIconsPerRow = 3;
   @override
   Widget build(BuildContext context) {
-    List<String> plantNames = widget.plantKeys;
+    List<String> plantNames = widget.plantMapping.values.toList();
+    List<int> plantIds = widget.plantMapping.keys.toList();
 
     final int end =
         (_displayStartIndex + _plantIconsPerRow > plantNames.length)
@@ -1043,6 +864,7 @@ class _PlantCardState extends State<_PlantCard> {
       _displayStartIndex,
       end,
     );
+    final List<int> plantsToShowIds = plantIds.sublist(_displayStartIndex, end);
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -1117,8 +939,9 @@ class _PlantCardState extends State<_PlantCard> {
                                 isSelected:
                                     widget.selectedPlantKey == plantsToShow[i],
                                 onPressed:
-                                    () =>
-                                        widget.onPlantSelected(plantsToShow[i]),
+                                    () => widget.onPlantSelected(
+                                      plantsToShowIds[i],
+                                    ),
                               ),
                             )
                             : const SizedBox(), // empty slot keeps spacing
