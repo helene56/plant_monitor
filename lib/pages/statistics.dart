@@ -19,16 +19,14 @@ enum _SelectedButton { water, temperature }
 class _MyStatsState extends ConsumerState<MyStats> {
   late String _selectedPlantKey = '';
   int currentPlantId = 0;
-  late Map<int, List<DateTime>> sortedWeeks;
   _SelectedButton _selectedButton = _SelectedButton.water;
   bool _showAvg = false;
   int dataIdx = 0;
   List<int> plantIds = [0];
   List<int> weekKeys = [0];
   Map<int, String> plantNameMap = {};
-
   StatisticsLoggingData? sortedData;
-  bool _dataIsLoaded = false;
+
   final DateTime noDateSet = DateTime.fromMillisecondsSinceEpoch(
     0,
     isUtc: true,
@@ -37,7 +35,6 @@ class _MyStatsState extends ConsumerState<MyStats> {
   void initState() {
     super.initState();
 
-    sortedWeeks = {};
     // temporary placeholder until real data loads
     sortedData = emptyStatisticsLoggingData();
     _initializeData();
@@ -47,18 +44,12 @@ class _MyStatsState extends ConsumerState<MyStats> {
     // use plantId to look up plantName
     Map<int, String> plants = await getPlantSummaries(ref.read(appDatabase));
     plantNameMap = plants;
-    // initialize availible ids
-    // plantIds = plants.keys.toList();
 
     // get plants and their id
     // get associated data from planthistory with plant id
     List<PlantHistory> plantHistoryData = await getPlantHistory(
       ref.read(appDatabase),
     );
-
-    // get date from history, as first key
-    // then get plantname from plants, where both have same plantid, this is the next key
-    // then add a list with values from water to this last key
 
     sortedData = StatisticsLoggingData(
       plantsIdentity: plants,
@@ -68,11 +59,8 @@ class _MyStatsState extends ConsumerState<MyStats> {
 
     setState(() {
       if (sortedData != null) {
-        _dataIsLoaded = true;
         _selectedPlantKey = plantNameMap.values.first;
         currentPlantId = plantNameMap.keys.first;
-      } else {
-        _dataIsLoaded = false;
       }
     });
   }
@@ -97,23 +85,6 @@ class _MyStatsState extends ConsumerState<MyStats> {
     setState(() {
       _showAvg = !_showAvg;
     });
-  }
-
-  Map<int, List<DateTime>> getLoggingWeeks(List<DateTime> dates) {
-    int week = 0;
-    Map<int, List<DateTime>> sortedWeeks = {};
-    for (var date in dates) {
-      if (date == noDateSet) {
-        continue;
-      }
-      week = weekNumber(date);
-      if (!sortedWeeks.containsKey(week)) {
-        sortedWeeks[week] = [];
-      }
-      sortedWeeks[week]!.add(date);
-    }
-
-    return sortedWeeks;
   }
 
   @override
@@ -214,17 +185,15 @@ class _MyStatsState extends ConsumerState<MyStats> {
   Widget _buildDateRow() {
     final String dateDisplayed;
 
-    if (_dataIsLoaded) {
-      int dateKey = weekKeys[dataIdx];
-      String startDate = toDate(sortedData!.dateRow[dateKey]!.startDate);
-      String endDate = toDate(sortedData!.dateRow[dateKey]!.endDate);
-      dateDisplayed = "$startDate - $endDate";
+    int weekKey = weekKeys[dataIdx];
+    if (weekKey == 0) {
+      dateDisplayed = '';
     } else {
-      dateDisplayed = "";
-      weekKeys = [0];
+      String startDate = toDate(sortedData!.dateRow[weekKey]!.startDate);
+      String endDate = toDate(sortedData!.dateRow[weekKey]!.endDate);
+      dateDisplayed = "$startDate - $endDate";
     }
 
-    // here should set a date displayed item
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
