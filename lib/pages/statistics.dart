@@ -22,15 +22,11 @@ class _MyStatsState extends ConsumerState<MyStats> {
   _SelectedButton _selectedButton = _SelectedButton.water;
   bool _showAvg = false;
   int dataIdx = 0;
-  List<int> plantIds = [0];
   List<int> weekKeys = [0];
   Map<int, String> plantNameMap = {};
   StatisticsLoggingData? sortedData;
 
-  final DateTime noDateSet = DateTime.fromMillisecondsSinceEpoch(
-    0,
-    isUtc: true,
-  );
+
   @override
   void initState() {
     super.initState();
@@ -45,8 +41,6 @@ class _MyStatsState extends ConsumerState<MyStats> {
     Map<int, String> plants = await getPlantSummaries(ref.read(appDatabase));
     plantNameMap = plants;
 
-    // get plants and their id
-    // get associated data from planthistory with plant id
     List<PlantHistory> plantHistoryData = await getPlantHistory(
       ref.read(appDatabase),
     );
@@ -112,7 +106,6 @@ class _MyStatsState extends ConsumerState<MyStats> {
   }
 
   Widget _buildPortraitLayout(
-    // Map<DateTime, Map<String, List<double>>> currentPlantData,
     StatisticsLoggingData? plantDataSorted,
     final List<String> plantKeys,
   ) {
@@ -142,7 +135,6 @@ class _MyStatsState extends ConsumerState<MyStats> {
   }
 
   Widget _buildLandscapeLayout(
-    // Map<DateTime, Map<String, List<double>>> currentPlantData,
     StatisticsLoggingData? plantDataSorted,
   ) {
     return Center(
@@ -824,7 +816,7 @@ class _PlantCardState extends State<_PlantCard> {
   Widget build(BuildContext context) {
     List<String> plantNames = widget.plantMapping.values.toList();
     List<int> plantIds = widget.plantMapping.keys.toList();
-
+    // TODO: any way to not repeat plantsToShow but for the ids?
     final int end =
         (_displayStartIndex + _plantIconsPerRow > plantNames.length)
             ? plantNames.length
