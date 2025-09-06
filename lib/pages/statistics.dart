@@ -23,6 +23,8 @@ class _MyStatsState extends ConsumerState<MyStats> {
   bool _showAvg = false;
   int dataIdx = 0;
   late final Map<String, Map<DateTime, Map<String, List<double>>>> logData;
+  StatisticsLoggingData? sortedData;
+  bool _dataIsLoaded = false;
   final DateTime noDateSet = DateTime.fromMillisecondsSinceEpoch(
     0,
     isUtc: true,
@@ -55,7 +57,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
     // then get plantname from plants, where both have same plantid, this is the next key
     // then add a list with values from water to this last key
 
-    var sortedData = StatisticsLoggingData(plantsIdentity: plants, plantHistoryData: plantHistoryData);
+    sortedData = StatisticsLoggingData(plantsIdentity: plants, plantHistoryData: plantHistoryData);
 
     for (var log in plantHistoryData) {
       plantName = plants[log.plantId] ?? '';
@@ -77,6 +79,14 @@ class _MyStatsState extends ConsumerState<MyStats> {
         List<DateTime> dates = logData[_selectedPlantKey]!.keys.toList();
         sortedWeeks = getLoggingWeeks(dates);
       }
+      if (sortedData != null)
+      {
+        _dataIsLoaded = true;
+      }
+      else {
+        _dataIsLoaded = false;
+      }
+      
     });
   }
 
@@ -225,20 +235,41 @@ class _MyStatsState extends ConsumerState<MyStats> {
     return a.year == b.year && weekNumber(a) == weekNumber(b);
   }
 
+  String toDate(DateTime date) {
+    return "${date.day}/${date.month}/${date.year}";
+  }
+
 
   Widget _buildDateRow() {
     final String dateDisplayed;
     final List<int> weekKeys;
-    if (logData.isNotEmpty) {
-      weekKeys = sortedWeeks.keys.toList(); // get keys as a list
-      final int key = weekKeys[dataIdx]; // pick key by index
-      String startDate = "${sortedWeeks[key]![0].day}/${sortedWeeks[key]![0].month}/${sortedWeeks[key]![0].year}";
-      String endDate = "${sortedWeeks[key]!.last.day}/${sortedWeeks[key]!.last.month}/${sortedWeeks[key]!.last.year}";
+    if (_dataIsLoaded)
+    {
+      weekKeys = sortedData!.dateRow.keys.toList();
+      int dateKey = weekKeys[dataIdx];
+      String startDate = toDate(sortedData!.dateRow[dateKey]!.startDate);
+      String endDate = toDate(sortedData!.dateRow[dateKey]!.endDate);
       dateDisplayed = "$startDate - $endDate";
-    } else {
+    }
+    else
+    {
       dateDisplayed = "";
       weekKeys = [0];
     }
+
+
+    // final String dateDisplayed;
+    // final List<int> weekKeys;
+    // if (logData.isNotEmpty) {
+    //   weekKeys = sortedWeeks.keys.toList(); // get keys as a list
+    //   final int key = weekKeys[dataIdx]; // pick key by index
+    //   String startDate = "${sortedWeeks[key]![0].day}/${sortedWeeks[key]![0].month}/${sortedWeeks[key]![0].year}";
+    //   String endDate = "${sortedWeeks[key]!.last.day}/${sortedWeeks[key]!.last.month}/${sortedWeeks[key]!.last.year}";
+    //   dateDisplayed = "$startDate - $endDate";
+    // } else {
+    //   dateDisplayed = "";
+    //   weekKeys = [0];
+    // }
 
     // here should set a date displayed item
     return Row(
