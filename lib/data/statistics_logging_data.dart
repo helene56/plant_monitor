@@ -1,5 +1,7 @@
 import 'plant_history.dart';
 
+final DateTime noDateSet = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+
 class StatisticsLoggingData {
   // use plantId to get the plant's asssigned name
   final Map<int, String> plantsIdentity;
@@ -16,11 +18,6 @@ class StatisticsLoggingData {
   }) {
     _populateData();
   }
-
-  final DateTime noDateSet = DateTime.fromMillisecondsSinceEpoch(
-    0,
-    isUtc: true,
-  );
 
   // populate loggedPlants
   void _populateData() {
@@ -72,15 +69,7 @@ class StatisticsLoggingData {
       }
     }
   }
-
-  
 }
-
-final DateTime noDateSet = DateTime.fromMillisecondsSinceEpoch(
-    0,
-    isUtc: true,
-  );
-
 
 class WeekData {
   List<double> water;
@@ -113,23 +102,21 @@ class DateDisplayed {
 }
 
 // Helper to create an “empty” WeekData
-  WeekData emptyWeekData() => WeekData(
-    water: List.filled(7, 0.0),
-    temp:
-        {}, // or Map.fromIterable(List.generate(7, (_) => DateTime.now()), value: (_) => 0.0)
-  );
+WeekData emptyWeekData() => WeekData(
+  water: List.filled(7, 0.0),
+  temp:
+      {}, // or Map.fromIterable(List.generate(7, (_) => DateTime.now()), value: (_) => 0.0)
+);
 
-  // Helper to create an empty PlantLoggingData
-  PlantLoggingData emptyPlantLoggingData(int plantId) => PlantLoggingData(
-    name: "",
-    loggingData: {0: emptyWeekData()}, // week 0 with zeros
-  );
+// Helper to create an empty PlantLoggingData
+PlantLoggingData emptyPlantLoggingData(int plantId) => PlantLoggingData(
+  name: "",
+  loggingData: {0: emptyWeekData()}, // week 0 with zeros
+);
 
-  // Create a placeholder StatisticsLoggingData
-  StatisticsLoggingData emptyStatisticsLoggingData() {
-    return StatisticsLoggingData(
-      plantsIdentity: {0: ""},
-      plantHistoryData: [],
-    )..loggedPlants = {0: emptyPlantLoggingData(0)}
+// Create a placeholder StatisticsLoggingData
+StatisticsLoggingData emptyStatisticsLoggingData() {
+  return StatisticsLoggingData(plantsIdentity: {0: ""}, plantHistoryData: [])
+    ..loggedPlants = {0: emptyPlantLoggingData(0)}
     ..dateRow = {0: DateDisplayed(startDate: noDateSet, endDate: noDateSet)};
-  }
+}
