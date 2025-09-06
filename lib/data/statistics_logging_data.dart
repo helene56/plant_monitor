@@ -76,6 +76,12 @@ class StatisticsLoggingData {
   
 }
 
+final DateTime noDateSet = DateTime.fromMillisecondsSinceEpoch(
+    0,
+    isUtc: true,
+  );
+
+
 class WeekData {
   List<double> water;
   Map<DateTime, double> temp;
@@ -122,7 +128,8 @@ class DateDisplayed {
   // Create a placeholder StatisticsLoggingData
   StatisticsLoggingData emptyStatisticsLoggingData() {
     return StatisticsLoggingData(
-      plantsIdentity: {0: "No Plant"},
+      plantsIdentity: {0: ""},
       plantHistoryData: [],
-    )..loggedPlants = {0: emptyPlantLoggingData(0)};
+    )..loggedPlants = {0: emptyPlantLoggingData(0)}
+    ..dateRow = {0: DateDisplayed(startDate: noDateSet, endDate: noDateSet)};
   }
