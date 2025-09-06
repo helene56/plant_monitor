@@ -207,7 +207,7 @@ Future<List<PlantHistory>> getPlantHistory(Database database) async {
 
   // Query the table for all the plant history
   final List<Map<String, Object?>> plantHistoryMap = await db.query(
-    'plant_history',
+    'plant_history', orderBy: 'date ASC'
   );
 
   // Convert each map into a planthistory
