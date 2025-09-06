@@ -8,7 +8,7 @@ class StatisticsLoggingData {
   // Map<int, WeekData> weeklyData = {};
   Map<int, PlantLoggingData> loggedPlants = {}; // access plant by their plantId
   // use weeknumber as key to get the date shown in the widget - should be used in _buildDateRow
-  Map<int, String> dateRow = {};
+  Map<int, DateDisplayed> dateRow = {};
 
   StatisticsLoggingData({
     required this.plantsIdentity,
@@ -29,12 +29,19 @@ class StatisticsLoggingData {
         log.date * 1000,
         isUtc: true,
       );
+
       int week = weekNumber(dt);
       int dayNum = dt.weekday;
       // skip where date is 0, that is equivalent to noDateSet
       if (dt == noDateSet) {
         continue;
       }
+
+      // 0. create daterow
+      dateRow.putIfAbsent(
+        week,
+        () => DateDisplayed(startDate: dt, endDate: dt),
+      );
 
       // 1. create plantloggingdata
       loggedPlants.putIfAbsent(
@@ -56,8 +63,17 @@ class StatisticsLoggingData {
       var weekData = plantData.loggingData[week]!;
       weekData.water[dayNum - 1] += log.waterMl;
       weekData.temp[dt] = log.temperature;
+
+      // set date values displayed
+      if (dt.day < dateRow[week]!.startDate.day) {
+        dateRow[week]!.startDate = dt;
+      } else if (dt.day > dateRow[week]!.endDate.day) {
+        dateRow[week]!.endDate = dt;
+      }
     }
   }
+
+  
 }
 
 class WeekData {
@@ -81,4 +97,12 @@ int weekNumber(DateTime date) {
   final days = date.difference(firstDay).inDays;
   // Week number (ISO weeks usually start on Monday, adjust if needed)
   return ((days + firstDay.weekday) / 7).ceil();
+}
+
+class DateDisplayed {
+  DateTime startDate;
+  DateTime endDate;
+
+  DateDisplayed({required this.startDate, required this.endDate});
+
 }
