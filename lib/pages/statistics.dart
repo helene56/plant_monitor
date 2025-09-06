@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plant_monitor/main.dart';
 import '../data/database_helper.dart';
 import '../data/plant_history.dart';
+// sorting the data
+import '../data/statistics_logging_data.dart';
 
 class MyStats extends ConsumerStatefulWidget {
   const MyStats({super.key});
@@ -16,6 +18,7 @@ enum _SelectedButton { water, temperature }
 
 class _MyStatsState extends ConsumerState<MyStats> {
   late String _selectedPlantKey = '';
+  late Map<int, List<DateTime>> sortedWeeks;
   _SelectedButton _selectedButton = _SelectedButton.water;
   bool _showAvg = false;
   int dataIdx = 0;
@@ -35,10 +38,12 @@ class _MyStatsState extends ConsumerState<MyStats> {
       //   },
       // },
     };
+    sortedWeeks = {};
     _initializeData();
   }
 
   void _initializeData() async {
+    // use plantId to look up plantName
     Map<int, String> plants = await getPlantSummaries(ref.read(appDatabase));
     // get plants and their id
     // get associated data from planthistory with plant id
@@ -49,6 +54,9 @@ class _MyStatsState extends ConsumerState<MyStats> {
     // get date from history, as first key
     // then get plantname from plants, where both have same plantid, this is the next key
     // then add a list with values from water to this last key
+
+    var sortedData = StatisticsLoggingData(plantsIdentity: plants, plantHistoryData: plantHistoryData);
+
     for (var log in plantHistoryData) {
       plantName = plants[log.plantId] ?? '';
 
@@ -60,54 +68,24 @@ class _MyStatsState extends ConsumerState<MyStats> {
 
       _addLog(dt, plantName, log.temperature, log.waterMl);
     }
-    // for how much water used
-    // only interested in the total amount per day - monday/tuesday and so on -
-    // so for 26/08/2025 - 31/08/2025 split data into 7 datapoints
-    // if a date is missing it will get data point 0
-    // for temperature the same as how much water used, but the hour is interesting,
-    // so when was the temperature per day what temperature
 
-    // maybe the logData should be structued like this:
-    // // "plant1": {
-    //   "26/08/2025 - 31/08/2025": {
-    //     "temperature": [0.0, 18, 20, ],
-    //     "water": [0.0],
-    //   },
-    // },
-    int desiredLength = 7;
-
-    // logData.forEach((plants, dateMap)
-    // {
-    //   dateMap.forEach((date, stats){
-    //     int day = date.day;
-
-    //   });
-
-    // });
-
-    // logData.forEach((plants, date) {
-    //   date.forEach((plantName, properties) {
-    //     properties.forEach((key, list) {
-    //       // Cap data to 7 entries
-    //       if (list.length > desiredLength) {
-    //         properties[key] = list.sublist(list.length - desiredLength);
-    //       }
-    //       // Pad with 0.0 if fewer than 7
-    //       else if (list.length < desiredLength) {
-    //         list.addAll(List.filled(desiredLength - list.length, 0.0));
-    //       }
-    //     });
-    //   });
-    // });
 
     setState(() {
       _selectedPlantKey = plants.isNotEmpty ? plants.values.first : '';
+      // update weeks
+      if (_selectedPlantKey.isNotEmpty) {
+        List<DateTime> dates = logData[_selectedPlantKey]!.keys.toList();
+        sortedWeeks = getLoggingWeeks(dates);
+      }
     });
   }
 
   void _onPlantSelected(String plantKey) {
     setState(() {
       _selectedPlantKey = plantKey;
+      // to update the sorted weeks
+      List<DateTime> dates = logData[_selectedPlantKey]!.keys.toList();
+      sortedWeeks = getLoggingWeeks(dates);
     });
   }
 
@@ -121,6 +99,23 @@ class _MyStatsState extends ConsumerState<MyStats> {
     logData.putIfAbsent(plantName, () => {});
     logData[plantName]!.putIfAbsent(date, () => {});
     logData[plantName]![date]!.putIfAbsent(key, () => <double>[]);
+  }
+
+  Map<int, List<DateTime>> getLoggingWeeks(List<DateTime> dates) {
+    int week = 0;
+    Map<int, List<DateTime>> sortedWeeks = {};
+    for (var date in dates) {
+      if (date == noDateSet) {
+        continue;
+      }
+      week = weekNumber(date);
+      if (!sortedWeeks.containsKey(week)) {
+        sortedWeeks[week] = [];
+      }
+      sortedWeeks[week]!.add(date);
+    }
+
+    return sortedWeeks;
   }
 
   void _addLog(DateTime date, String plantName, double tempVal, double watVal) {
@@ -146,8 +141,8 @@ class _MyStatsState extends ConsumerState<MyStats> {
         },
       };
     } else {
-      final String selectedPlantLog = plantKeys[dataIdx];
-      currentPlantData = logData[selectedPlantLog]!;
+
+      currentPlantData = logData[_selectedPlantKey]!;
     }
 
     return SingleChildScrollView(
@@ -225,26 +220,27 @@ class _MyStatsState extends ConsumerState<MyStats> {
     );
   }
 
-  List<String> _helpSetDateRow() {
-    List<DateTime> dateRow = logData[_selectedPlantKey]!.keys.toList();
-    List<String> sortedDateRow = [];
-    for (var date in dateRow) {
-      String dateString = "${date.day}/${date.month}/${date.year}";
-      if (!sortedDateRow.contains(dateString) && date != noDateSet) {
-        sortedDateRow.add(dateString);
-      }
-    }
 
-    return sortedDateRow;
+  bool isSameWeek(DateTime a, DateTime b) {
+    return a.year == b.year && weekNumber(a) == weekNumber(b);
   }
 
-  // todo here
+
   Widget _buildDateRow() {
-    final List<String> selectedDateRow =
-        logData.isNotEmpty ? _helpSetDateRow() : [""];
+    final String dateDisplayed;
+    final List<int> weekKeys;
+    if (logData.isNotEmpty) {
+      weekKeys = sortedWeeks.keys.toList(); // get keys as a list
+      final int key = weekKeys[dataIdx]; // pick key by index
+      String startDate = "${sortedWeeks[key]![0].day}/${sortedWeeks[key]![0].month}/${sortedWeeks[key]![0].year}";
+      String endDate = "${sortedWeeks[key]!.last.day}/${sortedWeeks[key]!.last.month}/${sortedWeeks[key]!.last.year}";
+      dateDisplayed = "$startDate - $endDate";
+    } else {
+      dateDisplayed = "";
+      weekKeys = [0];
+    }
 
-    final date = selectedDateRow[dataIdx];
-
+    // here should set a date displayed item
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -258,12 +254,12 @@ class _MyStatsState extends ConsumerState<MyStats> {
             });
           },
         ),
-        Text(date, style: const TextStyle(fontSize: 18)),
+        Text(dateDisplayed, style: const TextStyle(fontSize: 18)),
         IconButton(
           icon: const Icon(Icons.arrow_forward_ios),
           onPressed: () {
             setState(() {
-              if (dataIdx < selectedDateRow.length - 1) {
+              if (dataIdx < weekKeys.length - 1) {
                 dataIdx++;
               }
             });
@@ -273,40 +269,52 @@ class _MyStatsState extends ConsumerState<MyStats> {
     );
   }
 
-  List<double> _sortWaterData(
+  int weekNumber(DateTime date) {
+    // First day of the year
+    final firstDay = DateTime(date.year, 1, 1);
+    // Days since the start of the year
+    final days = date.difference(firstDay).inDays;
+    // Week number (ISO weeks usually start on Monday, adjust if needed)
+    return ((days + firstDay.weekday) / 7).ceil();
+  }
+
+// TODO: here i should also only pass in the selected days instead of sorting again
+  Map<int, List<double>> _sortWaterData(
     Map<DateTime, Map<String, List<double>>> currentPlantData,
   ) {
     // for how much water used
     // only interested in the total amount per day - monday/tuesday and so on -
     // so for 26/08/2025 - 31/08/2025 split data into 7 datapoints
     // if a date is missing it will get data point 0
-    int currentWeekDay = 1;
+
     // should only hold 7 data points, for 7 days.
-    List<double> waterUsed = [];
+    Map<int, List<double>> waterUsed = {};
     for (var entry in currentPlantData.entries) {
       DateTime date = entry.key;
+      final week = weekNumber(date);
+      final weekDay = date.weekday;
       var info = entry.value;
 
       if (date == noDateSet) {
         continue;
+      } else {
+        waterUsed.update(
+          week,
+          (list) {
+            // update existing list
+            list[weekDay - 1] += info['water']![0];
+            return list;
+          },
+          ifAbsent: () {
+            // create new list with 7 zeros
+            final list = List.filled(7, 0.0);
+            list[weekDay - 1] = info['water']![0];
+            return list;
+          },
+        );
       }
-      if (currentWeekDay == date.weekday) {
-        waterUsed.last += info['water']![0];
-        continue;
-      }
-      while (currentWeekDay != date.weekday && currentWeekDay < 7) {
-        waterUsed.add(0.0);
-
-        currentWeekDay++;
-      }
-      waterUsed.add(info['water']![0]);
     }
 
-    if (waterUsed.length < 7) {
-      for (int i = waterUsed.length; i < 7; ++i) {
-        waterUsed.add(0.0);
-      }
-    }
     return waterUsed;
   }
 
@@ -337,14 +345,22 @@ class _MyStatsState extends ConsumerState<MyStats> {
     Map<DateTime, Map<String, List<double>>> currentPlantData,
   ) {
     List<double> plantwaterValues;
-    Map<DateTime, Map<String, List<double>>> plantSortedTempValues;
+    Map<DateTime, Map<String, List<double>>> subsetTempValues;
 
     if (_selectedPlantKey.isNotEmpty && logData.isNotEmpty) {
-      plantwaterValues = _sortWaterData(currentPlantData);
-      plantSortedTempValues = _sortTemperatureData(currentPlantData);
+      int selectedWeek = sortedWeeks.keys.toList()[dataIdx];
+      List<DateTime> weekDates = sortedWeeks[selectedWeek]!;
+      plantwaterValues = _sortWaterData(currentPlantData)[selectedWeek]!;
+      Map<DateTime, Map<String, List<double>>> plantSortedTempValues =
+          _sortTemperatureData(currentPlantData);
+      subsetTempValues = Map.fromEntries(
+        plantSortedTempValues.entries.where(
+          (entry) => weekDates.contains(entry.key),
+        ),
+      );
     } else {
       plantwaterValues = [0.0];
-      plantSortedTempValues = {
+      subsetTempValues = {
         noDateSet: {
           'dates': [0.0],
           'temperature': [0.0],
@@ -367,7 +383,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
                   _selectedButton == _SelectedButton.water
                       ? _DailyBarChart(testData: plantwaterValues)
                       : _MonthlyLineChart(
-                        dataMap: plantSortedTempValues,
+                        dataMap: subsetTempValues,
                         showAvg: _showAvg,
                       ),
             ),
