@@ -104,5 +104,25 @@ class DateDisplayed {
   DateTime endDate;
 
   DateDisplayed({required this.startDate, required this.endDate});
-
 }
+
+// Helper to create an “empty” WeekData
+  WeekData emptyWeekData() => WeekData(
+    water: List.filled(7, 0.0),
+    temp:
+        {}, // or Map.fromIterable(List.generate(7, (_) => DateTime.now()), value: (_) => 0.0)
+  );
+
+  // Helper to create an empty PlantLoggingData
+  PlantLoggingData emptyPlantLoggingData(int plantId) => PlantLoggingData(
+    name: "",
+    loggingData: {0: emptyWeekData()}, // week 0 with zeros
+  );
+
+  // Create a placeholder StatisticsLoggingData
+  StatisticsLoggingData emptyStatisticsLoggingData() {
+    return StatisticsLoggingData(
+      plantsIdentity: {0: "No Plant"},
+      plantHistoryData: [],
+    )..loggedPlants = {0: emptyPlantLoggingData(0)};
+  }
