@@ -50,8 +50,10 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   Future<void> _loadDataFromDevices(List<Device> devices) async {
     final db = ref.read(appDatabase);
+    // try to send start up time
 
     for (var device in devices) {
+      await writeStartUpTime(db, BluetoothDevice.fromId(device.deviceId));
       for (var plant in plantsCards) {
         try {
           await getSensorReadings(
@@ -286,6 +288,60 @@ Future<void> getSensorReadings(
         debugPrint("random val 1: $val1");
         debugPrint("random val 2: $val2");
       }
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint("Error: $e");
+    }
+    return; // return error code
+  }
+}
+
+
+
+Future<void> writeStartUpTime(
+  Database db,
+  BluetoothDevice device,
+) async {
+  // TODO: add data related to plant
+  // Ensure device is connected
+  if (device.isDisconnected) {
+    await autoConnectDevice(db); // make sure this awaits the connection
+  }
+
+  // Wait until device reports it is connected
+  await device.connectionState.firstWhere(
+    (state) => state == BluetoothConnectionState.connected,
+  );
+
+  // Now we are sure device is connected
+  if (kDebugMode) {
+    debugPrint('Device is connected');
+  }
+
+  try {
+    final services = await device.discoverServices();
+
+    final targetService = services.firstWhere(
+      (s) => s.serviceUuid.toString() == BtUuid.serviceId,
+      orElse: () => throw Exception("Service not found"),
+    );
+
+    final targetChar = targetService.characteristics.firstWhere(
+      (c) => c.uuid.toString() == BtUuid.sensorInitTimeStamp,
+      orElse: () => throw Exception("Characteristic not found"),
+    );
+
+    int unixTime = DateTime.now().millisecondsSinceEpoch;
+    int unixTimeInt32 = unixTime & 0xFFFFFFFF;
+    ByteData byteData = ByteData(8);
+    byteData.setInt64(0, unixTime, Endian.little);
+    List<int> unixTimeBytes = byteData.buffer.asUint8List();
+
+    await targetChar.write(unixTimeBytes);
+
+    if (kDebugMode) {
+      debugPrint("Succusesfully wrote to time stamp to sensor: $unixTimeInt32");
     }
   } catch (e) {
     if (kDebugMode) {
