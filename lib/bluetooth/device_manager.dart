@@ -4,6 +4,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '/data/plant_sensor_data.dart';
 import '/data/database_helper.dart';
 import 'package:plant_monitor/main.dart';
+import 'bt_uuid.dart';
 
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -213,8 +214,8 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
     // Optional: use `stopScan()` as an alternative to timeout
     // TODO: specify my own identifiers, easier to look for identifier instead of names
     await FlutterBluePlus.startScan(
-      // withServices: [Guid("180D")], // match any of the specified services
-      withNames: ["MY_PWS1"], // *or* any of the specified names
+      withServices: [Guid(BtUuid.serviceId)], // match any of the specified services
+      // withNames: ["MY_PWS1"], // *or* any of the specified names
       timeout: Duration(
         minutes: 10,
       ), // maybe set a really large timout, but stop with stopScan
