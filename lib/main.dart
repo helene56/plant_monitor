@@ -252,7 +252,7 @@ Future<void> getSensorReadings(
 
         // Convert to DateTime
         DateTime dt = DateTime.fromMillisecondsSinceEpoch(
-          unixTimestamp * 1000,
+          unixTimestamp,
           isUtc: true,
         );
 

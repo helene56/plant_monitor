@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 class PlantHistory {
   final int plantId;
-  final int date;
+  final int date; // should be in milliseconds
   final double waterMl;
   final double temperature;
 

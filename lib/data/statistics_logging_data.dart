@@ -23,7 +23,7 @@ class StatisticsLoggingData {
   void _populateData() {
     for (var log in plantHistoryData) {
       DateTime dt = DateTime.fromMillisecondsSinceEpoch(
-        log.date * 1000,
+        log.date,
         isUtc: true,
       );
 
