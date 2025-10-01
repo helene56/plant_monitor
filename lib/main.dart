@@ -252,9 +252,9 @@ Future<void> getSensorReadings(
 
         // Convert to DateTime
         DateTime dt = DateTime.fromMillisecondsSinceEpoch(
-          unixTimestamp,
+          unixTimestamp * 1000,
           isUtc: true,
-        );
+        ).toLocal();
 
         print("Unix timestamp: $unixTimestamp");
         print(

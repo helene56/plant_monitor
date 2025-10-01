@@ -23,9 +23,9 @@ class StatisticsLoggingData {
   void _populateData() {
     for (var log in plantHistoryData) {
       DateTime dt = DateTime.fromMillisecondsSinceEpoch(
-        log.date,
+        log.date * 1000,
         isUtc: true,
-      );
+      ).toLocal();
 
       int week = weekNumber(dt);
       int dayNum = dt.weekday;
