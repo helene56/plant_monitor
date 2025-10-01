@@ -35,11 +35,12 @@ class PlantHistory {
     int readValues = buffer.getUint32(4, Endian.little);
     int water = readValues & 0xFF;
     int temp = (readValues >> 16) & 0xFF;
+    
     return PlantHistory(
       plantId: id,
       date: unixTimestamp,
       waterMl: water.toDouble(),
-      temperature: temp.toDouble(),
+      temperature: temp.toDouble() / 10,
     );
   }
 }
