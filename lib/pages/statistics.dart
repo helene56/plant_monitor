@@ -25,7 +25,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
   List<int> weekKeys = [0];
   Map<int, String> plantNameMap = {};
   StatisticsLoggingData? sortedData;
-
+  StatisticsLoggingData? dummyData;
 
   @override
   void initState() {
@@ -33,6 +33,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
 
     // temporary placeholder until real data loads
     sortedData = emptyStatisticsLoggingData();
+    dummyData = emptyStatisticsLoggingData();
     _initializeData();
   }
 
@@ -96,9 +97,9 @@ class _MyStatsState extends ConsumerState<MyStats> {
           final bool isLandscape = orientation == Orientation.landscape;
 
           if (isLandscape) {
-            return _buildLandscapeLayout(sortedData);
+            return _buildLandscapeLayout(sortedData, dummyData);
           } else {
-            return _buildPortraitLayout(sortedData, plantKeys);
+            return _buildPortraitLayout(sortedData, dummyData, plantKeys);
           }
         },
       ),
@@ -107,6 +108,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
 
   Widget _buildPortraitLayout(
     StatisticsLoggingData? plantDataSorted,
+    StatisticsLoggingData? dummyData,
     final List<String> plantKeys,
   ) {
     return Padding(
@@ -121,7 +123,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
           const SizedBox(height: 20),
           _buildDateRow(),
           const SizedBox(height: 40),
-          _buildChartCard(plantDataSorted),
+          _buildChartCard(plantDataSorted, dummyData),
           const SizedBox(height: 20),
           _PlantCard(
             // plantKeys: plantKeys,
@@ -136,6 +138,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
 
   Widget _buildLandscapeLayout(
     StatisticsLoggingData? plantDataSorted,
+    StatisticsLoggingData? dummyData,
   ) {
     return Center(
       child: Padding(
@@ -159,7 +162,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
               ),
             ),
             const SizedBox(width: 20),
-            Expanded(flex: 3, child: _buildChartCard(sortedData)),
+            Expanded(flex: 3, child: _buildChartCard(sortedData, dummyData)),
           ],
         ),
       ),
@@ -223,12 +226,26 @@ class _MyStatsState extends ConsumerState<MyStats> {
     return ((days + firstDay.weekday) / 7).ceil();
   }
 
-  Widget _buildChartCard(StatisticsLoggingData? plantDataSorted) {
-    var currentPlantData = plantDataSorted!.loggedPlants[currentPlantId];
-    List<double> waterVals =
-        currentPlantData!.loggingData[weekKeys[dataIdx]]!.water;
-    Map<DateTime, double> tempVals =
-        currentPlantData.loggingData[weekKeys[dataIdx]]!.temp;
+  Widget _buildChartCard(
+    StatisticsLoggingData? plantDataSorted,
+    StatisticsLoggingData? dummyData,
+  ) {
+    List<double> waterVals;
+    Map<DateTime, double> tempVals;
+    var currentPlantData =
+        plantDataSorted!.loggedPlants[currentPlantId] ??
+        dummyData!.loggedPlants[0];
+    if (dummyData!.loggedPlants[0] != null && plantDataSorted.loggedPlants[currentPlantId] == null) {
+      waterVals =
+          currentPlantData!.loggingData[0]!.water;
+      tempVals =
+          currentPlantData.loggingData[0]!.temp;
+    } else {
+      waterVals =
+          currentPlantData!.loggingData[weekKeys[dataIdx]]!.water;
+      tempVals =
+          currentPlantData.loggingData[weekKeys[dataIdx]]!.temp;
+    }
 
     return Card(
       elevation: 4,

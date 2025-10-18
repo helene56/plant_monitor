@@ -30,7 +30,7 @@ class DeviceManagerState {
   final int? selectedIndex;
   final int? currentPlantId;
   final List<Device> scannedDevices;
-  List<Device> get allDevices => [
+  List<Device> get allDevices=> [
     ...persistentDevices,
     ...scannedDevices.where(
       (s) => !persistentDevices.any((p) => p.deviceId == s.deviceId),
@@ -225,6 +225,8 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
     await FlutterBluePlus.isScanning.where((val) => val == false).first;
   }
 
+  
+
   Future<SensorReadings> getServices(BluetoothDevice device) async {
     // Note: You must call discoverServices after every re-connection!
     List<BluetoothService> services = await device.discoverServices();
@@ -232,7 +234,7 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
     List<int> pumpValue = [0];
     for (var service in services) {
       if (service.serviceUuid.toString() ==
-          "0f956141-6b9c-4a41-a6df-977ac4b99d78") {
+          BtUuid.serviceId) {
         for (var c in service.characteristics) {
           if (c.uuid.toString() == "0f956142-6b9c-4a41-a6df-977ac4b99d78") {
             if (c.properties.read) {

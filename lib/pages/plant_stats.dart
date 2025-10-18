@@ -57,7 +57,8 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     toggleSensorTemperature(_device); // activate sensor reading
     subscribeToDevice(_device); // subscribe to get sensor readings
   }
-// TODO:  move into helper script
+
+  // TODO:  move into helper script
   Future<bool> _writeToSensor(
     BluetoothDevice device,
     int cmdId,
@@ -118,6 +119,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
   }
 
   Future<int> subscibeToCalibration(BluetoothDevice device) async {
+    debugPrint("subscribing to calibration");
     // Ensure device is connected
     if (device.isDisconnected) {
       await autoConnectDevice(); // make sure this awaits the connection
@@ -148,11 +150,11 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
       );
 
       await targetChar.setNotifyValue(true);
-
+      debugPrint("subscribing to calibration");
       // Wait for the first calibration value
       final value = await targetChar.onValueReceived.firstWhere(
         (data) =>
-            data.isNotEmpty &&
+            data.length == 1 &&
             (data[0] == CalibrationStates.dryFinish ||
                 data[0] == CalibrationStates.idealFinish),
       );
@@ -160,6 +162,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
       if (kDebugMode) {
         debugPrint("Received value: $value");
       }
+
       return value[0];
     } catch (e) {
       if (kDebugMode) {
@@ -177,6 +180,10 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
       SensorCmdId.temperatureHumidity,
       sensorStatus,
     );
+    
+    success = await _writeToSensor(device, SensorCmdId.soil, sensorStatus);
+    
+    
     if (!success) {
       sensorStatus ^= 1; // revert
       if (mounted) {
@@ -292,17 +299,19 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
         final byteData = ByteData.sublistView(Uint8List.fromList(value));
         final readAirTemp = byteData.getInt16(0, Endian.little) / 10.0;
         final readAirHumidity = byteData.getInt16(2, Endian.little) / 10.0;
+        final soilMoisture = byteData.getInt16(4, Endian.little);
 
         if (kDebugMode) {
           debugPrint(
             'Temperature: $readAirTemp °C, Humidity: $readAirHumidity%',
           );
         }
-
+        // TODO: rename water to soil water or something
         setState(() {
           plantSensor = plantSensor!.copyWith(
             airTemp: readAirTemp,
             humidity: readAirHumidity,
+            water: soilMoisture.toDouble(),
           );
         });
 
@@ -355,7 +364,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     List tooltips = [waterKey, sunKey, humidityKey, airTempKey, earthTempKey];
 
     int waterMax = widget.plantCard.waterNeedsMax;
-    int waterPercentage = ((0 / waterMax) * 100).round();
+
     int sunMax = widget.plantCard.sunLuxMax;
     int humidityMax = widget.plantCard.humidityMax;
     int airTempMax = widget.plantCard.airTempMax;
@@ -369,6 +378,9 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     double airTempSensor = plantSensor!.airTemp;
     double earthTempSensor = plantSensor!.earthTemp;
     double humiditySensor = plantSensor!.humidity;
+
+    // int waterPercentage = ((waterSensor / waterMax) * 100).round();
+    int waterPercentage = waterSensor.toInt();
 
     return PopScope(
       onPopInvokedWithResult: (bool didPop, Object? result) async {
@@ -453,6 +465,8 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                                     await subscibeToCalibration(_device);
                                 if (calibrationResult ==
                                     CalibrationStates.idealFinish) {
+                                  calibrationFinish = true;
+                                  // await _writeToSensor(_device, SensorCmdId.soil, sensorStatus);
                                   await Haptics.vibrate(HapticsType.success);
                                   setState(() {
                                     soilSensorText = '2/2 Kalibreret';
@@ -497,7 +511,7 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
                         '$waterPercentage%',
                         Icons.water_drop,
                         waterKey,
-                        waterSensor,
+                        (waterSensor * waterMax / 100).toInt(),
                         waterMax,
                         [255, 120, 180, 220],
                       ),
@@ -584,7 +598,7 @@ class TooltipIcon extends StatelessWidget {
   }
 }
 
-double getProgressBarPercentage(double sensorValue, int maxValue) {
+double getProgressBarPercentage(num sensorValue, int maxValue) {
   return (sensorValue / maxValue);
 }
 
@@ -593,7 +607,7 @@ List<Widget> buildSensorProgress(
   String unitName,
   IconData icon,
   GlobalKey<TooltipState> tooltipKey,
-  double sensorValue,
+  num sensorValue,
   int maxValue,
   List<int> colorCode,
 ) {

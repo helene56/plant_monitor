@@ -114,17 +114,25 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   Widget build(BuildContext context) {
     // Listen to the devices provider
-    ref.listen<List<Device>>(
-      deviceManagerProvider.select((s) => s.allDevices),
-      (previous, next) {
-        if (!_loadedLogs && next.isNotEmpty) {
-          _loadedLogs = true;
+    // ref.listen<List<Device>>(
+    //   deviceManagerProvider.select((s) => s.allDevices),
+    //   (previous, next) {
+    //     if (!_loadedLogs && next.isNotEmpty) {
+    //       _loadedLogs = true;
 
-          // call your async function for each device
-          _loadDataFromDevices(next);
-        }
-      },
-    );
+    //       // call your async function for each device
+    //       _loadDataFromDevices(next);
+    //     }
+    //   },
+    // );
+
+    // Manually trigger the listener behavior immediately since `fireImmediately` is not available.
+    final initialDevices =
+        ref.read(deviceManagerProvider.select((s) => s.allDevices));
+    if (!_loadedLogs && initialDevices.isNotEmpty) {
+      _loadedLogs = true;
+      _loadDataFromDevices(initialDevices);
+    }
 
     final List<Widget> widgetOptions = [
       MyWater(),
