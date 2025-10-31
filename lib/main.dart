@@ -6,6 +6,7 @@ import 'package:plant_monitor/pages/statistics.dart';
 import 'pages/home.dart';
 import 'pages/water.dart';
 import 'pages/add_plant.dart';
+import 'pages/debug.dart';
 import 'data/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 import 'data/plant.dart';
@@ -144,17 +145,43 @@ class _MyAppState extends ConsumerState<MyApp> {
         final bool isLandscape = orientation == Orientation.landscape;
 
         return Scaffold(
-          floatingActionButton: Visibility(
-            visible:
-                !isLandscape, // The button is visible only in portrait mode
-            child: FloatingActionButton.small(
-              onPressed: () {
-                _openDialog();
-              },
-              backgroundColor: Colors.lightGreen,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add),
-            ),
+          floatingActionButton: Stack(
+            children: [
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: FloatingActionButton.small(
+                  heroTag: "debug",
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const DebugPage()),
+                    );
+                  },
+                  backgroundColor: Colors.grey,
+                  child: const Icon(Icons.bug_report),
+                ),
+              ),
+              Visibility(
+                visible: !isLandscape,
+                child: Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: FloatingActionButton.small(
+                      heroTag: "add",
+                      onPressed: () {
+                        _openDialog();
+                      },
+                      backgroundColor: Colors.lightGreen,
+                      shape: const CircleBorder(),
+                      child: const Icon(Icons.add),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           floatingActionButtonLocation:
               FloatingActionButtonLocation.centerFloat,
