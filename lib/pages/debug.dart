@@ -7,6 +7,7 @@ import '../data/sensor_cmd_id.dart';
 import 'package:sqflite/sqflite.dart';
 import '../main.dart';
 
+// TODO: does not connect correctly to new devices
 class DebugPage extends ConsumerWidget {
   const DebugPage({super.key});
 
