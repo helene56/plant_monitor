@@ -8,6 +8,7 @@ import 'bt_uuid.dart';
 
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+
 // TODO: consider renaming because it might be confused with bluetooth device or simply convert to bluetoothdevice?
 class Device {
   final String deviceId;
@@ -30,7 +31,7 @@ class DeviceManagerState {
   final int? selectedIndex;
   final int? currentPlantId;
   final List<Device> scannedDevices;
-  List<Device> get allDevices=> [
+  List<Device> get allDevices => [
     ...persistentDevices,
     ...scannedDevices.where(
       (s) => !persistentDevices.any((p) => p.deviceId == s.deviceId),
@@ -121,7 +122,7 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
 
     List<PlantSensorData> sensors = await getAllSensors(db);
     // check if any sensors where found
-    
+
     if (sensors.isNotEmpty) {
       for (var sensor in sensors) {
         var device = BluetoothDevice.fromId(sensor.remoteId);
@@ -214,7 +215,9 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
     // Optional: use `stopScan()` as an alternative to timeout
     // TODO: specify my own identifiers, easier to look for identifier instead of names
     await FlutterBluePlus.startScan(
-      withServices: [Guid(BtUuid.serviceId)], // match any of the specified services
+      withServices: [
+        Guid(BtUuid.serviceId),
+      ], // match any of the specified services
       // withNames: ["MY_PWS1"], // *or* any of the specified names
       timeout: Duration(
         minutes: 10,
@@ -225,16 +228,13 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
     await FlutterBluePlus.isScanning.where((val) => val == false).first;
   }
 
-  
-
   Future<SensorReadings> getServices(BluetoothDevice device) async {
     // Note: You must call discoverServices after every re-connection!
     List<BluetoothService> services = await device.discoverServices();
     double airTemperature = 0;
     List<int> pumpValue = [0];
     for (var service in services) {
-      if (service.serviceUuid.toString() ==
-          BtUuid.serviceId) {
+      if (service.serviceUuid.toString() == BtUuid.serviceId) {
         for (var c in service.characteristics) {
           if (c.uuid.toString() == "0f956142-6b9c-4a41-a6df-977ac4b99d78") {
             if (c.properties.read) {
@@ -286,6 +286,17 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
       );
 
       await insertRecord(db, 'plant_sensor', sensor.toMap());
+
+      state = state.copyWith(
+        devices: [
+          ...state.persistentDevices,
+          Device(
+            deviceId: selectedDevice.deviceId,
+            deviceName: selectedDevice.deviceName,
+          ),
+        ],
+      );
+
       _resetTimeToAdd();
       _resetScannedDevices();
     }
