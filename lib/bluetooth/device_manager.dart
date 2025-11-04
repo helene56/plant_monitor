@@ -122,27 +122,70 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
 
     List<PlantSensorData> sensors = await getAllSensors(db);
     // check if any sensors where found
-
     if (sensors.isNotEmpty) {
       for (var sensor in sensors) {
-        var device = BluetoothDevice.fromId(sensor.remoteId);
-        await device.connect(autoConnect: true, mtu: null).then((_) {});
+        final device = BluetoothDevice.fromId(sensor.remoteId);
 
-        await device.connectionState.firstWhere(
-          (state) => state == BluetoothConnectionState.connected,
-        );
-        // TODO: if add page is already open and trying to connect, error will occur
-        // add already connected sensor to device list
-        if (!hasDeviceWithId(sensor.remoteId)) {
-          state = state.copyWith(
-            devices: [
-              ...state.persistentDevices,
-              Device(deviceId: sensor.remoteId, deviceName: sensor.sensorName),
-            ],
+        // Skip if already connected
+        final currentState = await device.connectionState.first;
+        if (currentState == BluetoothConnectionState.connected) {
+          print("Already connected to ${sensor.remoteId}");
+          continue;
+        }
+
+        try {
+          // First ensure we scanned recently
+          await FlutterBluePlus.startScan(timeout: Duration(seconds: 3));
+
+          await device.connect(
+            autoConnect: false, // <-- important on Android
+            mtu: 512, // or remove this argument entirely
           );
+
+          await device.connectionState.firstWhere(
+            (state) => state == BluetoothConnectionState.connected,
+          );
+
+          print("Connected to ${sensor.remoteId}");
+
+          // Add to UI state
+          if (!hasDeviceWithId(sensor.remoteId)) {
+            state = state.copyWith(
+              devices: [
+                ...state.persistentDevices,
+                Device(
+                  deviceId: sensor.remoteId,
+                  deviceName: sensor.sensorName,
+                ),
+              ],
+            );
+          }
+        } catch (e) {
+          print("Could not connect to ${sensor.remoteId}: $e");
         }
       }
     }
+
+    // if (sensors.isNotEmpty) {
+    //   for (var sensor in sensors) {
+    //     var device = BluetoothDevice.fromId(sensor.remoteId);
+    //     await device.connect(autoConnect: true, mtu: null).then((_) {});
+
+    //     await device.connectionState.firstWhere(
+    //       (state) => state == BluetoothConnectionState.connected,
+    //     );
+    //     // TODO: if add page is already open and trying to connect, error will occur
+    //     // add already connected sensor to device list
+    //     if (!hasDeviceWithId(sensor.remoteId)) {
+    //       state = state.copyWith(
+    //         devices: [
+    //           ...state.persistentDevices,
+    //           Device(deviceId: sensor.remoteId, deviceName: sensor.sensorName),
+    //         ],
+    //       );
+    //     }
+    //   }
+    // }
   }
 
   // add device to DeviceManager

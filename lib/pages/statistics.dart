@@ -512,6 +512,7 @@ class _MonthlyLineChart extends StatelessWidget {
     double maxVal1 = 24;
     // find max y value
     double maxValY = 0;
+    final avgSpots;
     if (dataMap.isNotEmpty) {
       final entries = dataMap.entries.toList();
       for (int i = 0; i < entries.length; i++) {
@@ -533,13 +534,19 @@ class _MonthlyLineChart extends StatelessWidget {
         double y = value;
 
         lineSpots.add(FlSpot(x, y));
+        
       }
-    }
-
-    final avgY =
+      final avgY =
         lineSpots.map((s) => s.y).reduce((a, b) => a + b) / lineSpots.length;
 
-    final avgSpots = lineSpots.map((s) => FlSpot(s.x, avgY)).toList();
+      avgSpots = lineSpots.map((s) => FlSpot(s.x, avgY)).toList();
+
+    }
+    else
+    {
+      avgSpots = 0;
+    }
+    
 
     return LineChart(
       showAvg ? _avgData(avgSpots, maxValY) : _mainData(maxValY),

@@ -44,7 +44,7 @@ class DebugPage extends ConsumerWidget {
                 },
                 child: Text('Test Pump - ${device.deviceId}'),
               ),
-            )).toList(),
+            )),
           ],
         ),
       ),
