@@ -137,55 +137,37 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
           // First ensure we scanned recently
           await FlutterBluePlus.startScan(timeout: Duration(seconds: 3));
 
-          await device.connect(
-            autoConnect: false, // <-- important on Android
-            mtu: 512, // or remove this argument entirely
-          );
+          await device.connect(autoConnect: true, mtu: null);
 
-          await device.connectionState.firstWhere(
-            (state) => state == BluetoothConnectionState.connected,
-          );
+          try {
+            // waits until the device enters the "connected" state
+            await device.connectionState
+                .where((s) => s == BluetoothConnectionState.connected)
+                .first
+                .timeout(const Duration(seconds: 5));
 
-          print("Connected to ${sensor.remoteId}");
+            // Add to UI state
+            if (!hasDeviceWithId(sensor.remoteId)) {
+              state = state.copyWith(
+                devices: [
+                  ...state.persistentDevices,
+                  Device(
+                    deviceId: sensor.remoteId,
+                    deviceName: sensor.sensorName,
+                  ),
+                ],
+              );
+            }
 
-          // Add to UI state
-          if (!hasDeviceWithId(sensor.remoteId)) {
-            state = state.copyWith(
-              devices: [
-                ...state.persistentDevices,
-                Device(
-                  deviceId: sensor.remoteId,
-                  deviceName: sensor.sensorName,
-                ),
-              ],
-            );
+            print("Connected! new new device");
+          } catch (e) {
+            print("Connection timed out — device never connected.");
           }
         } catch (e) {
           print("Could not connect to ${sensor.remoteId}: $e");
         }
       }
     }
-
-    // if (sensors.isNotEmpty) {
-    //   for (var sensor in sensors) {
-    //     var device = BluetoothDevice.fromId(sensor.remoteId);
-    //     await device.connect(autoConnect: true, mtu: null).then((_) {});
-
-    //     await device.connectionState.firstWhere(
-    //       (state) => state == BluetoothConnectionState.connected,
-    //     );
-    //     // TODO: if add page is already open and trying to connect, error will occur
-    //     // add already connected sensor to device list
-    //     if (!hasDeviceWithId(sensor.remoteId)) {
-    //       state = state.copyWith(
-    //         devices: [
-    //           ...state.persistentDevices,
-    //           Device(deviceId: sensor.remoteId, deviceName: sensor.sensorName),
-    //         ],
-    //       );
-    //     }
-    //   }
-    // }
   }
 
   // add device to DeviceManager
