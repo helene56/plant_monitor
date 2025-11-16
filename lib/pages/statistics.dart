@@ -73,6 +73,8 @@ class _MyStatsState extends ConsumerState<MyStats> {
       _selectedPlantKey = plantNameMap[plantId]!;
       currentPlantId = plantId;
       weekKeys = sortedData!.dateRow[currentPlantId]!.keys.toList();
+      // reset to avoid errors
+      dataIdx = 0;
     });
   }
 
