@@ -10,7 +10,7 @@ class StatisticsLoggingData {
   // Map<int, WeekData> weeklyData = {};
   Map<int, PlantLoggingData> loggedPlants = {}; // access plant by their plantId
   // use weeknumber as key to get the date shown in the widget - should be used in _buildDateRow
-  Map<int, DateDisplayed> dateRow = {};
+  Map<int, Map<int, DateDisplayed>> dateRow = {};
 
   StatisticsLoggingData({
     required this.plantsIdentity,
@@ -34,11 +34,24 @@ class StatisticsLoggingData {
         continue;
       }
 
-      // 0. create daterow
+      // // 0. create daterow
+      // dateRow.putIfAbsent(
+      //   week,
+      //   () => DateDisplayed(startDate: dt, endDate: dt),
+      // );
+
+      // 0. ensure plantId exists
       dateRow.putIfAbsent(
+        log.plantId,
+        () => {},
+      );
+
+      // 0.1. inside that plantId, ensure week exists
+      (dateRow[log.plantId] as Map).putIfAbsent(
         week,
         () => DateDisplayed(startDate: dt, endDate: dt),
       );
+
 
       // 1. create plantloggingdata
       loggedPlants.putIfAbsent(
@@ -62,10 +75,10 @@ class StatisticsLoggingData {
       weekData.temp[dt] = log.temperature;
 
       // set date values displayed
-      if (dt.day < dateRow[week]!.startDate.day) {
-        dateRow[week]!.startDate = dt;
-      } else if (dt.day > dateRow[week]!.endDate.day) {
-        dateRow[week]!.endDate = dt;
+      if (dt.day < dateRow[log.plantId]![week]!.startDate.day) {
+        dateRow[log.plantId]![week]!.startDate = dt;
+      } else if (dt.day > dateRow[log.plantId]![week]!.endDate.day) {
+        dateRow[log.plantId]![week]!.endDate = dt;
       }
     }
   }
@@ -118,5 +131,5 @@ PlantLoggingData emptyPlantLoggingData(int plantId) => PlantLoggingData(
 StatisticsLoggingData emptyStatisticsLoggingData() {
   return StatisticsLoggingData(plantsIdentity: {0: ""}, plantHistoryData: [])
     ..loggedPlants = {0: emptyPlantLoggingData(0)}
-    ..dateRow = {0: DateDisplayed(startDate: noDateSet, endDate: noDateSet)};
+    ..dateRow = {0: {0: DateDisplayed(startDate: noDateSet, endDate: noDateSet)}};
 }

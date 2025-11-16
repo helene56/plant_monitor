@@ -50,12 +50,12 @@ class _MyStatsState extends ConsumerState<MyStats> {
       plantsIdentity: plants,
       plantHistoryData: plantHistoryData,
     );
-    weekKeys = sortedData!.dateRow.keys.toList();
 
     setState(() {
       if (sortedData != null) {
         _selectedPlantKey = plantNameMap.values.first;
         currentPlantId = plantNameMap.keys.first;
+        weekKeys = sortedData!.dateRow[currentPlantId]!.keys.toList();
       }
     });
   }
@@ -70,9 +70,9 @@ class _MyStatsState extends ConsumerState<MyStats> {
 
   void _onPlantSelected(int plantId) {
     setState(() {
-      // _selectedPlantKey = plantKey;
       _selectedPlantKey = plantNameMap[plantId]!;
       currentPlantId = plantId;
+      weekKeys = sortedData!.dateRow[currentPlantId]!.keys.toList();
     });
   }
 
@@ -184,8 +184,12 @@ class _MyStatsState extends ConsumerState<MyStats> {
     if (weekKey == 0) {
       dateDisplayed = '';
     } else {
-      String startDate = toDate(sortedData!.dateRow[weekKey]!.startDate);
-      String endDate = toDate(sortedData!.dateRow[weekKey]!.endDate);
+      String startDate = toDate(
+        sortedData!.dateRow[currentPlantId]![weekKey]!.startDate,
+      );
+      String endDate = toDate(
+        sortedData!.dateRow[currentPlantId]![weekKey]!.endDate,
+      );
       dateDisplayed = "$startDate - $endDate";
     }
 
@@ -235,16 +239,13 @@ class _MyStatsState extends ConsumerState<MyStats> {
     var currentPlantData =
         plantDataSorted!.loggedPlants[currentPlantId] ??
         dummyData!.loggedPlants[0];
-    if (dummyData!.loggedPlants[0] != null && plantDataSorted.loggedPlants[currentPlantId] == null) {
-      waterVals =
-          currentPlantData!.loggingData[0]!.water;
-      tempVals =
-          currentPlantData.loggingData[0]!.temp;
+    if (dummyData!.loggedPlants[0] != null &&
+        plantDataSorted.loggedPlants[currentPlantId] == null) {
+      waterVals = currentPlantData!.loggingData[0]!.water;
+      tempVals = currentPlantData.loggingData[0]!.temp;
     } else {
-      waterVals =
-          currentPlantData!.loggingData[weekKeys[dataIdx]]!.water;
-      tempVals =
-          currentPlantData.loggingData[weekKeys[dataIdx]]!.temp;
+      waterVals = currentPlantData!.loggingData[weekKeys[dataIdx]]!.water;
+      tempVals = currentPlantData.loggingData[weekKeys[dataIdx]]!.temp;
     }
 
     return Card(
@@ -534,19 +535,14 @@ class _MonthlyLineChart extends StatelessWidget {
         double y = value;
 
         lineSpots.add(FlSpot(x, y));
-        
       }
       final avgY =
-        lineSpots.map((s) => s.y).reduce((a, b) => a + b) / lineSpots.length;
+          lineSpots.map((s) => s.y).reduce((a, b) => a + b) / lineSpots.length;
 
       avgSpots = lineSpots.map((s) => FlSpot(s.x, avgY)).toList();
-
-    }
-    else
-    {
+    } else {
       avgSpots = 0;
     }
-    
 
     return LineChart(
       showAvg ? _avgData(avgSpots, maxValY) : _mainData(maxValY),
