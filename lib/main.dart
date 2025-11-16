@@ -17,6 +17,7 @@ import 'bluetooth_helpers.dart';
 import 'package:flutter/foundation.dart';
 import 'bluetooth/bt_uuid.dart';
 import '/bluetooth/device_manager.dart';
+import 'data/plant_sensor_data.dart';
 
 final appDatabase = Provider<Database>((ref) {
   throw UnimplementedError('Database provider was not initialized');
@@ -52,18 +53,26 @@ class _MyAppState extends ConsumerState<MyApp> {
   Future<void> _loadDataFromDevices(List<Device> devices) async {
     final db = ref.read(appDatabase);
     // try to send start up time
+    List<PlantSensorData> sensors = await getAllSensors(db);
 
     for (var device in devices) {
       await writeStartUpTime(db, BluetoothDevice.fromId(device.deviceId));
-      for (var plant in plantsCards) {
-        try {
-          await getSensorReadings(
-            db,
-            plant.id,
-            BluetoothDevice.fromId(device.deviceId),
-          );
-        } catch (e) {
-          print("Error reading ${device.deviceId} for plant ${plant.id}: $e");
+
+      for (var sensor in sensors) {
+        if (sensor.remoteId == device.deviceId) {
+          {
+            try {
+              await getSensorReadings(
+                db,
+                sensor.plantId,
+                BluetoothDevice.fromId(device.deviceId),
+              );
+            } catch (e) {
+              print(
+                "Error reading ${device.deviceId} for plant ${sensor.plantId}: $e",
+              );
+            }
+          }
         }
       }
     }
@@ -128,8 +137,9 @@ class _MyAppState extends ConsumerState<MyApp> {
     // );
 
     // Manually trigger the listener behavior immediately since `fireImmediately` is not available.
-    final initialDevices =
-        ref.read(deviceManagerProvider.select((s) => s.allDevices));
+    final initialDevices = ref.read(
+      deviceManagerProvider.select((s) => s.allDevices),
+    );
     if (!_loadedLogs && initialDevices.isNotEmpty) {
       _loadedLogs = true;
       _loadDataFromDevices(initialDevices);
@@ -155,7 +165,9 @@ class _MyAppState extends ConsumerState<MyApp> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const DebugPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const DebugPage(),
+                      ),
                     );
                   },
                   backgroundColor: Colors.grey,
@@ -286,10 +298,11 @@ Future<void> getSensorReadings(
         int unixTimestamp = buffer.getUint32(0, Endian.little);
 
         // Convert to DateTime
-        DateTime dt = DateTime.fromMillisecondsSinceEpoch(
-          unixTimestamp * 1000,
-          isUtc: true,
-        ).toLocal();
+        DateTime dt =
+            DateTime.fromMillisecondsSinceEpoch(
+              unixTimestamp * 1000,
+              isUtc: true,
+            ).toLocal();
 
         print("Unix timestamp: $unixTimestamp");
         print(
@@ -332,12 +345,7 @@ Future<void> getSensorReadings(
   }
 }
 
-
-
-Future<void> writeStartUpTime(
-  Database db,
-  BluetoothDevice device,
-) async {
+Future<void> writeStartUpTime(Database db, BluetoothDevice device) async {
   // TODO: add data related to plant
   // Ensure device is connected
   if (device.isDisconnected) {
