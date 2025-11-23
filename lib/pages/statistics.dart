@@ -6,6 +6,9 @@ import '../data/database_helper.dart';
 import '../data/plant_history.dart';
 // sorting the data
 import '../data/statistics_logging_data.dart';
+import '/bluetooth/device_manager.dart';
+import '/data/plant_sensor_data.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class MyStats extends ConsumerStatefulWidget {
   const MyStats({super.key});
@@ -58,6 +61,41 @@ class _MyStatsState extends ConsumerState<MyStats> {
         weekKeys = sortedData!.dateRow[currentPlantId]!.keys.toList();
       }
     });
+  }
+
+  Future<List<int>> _loadDataFromDevices(List<Device> devices) async {
+    final db = ref.read(appDatabase);
+    // try to send start up time
+    List<PlantSensorData> sensors = await getAllSensors(db);
+    List<int> sensorReadingResults = [];
+
+    for (var device in devices) {
+      await writeStartUpTime(db, BluetoothDevice.fromId(device.deviceId));
+
+      for (var sensor in sensors) {
+        if (sensor.remoteId == device.deviceId) {
+          {
+            try {
+              int sensorRes = await getSensorReadings(
+                db,
+                sensor.plantId,
+                BluetoothDevice.fromId(device.deviceId),
+              );
+              if (sensorRes != -1) {
+                sensorReadingResults.add(sensorRes);
+              }
+            } catch (e) {
+              print(
+                "Error reading ${device.deviceId} for plant ${sensor.plantId}: $e",
+              );
+            }
+          }
+        }
+      }
+    }
+
+    print("All sensor data loaded!");
+    return sensorReadingResults;
   }
 
   List<MapEntry<int, String>> getPlantNamesWithId(
@@ -113,28 +151,79 @@ class _MyStatsState extends ConsumerState<MyStats> {
     StatisticsLoggingData? dummyData,
     final List<String> plantKeys,
   ) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          const SizedBox(height: 40),
-          const Text(
-            'Status',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return Stack(
+      // The Stack will fill the available area.
+      children: [
+        // 1. The main content (Column)
+        // Wrap the Column in Positioned.fill or Align to manage its size/position
+        // relative to the Stack if necessary, but Padding usually handles it.
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              const SizedBox(height: 40),
+              const Text(
+                'Status',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              _buildDateRow(),
+              const SizedBox(height: 40),
+              _buildChartCard(plantDataSorted, dummyData),
+              const SizedBox(height: 20),
+              _PlantCard(
+                // plantKeys: plantKeys,
+                plantMapping: plantNameMap,
+                onPlantSelected: _onPlantSelected,
+                selectedPlantKey: _selectedPlantKey,
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
-          _buildDateRow(),
-          const SizedBox(height: 40),
-          _buildChartCard(plantDataSorted, dummyData),
-          const SizedBox(height: 20),
-          _PlantCard(
-            // plantKeys: plantKeys,
-            plantMapping: plantNameMap,
-            onPlantSelected: _onPlantSelected,
-            selectedPlantKey: _selectedPlantKey,
+        ),
+
+        Positioned(
+          top: 0,
+          right: 10,
+          child: SafeArea(
+            // SafeArea ensures the button isn't covered by the device notch/status bar
+            child: IconButton(
+              onPressed: () async {
+                // Your refresh logic goes here
+                print('Top right refresh pressed!');
+                final initialDevices = ref.read(
+                  deviceManagerProvider.select((s) => s.allDevices),
+                );
+
+                for (var device in initialDevices) {
+                  print(device.deviceName);
+                }
+                List<int> results = [];
+                if (initialDevices.isNotEmpty) {
+                  results = await _loadDataFromDevices(initialDevices);
+                }
+                if (results.isNotEmpty) {
+                  _initializeData();
+                  // for debug
+                  for (var res in results) {
+                    DateTime dt =
+                        DateTime.fromMillisecondsSinceEpoch(
+                          res * 1000,
+                          isUtc: true,
+                        ).toLocal();
+                    print("loaded date from refresh button:");
+                    print(
+                      "Date/Time: ${dt.year}/${dt.month}/${dt.day} ${dt.hour}:${dt.minute}",
+                    );
+                  }
+                }
+              },
+              icon: const Icon(Icons.refresh),
+              // Set an appropriate size for a tappable icon
+              iconSize: 24,
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -145,26 +234,77 @@ class _MyStatsState extends ConsumerState<MyStats> {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Stack(
           children: [
-            Expanded(
-              flex: 1,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Status',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Status',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildDateRow(),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  _buildDateRow(),
-                ],
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  flex: 3,
+                  child: _buildChartCard(sortedData, dummyData),
+                ),
+              ],
+            ),
+
+            Positioned(
+              top: 0,
+              right:
+                  0, // Using 0 for corner, since Padding(20) is on the outside
+              child: SafeArea(
+                child: IconButton(
+                  onPressed: () async {
+                    print('Top right refresh pressed!');
+                    final initialDevices = ref.read(
+                      deviceManagerProvider.select((s) => s.allDevices),
+                    );
+
+                    for (var device in initialDevices) {
+                      print(device.deviceName);
+                    }
+                    List<int> results = [];
+                    if (initialDevices.isNotEmpty) {
+                      results = await _loadDataFromDevices(initialDevices);
+                    }
+                    if (results.isNotEmpty) {
+                      _initializeData();
+                      // for debug
+                      for (var res in results) {
+                        DateTime dt =
+                            DateTime.fromMillisecondsSinceEpoch(
+                              res * 1000,
+                              isUtc: true,
+                            ).toLocal();
+                        print("loaded date from refresh button:");
+                        print(
+                          "Date/Time: ${dt.year}/${dt.month}/${dt.day} ${dt.hour}:${dt.minute}",
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.refresh),
+                  iconSize: 24,
+                ),
               ),
             ),
-            const SizedBox(width: 20),
-            Expanded(flex: 3, child: _buildChartCard(sortedData, dummyData)),
           ],
         ),
       ),

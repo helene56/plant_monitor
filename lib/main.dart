@@ -252,7 +252,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   }
 }
 
-Future<void> getSensorReadings(
+Future<int> getSensorReadings(
   Database db,
   int plantId,
   BluetoothDevice device,
@@ -335,14 +335,17 @@ Future<void> getSensorReadings(
 
         debugPrint("random val 1: $val1");
         debugPrint("random val 2: $val2");
+        return unixTimestamp;
       }
+
     }
   } catch (e) {
     if (kDebugMode) {
       debugPrint("Error: $e");
     }
-    return; // return error code
+    return -1; // return error code
   }
+  return -1;
 }
 
 Future<void> writeStartUpTime(Database db, BluetoothDevice device) async {
