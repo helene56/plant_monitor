@@ -10,12 +10,14 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plant_monitor/data/sensor_cmd_id.dart';
 import 'package:haptic_feedback/haptic_feedback.dart';
-
 // TODO: somehow the page should remember the calibration state, as well as saving it to the db
+
+import 'package:plant_monitor/bluetooth/improved_device_manager.dart';
 
 class MyPlantStat extends ConsumerStatefulWidget {
   final Plant plantCard;
   const MyPlantStat({super.key, required this.plantCard});
+
 
   @override
   ConsumerState<MyPlantStat> createState() => _MyPlantStatState();
@@ -65,11 +67,11 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
     int cmdVal,
   ) async {
     final completer = Completer<bool>();
-
-    if (device.isDisconnected) {
-      // Connect to the device
-      await autoConnectDevice();
-    }
+    // TODO: BLUETOOTH
+    // if (device.isDisconnected) {
+    //   // Connect to the device
+    //   await autoConnectDevice();
+    // }
     late StreamSubscription sub;
     sub = device.connectionState.listen((state) async {
       if (state == BluetoothConnectionState.connected) {
@@ -120,20 +122,23 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
 
   Future<int> subscibeToCalibration(BluetoothDevice device) async {
     debugPrint("subscribing to calibration");
+    // TODO: BLUETOOTH
     // Ensure device is connected
-    if (device.isDisconnected) {
-      await autoConnectDevice(); // make sure this awaits the connection
-    }
+//     if (device.isDisconnected) {
+//       await autoConnectDevice();
+//       // await ref.read(deviceManagerProvider.notifier).autoConnectPersistentDevice();
+//  // make sure this awaits the connection
+//     }
 
-    // Wait until device reports it is connected
-    await device.connectionState.firstWhere(
-      (state) => state == BluetoothConnectionState.connected,
-    );
+    // // Wait until device reports it is connected
+    // await device.connectionState.firstWhere(
+    //   (state) => state == BluetoothConnectionState.connected,
+    // );
 
     // Now we are sure device is connected
-    if (kDebugMode) {
-      debugPrint('Device is connected');
-    }
+    // if (kDebugMode) {
+    //   debugPrint('Device is connected');
+    // }
 
     try {
       final services = await device.discoverServices();
@@ -223,9 +228,10 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
   }
 
   Future<void> subscribeToDevice(BluetoothDevice device) async {
-    if (device.isDisconnected) {
-      await autoConnectDevice();
-    }
+    // TODO: BLUETOOTH
+    // if (device.isDisconnected) {
+    //   await autoConnectDevice();
+    // }
 
     device.connectionState.listen((state) async {
       if (!mounted) return;
@@ -354,6 +360,14 @@ class _MyPlantStatState extends ConsumerState<MyPlantStat>
 
   @override
   Widget build(BuildContext context) {
+    // This will rebuild whenever connectedDevices changes.
+    final connectedDevices = ref.watch(
+      deviceManagerProvider.select((state) => state.connectedDevices),
+    );
+
+    if (connectedDevices.isEmpty) {
+      print("no connected items");
+    }
     final GlobalKey<TooltipState> waterKey = GlobalKey<TooltipState>();
     final GlobalKey<TooltipState> sunKey = GlobalKey<TooltipState>();
     final GlobalKey<TooltipState> humidityKey = GlobalKey<TooltipState>();

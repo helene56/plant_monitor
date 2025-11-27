@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import './../bluetooth_helpers.dart';
-import '../bluetooth/device_manager.dart';
+import '../bluetooth/improved_device_manager.dart';
 import '../data/sensor_cmd_id.dart';
 import 'package:sqflite/sqflite.dart';
 import '../main.dart';
@@ -14,7 +14,14 @@ class DebugPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.read(appDatabase);
-    final devices = ref.watch(deviceManagerProvider.select((s) => s.allDevices));
+     // This will rebuild whenever connectedDevices changes.
+    final connectedDevices = ref.watch(
+      deviceManagerProvider.select((state) => state.connectedDevices),
+    );
+
+    if (connectedDevices.isEmpty) {
+      print("no connected items");
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -28,9 +35,9 @@ class DebugPage extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Connected Devices: ${devices.length}'),
+            Text('Connected Devices: ${connectedDevices.length}'),
             const SizedBox(height: 20),
-            ...devices.map((device) => Padding(
+            ...connectedDevices.map((device) => Padding(
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
                 onPressed: () {

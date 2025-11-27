@@ -6,9 +6,11 @@ import '../data/database_helper.dart';
 import '../data/plant_history.dart';
 // sorting the data
 import '../data/statistics_logging_data.dart';
-import '/bluetooth/device_manager.dart';
+// import '/bluetooth/device_manager.dart';
 import '/data/plant_sensor_data.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+
+import 'package:plant_monitor/bluetooth/improved_device_manager.dart';
 
 class MyStats extends ConsumerStatefulWidget {
   const MyStats({super.key});
@@ -124,6 +126,14 @@ class _MyStatsState extends ConsumerState<MyStats> {
 
   @override
   Widget build(BuildContext context) {
+     // This will rebuild whenever connectedDevices changes.
+    final connectedDevices = ref.watch(
+      deviceManagerProvider.select((state) => state.connectedDevices),
+    );
+
+    if (connectedDevices.isEmpty) {
+      print("no connected items");
+    }
     final List<String> plantKeys;
 
     plantKeys =
@@ -152,11 +162,7 @@ class _MyStatsState extends ConsumerState<MyStats> {
     final List<String> plantKeys,
   ) {
     return Stack(
-      // The Stack will fill the available area.
       children: [
-        // 1. The main content (Column)
-        // Wrap the Column in Positioned.fill or Align to manage its size/position
-        // relative to the Stack if necessary, but Padding usually handles it.
         Padding(
           padding: const EdgeInsets.all(20),
           child: Column(

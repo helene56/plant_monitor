@@ -110,11 +110,11 @@ Future<bool> writeToSensor(
     int cmdVal,
   ) async {
     final completer = Completer<bool>();
-
-    if (device.isDisconnected) {
-      // Connect to the device
-      await autoConnectDevice(db);
-    }
+    // TODO: BLUETOOTH
+    // if (device.isDisconnected) {
+    //   // Connect to the device
+    //   await autoConnectDevice(db);
+    // }
     late StreamSubscription sub;
     sub = device.connectionState.listen((state) async {
       if (state == BluetoothConnectionState.connected) {

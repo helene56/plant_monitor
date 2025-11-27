@@ -72,7 +72,7 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
     // One-time initialization
     _initializeBluetooth();
     // autoconnect if devices is not empty
-    _autoConnectDevice();
+    autoConnectPersistentDevice();
     // start scanning for devices
     scanForDevices();
   }
@@ -113,7 +113,7 @@ class DeviceManager extends StateNotifier<DeviceManagerState> {
     subscription.cancel();
   }
 
-  Future<void> _autoConnectDevice() async {
+  Future<void> autoConnectPersistentDevice() async {
     // if getSensor is not empty
     // autoconnect device and add to devices
     if (!kIsWeb && Platform.isAndroid) {

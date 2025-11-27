@@ -16,8 +16,7 @@ import '../data/water_data_provider.dart';
 import 'bluetooth_helpers.dart';
 import 'package:flutter/foundation.dart';
 import 'bluetooth/bt_uuid.dart';
-import '/bluetooth/device_manager.dart';
-import 'data/plant_sensor_data.dart';
+import 'bluetooth/improved_device_manager.dart';
 
 final appDatabase = Provider<Database>((ref) {
   throw UnimplementedError('Database provider was not initialized');
@@ -48,38 +47,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   int currentPageindex = 1;
   List<Plant> plantsCards = [];
   List<PlantType> plantingTypes = [];
-  bool _loadedLogs = false;
-
-  Future<void> _loadDataFromDevices(List<Device> devices) async {
-    final db = ref.read(appDatabase);
-    // try to send start up time
-    List<PlantSensorData> sensors = await getAllSensors(db);
-
-    for (var device in devices) {
-      await writeStartUpTime(db, BluetoothDevice.fromId(device.deviceId));
-
-      for (var sensor in sensors) {
-        if (sensor.remoteId == device.deviceId) {
-          {
-            try {
-              await getSensorReadings(
-                db,
-                sensor.plantId,
-                BluetoothDevice.fromId(device.deviceId),
-              );
-            } catch (e) {
-              print(
-                "Error reading ${device.deviceId} for plant ${sensor.plantId}: $e",
-              );
-            }
-          }
-        }
-      }
-    }
-
-    print("All sensor data loaded!");
-  }
-
+ 
   @override
   void initState() {
     super.initState();
@@ -123,26 +91,13 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen to the devices provider
-    // ref.listen<List<Device>>(
-    //   deviceManagerProvider.select((s) => s.allDevices),
-    //   (previous, next) {
-    //     if (!_loadedLogs && next.isNotEmpty) {
-    //       _loadedLogs = true;
-
-    //       // call your async function for each device
-    //       _loadDataFromDevices(next);
-    //     }
-    //   },
-    // );
-
-    // Manually trigger the listener behavior immediately since `fireImmediately` is not available.
-    final initialDevices = ref.read(
-      deviceManagerProvider.select((s) => s.allDevices),
+     // This will rebuild whenever connectedDevices changes.
+    final connectedDevices = ref.watch(
+      deviceManagerProvider.select((state) => state.connectedDevices),
     );
-    if (!_loadedLogs && initialDevices.isNotEmpty) {
-      _loadedLogs = true;
-      _loadDataFromDevices(initialDevices);
+
+    if (connectedDevices.isEmpty) {
+      print("no connected items");
     }
 
     final List<Widget> widgetOptions = [
@@ -258,15 +213,16 @@ Future<int> getSensorReadings(
   BluetoothDevice device,
 ) async {
   // TODO: add data related to plant
-  // Ensure device is connected
-  if (device.isDisconnected) {
-    await autoConnectDevice(db); // make sure this awaits the connection
-  }
+  // TODO: BLUETOOTH - await connecting should happen at the device_manager
+  // // Ensure device is connected
+  // if (device.isDisconnected) {
+  //   await autoConnectDevice(db); // make sure this awaits the connection
+  // }
 
-  // Wait until device reports it is connected
-  await device.connectionState.firstWhere(
-    (state) => state == BluetoothConnectionState.connected,
-  );
+  // // Wait until device reports it is connected
+  // await device.connectionState.firstWhere(
+  //   (state) => state == BluetoothConnectionState.connected,
+  // );
 
   // Now we are sure device is connected
   if (kDebugMode) {
@@ -350,15 +306,16 @@ Future<int> getSensorReadings(
 
 Future<void> writeStartUpTime(Database db, BluetoothDevice device) async {
   // TODO: add data related to plant
-  // Ensure device is connected
-  if (device.isDisconnected) {
-    await autoConnectDevice(db); // make sure this awaits the connection
-  }
+  // TODO: BLUETOOTH
+  // // Ensure device is connected
+  // if (device.isDisconnected) {
+  //   await autoConnectDevice(db); // make sure this awaits the connection
+  // }
 
-  // Wait until device reports it is connected
-  await device.connectionState.firstWhere(
-    (state) => state == BluetoothConnectionState.connected,
-  );
+  // // Wait until device reports it is connected
+  // await device.connectionState.firstWhere(
+  //   (state) => state == BluetoothConnectionState.connected,
+  // );
 
   // Now we are sure device is connected
   if (kDebugMode) {
