@@ -121,7 +121,7 @@ class _MyAppState extends ConsumerState<MyApp> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const DebugPage(),
+                        builder: (context) => DebugPage(plantsCards: plantsCards),
                       ),
                     );
                   },
